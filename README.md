@@ -63,3 +63,4 @@ Examples of commit message formats:
 ## License
 
 Stratos is licensed under the [MIT License](LICENSE).
+
