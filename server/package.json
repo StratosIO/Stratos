@@ -15,11 +15,8 @@
   "devDependencies": {
     "@types/node": "latest",
     "eslint": "latest",
-    "@typescript-eslint/eslint-plugin": "latest",
-    "@typescript-eslint/parser": "latest",
-    "@types/eslint-config-prettier": "latest",
-    "eslint-plugin-import": "latest",
-    "eslint-define-config": "latest",
+    "typescript-eslint": "latest",
+    "eslint-config-prettier": "latest",
     "jiti": "latest",
     "prettier": "latest",
     "tsx": "latest"
