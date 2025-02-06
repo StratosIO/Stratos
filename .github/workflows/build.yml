@@ -1,13 +1,12 @@
-# This workflow will do a clean installation of node dependencies, cache/restore them, build the source code and run tests across different versions of node
-# For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-nodejs
-
 name: Build CI
 
 on: [push, pull_request, workflow_dispatch]
 
+permissions:
+  contents: write
+
 jobs:
   build:
-
     runs-on: ubuntu-latest
 
     strategy:
@@ -17,13 +16,52 @@ jobs:
 
     steps:
     - uses: actions/checkout@v4
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
+
     - name: Set up Node.js ${{ matrix.node-version }}
       uses: actions/setup-node@v4
       with:
         node-version: ${{ matrix.node-version }}
+
     - name: Install Dependencies
       run: npm install
       working-directory: ${{ matrix.directory }}
+
     - name: Run ESLint
       run: npm run lint
       working-directory: ${{ matrix.directory }}
+
+  format:
+    runs-on: ubuntu-latest
+    needs: build
+
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Set up Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: latest
+
+    - name: Install Dependencies
+      run: |
+        (cd server && npm install)
+        (cd web && npm install)
+    
+    - name: Run Prettier Formatting
+      run: |
+        (cd server && npm run format)
+        (cd web && npm run format)
+
+    - name: Push Prettier Changes
+      run: |
+        git diff --quiet && echo "No formatting changes." && exit 0
+        git config --global user.name "github-actions[bot]"
+        git config --global user.email "github-actions[bot]@users.noreply.github.com"
+        git commit -am "chore: auto-format code"
+        git push
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
