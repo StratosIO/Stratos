@@ -10,7 +10,9 @@
   },
   "dependencies": {
     "@hono/node-server": "latest",
-    "hono": "latest"
+    "dotenv": "^16.4.7",
+    "hono": "latest",
+    "postgres": "^3.4.5"
   },
   "devDependencies": {
     "@types/node": "latest",
