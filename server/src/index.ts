@@ -11,14 +11,13 @@ app.get('/db-test', async (c) => {
     const result = await sql`SELECT NOW()`
     return c.json({
       status: 'Connected :D',
-      timestamp: result[0].NOW
+      timestamp: result[0].NOW,
     })
-    } catch (error){
-      console.error('Db connection error:', error)
-      return c.json({error: 'Failed to connect to database'},500)
-    
-    }
-  })
+  } catch (error) {
+    console.error('Db connection error:', error)
+    return c.json({ error: 'Failed to connect to database' }, 500)
+  }
+})
 
 app.get('/', (c) => {
   return c.text('Hello Hono!')
@@ -27,14 +26,11 @@ app.get('/', (c) => {
 const port = 3000
 console.log(`Server is running on http://localhost:${port}`)
 
-
 serve({
   fetch: app.fetch,
   port,
   hostname: '0.0.0.0',
   onListen: ({ hostname, port }) => {
-    console.log(`Server started on ${hostname}:${port}`);
+    console.log(`Server started on ${hostname}:${port}`)
   },
 })
-  
-

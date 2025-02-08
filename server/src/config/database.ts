@@ -1,6 +1,5 @@
-import postgres from 'postgres' 
+import postgres from 'postgres'
 import 'dotenv/config'
-
 
 const sql = postgres({
   host: process.env.DB_HOST,
@@ -10,4 +9,4 @@ const sql = postgres({
   password: process.env.DB_PASSWORD,
 })
 
-export default sql 
+export default sql
