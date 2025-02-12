@@ -8,8 +8,9 @@ pnpm-debug.log*
 lerna-debug.log*
 
 node_modules
-bun.lock*
 .DS_Store
+bun.lock*
+build
 dist
 dist-ssr
 coverage

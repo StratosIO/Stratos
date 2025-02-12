@@ -14,7 +14,7 @@ app.get('/db-test', async (c) => {
       timestamp: result[0].NOW,
     })
   } catch (error) {
-    console.error('Db connection error:', error)
+    console.error('Database connection error:', error)
     return c.json({ error: 'Failed to connect to database' }, 500)
   }
 })
@@ -26,6 +26,7 @@ app.get('/', (c) => {
 const port = 3000
 console.log(`Server is running on http://localhost:${port}`)
 
+/* to be fixed
 serve({
   fetch: app.fetch,
   port,
@@ -33,4 +34,4 @@ serve({
   onListen: ({ hostname, port }) => {
     console.log(`Server started on ${hostname}:${port}`)
   },
-})
+}) */

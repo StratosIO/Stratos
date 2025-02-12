@@ -6,8 +6,8 @@
     "verbatimModuleSyntax": true,
     "skipLibCheck": true,
     "esModuleInterop": true,
-    "types": [
-      "node",
-    ]
+    "types": ["node"],
+    "rootDir": "src",
+    "outDir": "build"
   }
 }
