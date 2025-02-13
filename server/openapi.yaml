@@ -21,20 +21,38 @@ components:
       bearerFormat: JWT
 
   schemas:
+    Error:
+      type: object
+      properties:
+        error:
+          type: string
+          description: Error message
+
     User:
       type: object
       properties:
         id:
+          type: integer
+        username:
           type: string
-          format: uuid
         email:
           type: string
           format: email
-        fullName:
+        role:
           type: string
-        createdAt:
+          enum: [user, admin]
+        created_at:
           type: string
           format: date-time
+
+    UserResponse:
+      type: object
+      properties:
+        user:
+          $ref: '#/components/schemas/User'
+        token:
+          type: string
+          description: JWT token for authentication
 
     Video:
       type: object
@@ -88,20 +106,6 @@ components:
           type: string
           format: date-time
 
-    Error:
-      type: object
-      properties:
-        error:
-          type: object
-          properties:
-            code:
-              type: string
-            message:
-              type: string
-            details:
-              type: object
-              additionalProperties: true
-
 paths:
   /auth/register:
     post:
@@ -115,27 +119,33 @@ paths:
             schema:
               type: object
               required:
+                - username
                 - email
                 - password
-                - fullName
               properties:
+                username:
+                  type: string
                 email:
                   type: string
                   format: email
                 password:
                   type: string
                   minLength: 8
-                fullName:
-                  type: string
       responses:
-        '201':
+        '200':
           description: User created successfully
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/User'
+                $ref: '#/components/schemas/UserResponse'
         '400':
-          description: Invalid input
+          description: User already exists or invalid input
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Registration failed
           content:
             application/json:
               schema:
@@ -167,14 +177,15 @@ paths:
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  token:
-                    type: string
-                  expiresIn:
-                    type: integer
+                $ref: '#/components/schemas/UserResponse'
         '401':
           description: Invalid credentials
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Login failed
           content:
             application/json:
               schema:
@@ -458,3 +469,4 @@ paths:
                     type: integer
                   limit:
                     type: integer
+

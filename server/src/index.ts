@@ -1,37 +1,31 @@
 import { serve } from '@hono/node-server'
 import { Hono } from 'hono'
-import sql from './config/database.js'
+import { cors } from 'hono/cors'
 import dotenv from 'dotenv'
-import { timeStamp } from 'console'
+import sql from './config/database.js'
+import { authMiddleware, requireRole } from './middleware/auth.js'
+import { createAdmin } from './scripts/create-admin.js'
+import auth from './routes/auth.js'
+import dev from './routes/dev.js'
 
 const app = new Hono()
 
-app.get('/db-test', async (c) => {
-  try {
-    const result = await sql`SELECT NOW()`
-    return c.json({
-      status: 'Connected :D',
-      timestamp: result[0].NOW,
-    })
-  } catch (error) {
-    console.error('Database connection error:', error)
-    return c.json({ error: 'Failed to connect to database' }, 500)
-  }
-})
+//Middleware
+app.use('/*', cors())
+
+//Routes
+app.route('/auth', auth)
+
+//this route is only defined in dev env. not part of the actual application
+if (process.env.NODE_ENV === 'development') {
+  app.route('/dev', dev)
+}
 
 app.get('/', (c) => {
-  return c.text('Hello Hono!')
+  return c.text('Stratos Api')
 })
 
-const port = 3000
-console.log(`Server is running on http://localhost:${port}`)
+createAdmin() // adds default admin user to db if doesn't exist
+console.log(`Server is running on http://localhost:3000`)
 
-/* to be fixed
-serve({
-  fetch: app.fetch,
-  port,
-  hostname: '0.0.0.0',
-  onListen: ({ hostname, port }) => {
-    console.log(`Server started on ${hostname}:${port}`)
-  },
-}) */
+export default app
