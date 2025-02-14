@@ -15,7 +15,8 @@
     "dotenv": "^16.4.7",
     "hono": "latest",
     "jsonwebtoken": "^9.0.2",
-    "postgres": "^3.4.5"
+    "postgres": "^3.4.5",
+    "winston": "^3.17.0"
   },
   "devDependencies": {
     "@types/bcrypt": "^5.0.2",

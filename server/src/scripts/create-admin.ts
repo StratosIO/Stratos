@@ -1,10 +1,10 @@
 import bcrypt from 'bcrypt'
 import sql from '../config/database.js'
+import log from '../config/logger.js'
+
 
 export async function createAdmin() {
   try {
-    //wait for db connection
-    await sql`SELECT 1`
     // Check if admin exists first
     const adminExists = await sql`
       SELECT id FROM users WHERE email = 'admin@example.com'
@@ -18,11 +18,11 @@ export async function createAdmin() {
         INSERT INTO users (username, email, password_hash, role)
         VALUES ('admin', 'admin@example.com', ${passwordHash}, 'admin')
       `
-      console.log('Admin user created successfully')
+      log.info('Admin user created successfully')
     } else {
-      console.log('Admin user already exists')
+      log.debug('Admin user already exists')
     }
   } catch (error) {
-    console.error('Error creating admin:', error)
+    log.error('Error creating admin:', error)
   }
 }

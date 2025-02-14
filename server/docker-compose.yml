@@ -2,6 +2,11 @@ services:
   db:
     image: postgres:latest
     container_name: stratos-db
+    healthcheck: #this causes server to take a little longer to load
+      test: ["CMD-SHELL", "pg_isready -U user -d stratos"]
+      interval: 3s
+      timeout: 3s
+      retries: 3
     environment:
       POSTGRES_USER: user
       POSTGRES_PASSWORD: pass 
@@ -19,7 +24,10 @@ services:
     ports:
       - "3000:3000"
     depends_on:
-      - db
+      db:
+        condition: service_healthy
+    volumes:
+      - ./logs:/app/logs 
 
 volumes:
   postgres_data:
