@@ -22,6 +22,7 @@
     "@types/bcrypt": "^5.0.2",
     "@types/jsonwebtoken": "^9.0.8",
     "@types/node": "latest",
+    "bun-types": "^1.2.2",
     "eslint": "latest",
     "eslint-config-prettier": "latest",
     "jiti": "latest",

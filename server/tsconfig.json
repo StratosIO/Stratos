@@ -1,3 +1,21 @@
+/*
+{
+
+  "compilerOptions": {
+    "target": "ESNext",
+    "module": "NodeNext",
+    "strict": true,
+    "verbatimModuleSyntax": true,
+    "skipLibCheck": true,
+    "esModuleInterop": true,
+    "types": ["bun-types"],
+    "rootDir": "src",
+    "outDir": "build"
+  },
+  "include": ["src", "test"]
+  "exclude": ["build", "node_modules", "test"]
+}
+*/
 {
   "compilerOptions": {
     "target": "ESNext",
@@ -6,8 +24,10 @@
     "verbatimModuleSyntax": true,
     "skipLibCheck": true,
     "esModuleInterop": true,
-    "types": ["node"],
+    "types": ["bun-types"],
     "rootDir": "src",
     "outDir": "build"
-  }
+  },
+  "include": ["src"],
+  "exclude": ["build", "node_modules", "test"]
 }

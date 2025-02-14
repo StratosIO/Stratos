@@ -1,9 +1,9 @@
 name: Build CI
-
 on:
   push:
     branches:
       - master 
+      - feature/add-bun-testing
   pull_request: 
   workflow_dispatch:  
 
@@ -13,38 +13,37 @@ permissions:
 jobs:
   build:
     runs-on: ubuntu-latest
-
     strategy:
       matrix:
-        node-version: [latest]
         directory: [server, web]
-
     steps:
     - uses: actions/checkout@v4
       with:
         token: ${{ secrets.GITHUB_TOKEN }}
 
-    - name: Set up Node.js ${{ matrix.node-version }}
-      uses: actions/setup-node@v4
-      with:
-        node-version: ${{ matrix.node-version }}
+    - name: Setup Bun
+      uses: oven-sh/setup-bun@v1
 
     - name: Install Dependencies
-      run: npm install
+      run: bun install
+      working-directory: ${{ matrix.directory }}
+        
+    - name: Run Tests
+      run: bun test
       working-directory: ${{ matrix.directory }}
 
     - name: Run ESLint
-      run: npm run lint
+      run: bun run lint
       working-directory: ${{ matrix.directory }}
 
     - name: Build Project
-      run: npm run build
+      run: bun run build
       working-directory: ${{ matrix.directory }}
-
+        
     - name: Upload Artifacts
       uses: actions/upload-artifact@v4
       with:
-        name: build-artifact-node-${{ matrix.node-version }}-${{ matrix.directory }}
+        name: build-artifact-${{ matrix.directory }}
         path: ${{ matrix.directory }}/build
 
   format:
@@ -56,20 +55,18 @@ jobs:
       with:
         token: ${{ secrets.GITHUB_TOKEN }}
 
-    - name: Set up Node.js
-      uses: actions/setup-node@v4
-      with:
-        node-version: latest
-
+    - name: Setup Bun
+      uses: oven-sh/setup-bun@v1
+        
     - name: Install Dependencies
       run: |
-        (cd server && npm install)
-        (cd web && npm install)
+        (cd server && bun install)
+        (cd web && bun install)
     
     - name: Run Prettier Formatting
       run: |
-        (cd server && npm run format)
-        (cd web && npm run format)
+        (cd server && bun run format)
+        (cd web && bun run format)
 
     - name: Push Prettier Changes
       run: |
