@@ -2,7 +2,6 @@ import bcrypt from 'bcrypt'
 import sql from '../config/database.js'
 import log from '../config/logger.js'
 
-
 export async function createAdmin() {
   try {
     // Check if admin exists first

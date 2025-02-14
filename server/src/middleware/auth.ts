@@ -33,7 +33,9 @@ export function requireRole(requiredRole: string) {
     const user = c.get('user')
 
     if (user.role !== requiredRole && user.role !== 'admin') {
-      log.warn(`Access denied: User ${user.username} with role ${user.role} attempted to access ${requiredRole} route`)
+      log.warn(
+        `Access denied: User ${user.username} with role ${user.role} attempted to access ${requiredRole} route`,
+      )
       return c.json({ error: 'Insufficient permissions' }, 403)
     }
 
