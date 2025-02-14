@@ -3,7 +3,6 @@ on:
   push:
     branches:
       - master 
-      - feature/add-bun-testing
   pull_request: 
   workflow_dispatch:  
 

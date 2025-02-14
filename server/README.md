@@ -54,7 +54,7 @@ bun install
 
 3. Start the development server:
 ```bash
-bun run dev
+bun dev
 ```
 
 ## API Documentation
