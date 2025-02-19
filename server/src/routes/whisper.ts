@@ -1,10 +1,33 @@
-import express from "express"
+import { Hono } from "hono"
+import { cors } from "hono/cors"
 import multer from "multer"
-import { transcribe } from "../controllers/whisperController"
+import { transcribeAudio } from "../services/authService"
 
-const router = express.Router()
-const upload = multer({ dest: "uploads/" })
+const whisper = new Hono()
+const upload = multer({ dest: "uploads/" }).single("audio")
 
-router.post("/transcribe", upload.single("audio"), transcribe)
+whisper.use("/*", cors())
 
-export default router
+whisper.post("/transcribe", async (c) => {
+    return new Promise((resolve, reject) => {
+        upload(c.req.raw, {} as any, async (err) => {
+            if (err) {
+                return resolve(c.json({ error: "File upload failed" }, 400))
+            }
+
+            const file = (c.req.raw as any).file
+            if (!file) {
+                return resolve(c.json({ error: "No audio file provided" }, 400))
+            }
+
+            try {
+                const transcription = await transcribeAudio(file.path)
+                resolve(c.json({ transcription}))
+            } catch (error) {
+                resolve(c.json({ error: "Error processing transcription" }, 500))
+            }
+        })
+    })
+})
+
+export default whisper
