@@ -5,6 +5,6 @@ import { authMiddleware } from '../middleware/auth.js'
 const videos = new Hono()
 
 // videos.post('/upload', authMiddleware, videoController.upload)
-videos.post('/upload', videoController.upload) // without authentication for testing
+videos.post('/upload',parse(), videoController.upload) // without authentication for testing
 
 export default videos

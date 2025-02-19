@@ -5,8 +5,10 @@ import log from '../config/logger.js'
 export const videoController = {
   upload: async (c: Context) => {
     try {
-      const file = await c.req.file('video')
-      if (!file) {
+      const body = await c.req.parseBody()
+      const file = body.video as File
+      
+      if (!file || !(file instanceof File)) {
         log.warn('Upload attempted with no file')
         return c.json({ error: 'No file provided' }, 400)
       }
