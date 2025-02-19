@@ -4,7 +4,7 @@ import multer from "multer"
 import { transcribeAudio } from "../services/authService"
 
 const whisper = new Hono()
-const upload = multer({ dest: "uploads/" }).single("audio")
+const upload = multer({ dest: "/app/uploads/" }).single("audio")
 
 whisper.use("/*", cors())
 
