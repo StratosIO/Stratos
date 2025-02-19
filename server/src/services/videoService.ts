@@ -8,20 +8,20 @@ export const videoService = {
         throw new Error('No file provided')
       }
 
-      const UPLOAD_DIR = './uploads/videos'
+      const UPLOAD_DIR = './uploads'
       await mkdir(UPLOAD_DIR, { recursive: true })
-      
+
       const fileName = `${crypto.randomUUID()}_${file.name}`
       const filePath = `${UPLOAD_DIR}/${fileName}`
-      
+
       // Process file in chunks via stream
       const stream = file.stream()
       const chunks = []
-      
+
       for await (const chunk of stream) {
         chunks.push(chunk)
       }
-      
+
       await Bun.write(filePath, Buffer.concat(chunks))
 
       const result = await sql`
@@ -42,5 +42,5 @@ export const videoService = {
     } catch (error) {
       throw error
     }
-  }
+  },
 }

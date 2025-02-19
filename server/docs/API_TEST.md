@@ -9,5 +9,9 @@ curl -X POST http://localhost:3000/api/auth/login \
 
 # uploading video
 curl http://localhost:3000/api/upload -F "video=@test.mp4"
+
+# Status
+curl http://localhost:3000/api/status
+
 # Clear tables
 curl -X POST http://localhost:3000/dev/reset-db
