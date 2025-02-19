@@ -1,9 +1,7 @@
 openapi: 3.0.0
 info:
   title: Stratos Video Processing API
-  description: |
-    API for the Stratos cloud-based video processing platform.
-    Enables video upload, processing, and management.
+  description: API for the Stratos web-based video processing platform
   version: '1.0.0'
   contact:
     name: Stratos Team
@@ -23,10 +21,22 @@ components:
   schemas:
     Error:
       type: object
+      required:
+        - code
+        - message
       properties:
-        error:
+        code:
           type: string
-          description: Error message
+          enum:
+            - INVALID_INPUT
+            - PROCESSING_FAILED
+            - INVALID_CREDENTIALS
+            - USER_EXISTS
+            - SERVER_ERROR
+            - NOT_FOUND
+        message:
+          type: string
+          description: Detailed error message
 
     User:
       type: object
@@ -54,57 +64,111 @@ components:
           type: string
           description: JWT token for authentication
 
-    Video:
+    VideoMetadata:
       type: object
+      required:
+        - filename
+        - fileSize
+        - format
       properties:
-        id:
+        filename:
           type: string
-          format: uuid
-        title:
-          type: string
-        description:
-          type: string
-        status:
-          type: string
-          enum: [uploading, processing, ready, failed]
+          example: "video.mp4"
         fileSize:
           type: integer
-          format: int64
-        duration:
-          type: integer
+          description: File size in bytes
+          example: 15000000
         format:
           type: string
+          example: "mp4"
+        duration:
+          type: number
+          description: Duration in seconds
+          example: 180.5
+        language:
+          type: string
+          description: Source video language
+          example: "en"
+
+    ProcessingOptions:
+      type: object
+      required:
+        - outputFormat
+      properties:
+        outputFormat:
+          type: string
+          enum: [mp4, webm, hls]
+          example: "mp4"
+        quality:
+          type: string
+          enum: [high, medium, low]
+          default: "high"
         resolution:
           type: string
-        createdAt:
-          type: string
-          format: date-time
+          enum: [original, 1080p, 720p, 480p]
+          default: "original"
+        ai:
+          type: object
+          properties:
+            transcription:
+              type: boolean
+              default: false
+            translation:
+              type: object
+              properties:
+                enabled:
+                  type: boolean
+                  default: false
+                targetLanguage:
+                  type: string
+                  example: "es"
 
-    ProcessingJob:
+    JobCreationResponse:
       type: object
       properties:
-        id:
+        jobId:
           type: string
-          format: uuid
-        videoId:
-          type: string
-          format: uuid
-        type:
-          type: string
-          enum: [compression, conversion, ai_enhancement]
+          example: "job_123abc"
         status:
           type: string
-          enum: [queued, processing, completed, failed]
+          enum: [pending, processing, completed, failed]
+          example: "pending"
+        estimatedDuration:
+          type: number
+          description: Estimated processing time in seconds
+
+    JobStatus:
+      type: object
+      properties:
+        jobId:
+          type: string
+          example: "job_123abc"
+        status:
+          type: string
+          enum: [pending, processing, completed, failed]
+          example: "processing"
         progress:
-          type: integer
+          type: number
           minimum: 0
           maximum: 100
-        startedAt:
-          type: string
-          format: date-time
-        completedAt:
-          type: string
-          format: date-time
+          example: 45.5
+        result:
+          type: object
+          properties:
+            downloadUrl:
+              type: string
+              description: URL to download the processed video
+              example: "/api/v1/downloads/job_123abc/video.mp4"
+            expiresAt:
+              type: string
+              format: date-time
+              description: When the processed file will be deleted
+            transcriptionUrl:
+              type: string
+              description: URL to download transcription file (if requested)
+              example: "/api/v1/downloads/job_123abc/transcript.txt"
+        error:
+          $ref: '#/components/schemas/Error'
 
 paths:
   /auth/register:
@@ -125,6 +189,7 @@ paths:
               properties:
                 username:
                   type: string
+                  minLength: 3
                 email:
                   type: string
                   format: email
@@ -132,20 +197,14 @@ paths:
                   type: string
                   minLength: 8
       responses:
-        '200':
+        '201':
           description: User created successfully
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/UserResponse'
         '400':
-          description: User already exists or invalid input
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '500':
-          description: Registration failed
+          description: Invalid input or user exists
           content:
             application/json:
               schema:
@@ -184,177 +243,14 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
-        '500':
-          description: Login failed
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
 
-  /videos/init:
+  /jobs:
     post:
-      summary: Initialize video upload
-      tags:
-        - Videos
-      security:
-        - BearerAuth: []
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              required:
-                - filename
-                - fileSize
-              properties:
-                filename:
-                  type: string
-                fileSize:
-                  type: integer
-                  format: int64
-                metadata:
-                  type: object
-                  properties:
-                    title:
-                      type: string
-                    description:
-                      type: string
-                    retentionDays:
-                      type: integer
-                      minimum: 1
-      responses:
-        '201':
-          description: Upload initialized
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  videoId:
-                    type: string
-                    format: uuid
-                  uploadUrl:
-                    type: string
-                  expiresIn:
-                    type: integer
-
-  /videos/{videoId}/complete:
-    post:
-      summary: Complete video upload
-      tags:
-        - Videos
-      security:
-        - BearerAuth: []
-      parameters:
-        - name: videoId
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-      responses:
-        '200':
-          description: Upload completed
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  videoId:
-                    type: string
-                    format: uuid
-                  status:
-                    type: string
-                    enum: [processing]
-
-  /videos/{videoId}:
-    get:
-      summary: Get video details
-      tags:
-        - Videos
-      security:
-        - BearerAuth: []
-      parameters:
-        - name: videoId
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-      responses:
-        '200':
-          description: Video details
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Video'
-        '404':
-          description: Video not found
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-
-  /videos:
-    get:
-      summary: List videos
-      tags:
-        - Videos
-      security:
-        - BearerAuth: []
-      parameters:
-        - name: page
-          in: query
-          schema:
-            type: integer
-            minimum: 1
-            default: 1
-        - name: limit
-          in: query
-          schema:
-            type: integer
-            minimum: 1
-            maximum: 100
-            default: 20
-        - name: status
-          in: query
-          schema:
-            type: string
-            enum: [uploading, processing, ready, failed]
-      responses:
-        '200':
-          description: List of videos
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  items:
-                    type: array
-                    items:
-                      $ref: '#/components/schemas/Video'
-                  total:
-                    type: integer
-                  page:
-                    type: integer
-                  limit:
-                    type: integer
-
-  /videos/{videoId}/jobs:
-    post:
-      summary: Create processing job
+      summary: Create a new video processing job
       tags:
         - Jobs
       security:
         - BearerAuth: []
-      parameters:
-        - name: videoId
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
       requestBody:
         required: true
         content:
@@ -362,37 +258,28 @@ paths:
             schema:
               type: object
               required:
-                - type
-                - parameters
+                - videoMetadata
+                - processingOptions
               properties:
-                type:
-                  type: string
-                  enum: [compression, conversion, ai_enhancement]
-                parameters:
-                  type: object
-                  additionalProperties: true
-                priority:
-                  type: integer
-                  minimum: 1
-                  maximum: 10
+                videoMetadata:
+                  $ref: '#/components/schemas/VideoMetadata'
+                processingOptions:
+                  $ref: '#/components/schemas/ProcessingOptions'
       responses:
         '201':
-          description: Job created
+          description: Job created successfully
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  jobId:
-                    type: string
-                    format: uuid
-                  status:
-                    type: string
-                    enum: [queued]
-                  estimatedTime:
-                    type: integer
+                $ref: '#/components/schemas/JobCreationResponse'
+        '400':
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
 
-  /jobs/{jobId}:
+  /jobs/{jobId}/status:
     get:
       summary: Get job status
       tags:
@@ -405,14 +292,13 @@ paths:
           required: true
           schema:
             type: string
-            format: uuid
       responses:
         '200':
-          description: Job status
+          description: Job status retrieved successfully
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ProcessingJob'
+                $ref: '#/components/schemas/JobStatus'
         '404':
           description: Job not found
           content:
@@ -420,53 +306,35 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error'
 
-  /jobs:
+  /downloads/{jobId}/{filename}:
     get:
-      summary: List jobs
+      summary: Download processed file
       tags:
-        - Jobs
+        - Downloads
       security:
         - BearerAuth: []
       parameters:
-        - name: videoId
-          in: query
+        - name: jobId
+          in: path
+          required: true
           schema:
             type: string
-            format: uuid
-        - name: status
-          in: query
+        - name: filename
+          in: path
+          required: true
           schema:
             type: string
-            enum: [queued, processing, completed, failed]
-        - name: page
-          in: query
-          schema:
-            type: integer
-            minimum: 1
-            default: 1
-        - name: limit
-          in: query
-          schema:
-            type: integer
-            minimum: 1
-            maximum: 100
-            default: 20
       responses:
         '200':
-          description: List of jobs
+          description: File download
+          content:
+            application/octet-stream:
+              schema:
+                type: string
+                format: binary
+        '404':
+          description: File not found
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  items:
-                    type: array
-                    items:
-                      $ref: '#/components/schemas/ProcessingJob'
-                  total:
-                    type: integer
-                  page:
-                    type: integer
-                  limit:
-                    type: integer
-
+                $ref: '#/components/schemas/Error'
