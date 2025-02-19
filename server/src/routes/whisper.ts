@@ -1,7 +1,7 @@
 import { Hono } from "hono"
 import { cors } from "hono/cors"
 import busboy from "busboy"
-import { transcribeAudio } from "../services/whisperService"
+import { transcribeAudio } from "../services/whisperService.js"
 import fs from "fs"
 import path from "path"
 import { Readable } from "stream"
@@ -20,7 +20,7 @@ whisper.post("/transcribe", async (c) => {
   return new Promise(async (resolve, reject) => {
     console.log("[LOG] Received request at /transcribe")
 
-    // ✅ Convert Hono's `ReadableStream` to a Node.js `Readable` stream
+    // Convert Hono's `ReadableStream` to a Node.js `Readable` stream
     const buffer = Buffer.from(await c.req.arrayBuffer())
     const nodeStream = Readable.from(buffer)
 
@@ -37,9 +37,13 @@ whisper.post("/transcribe", async (c) => {
 
       stream.on("finish", async () => {
         console.log("[LOG] File uploaded:", filePath)
+        if (!filePath) {
+          console.error("[ERROR] File path is null.")
+          resolve(c.json({ error: "Error processing file" }, 500))
+        }
 
         try {
-          const transcription = await transcribeAudio(filePath)
+          const transcription = await transcribeAudio(filePath as string)
           resolve(c.json({ transcription }))
         } catch (error) {
           console.error("[ERROR] Transcription failed:", error)
@@ -60,7 +64,7 @@ whisper.post("/transcribe", async (c) => {
       }
     })
 
-    // ✅ Fix: Use the correctly formatted Node.js stream
+    // Use the correctly formatted Node.js stream
     nodeStream.pipe(bb)
   })
 })
