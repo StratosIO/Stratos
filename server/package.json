@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "build": "tsc",
+    "test": "cd test && bun test",
     "dev": "tsx watch src/index.ts",
     "lint": "eslint . --fix",
     "format": "prettier --write src/"

@@ -1,4 +1,3 @@
-import { serve } from '@hono/node-server'
 import { Hono } from 'hono'
 import { cors } from 'hono/cors'
 import dotenv from 'dotenv'
@@ -8,6 +7,7 @@ import { createAdmin } from './scripts/create-admin.js'
 import auth from './routes/auth.js'
 import dev from './routes/dev.js'
 import log from './config/logger.js'
+import videos from './routes/video.js'
 
 const app = new Hono()
 
@@ -16,6 +16,7 @@ app.use('/*', cors())
 
 //Routes
 app.route('/auth', auth)
+app.route('/videos', videos)
 
 //this route is only defined in dev env. not part of the actual application
 if (process.env.NODE_ENV === 'development') {

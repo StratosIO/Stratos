@@ -2,6 +2,17 @@ import { expect, test, describe, beforeEach, mock } from "bun:test";
 import jwt from 'jsonwebtoken';
 import { authMiddleware } from "../../src/middleware/auth.js";
 
+// Mock the logger module
+mock.module('../../src/config/logger.js', () => ({
+  default: {
+    error: mock(() => {}),
+    warn: mock(() => {}),
+    info: mock(() => {}),
+    http: mock(() => {}),
+    debug: mock(() => {})
+  }
+}));
+
 describe('authMiddleware', () => {
   let mockContext: any;
   let mockNext: any;
