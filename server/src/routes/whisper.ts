@@ -1,7 +1,7 @@
 import { Hono } from "hono"
 import { cors } from "hono/cors"
 import multer from "multer"
-import { transcribeAudio } from "../services/authService"
+import { transcribeAudio } from "../services/whisperService"
 
 const whisper = new Hono()
 const upload = multer({ dest: "/app/uploads/" }).single("audio")
