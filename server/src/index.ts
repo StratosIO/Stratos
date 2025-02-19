@@ -7,7 +7,7 @@ import { authMiddleware, requireRole } from './middleware/auth.js'
 import { createAdmin } from './scripts/create-admin.js'
 import auth from './routes/auth.js'
 import dev from './routes/dev.js'
-import whisper from "./routes/whisper.js"
+import whisper from './routes/whisper.js'
 import log from './config/logger.js'
 
 const app = new Hono()
