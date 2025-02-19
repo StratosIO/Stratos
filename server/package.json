@@ -11,15 +11,21 @@
   },
   "dependencies": {
     "@hono/node-server": "latest",
-    "bcrypt": "^5.1.1",
+    "bcryptjs": "^3.0.2",
+    "busboy": "^1.6.0",
     "dotenv": "^16.4.7",
-    "hono": "latest",
+    "express": "^4.21.2",
+    "hono": "^4.7.2",
     "jsonwebtoken": "^9.0.2",
+    "multer": "^1.4.5-lts.1",
+    "openai": "^4.85.2",
     "postgres": "^3.4.5",
     "winston": "^3.17.0"
   },
   "devDependencies": {
     "@types/bcrypt": "^5.0.2",
+    "@types/busboy": "^1.5.4",
+    "@types/express": "^5.0.0",
     "@types/jsonwebtoken": "^9.0.8",
     "@types/node": "latest",
     "bun-types": "^1.2.2",

@@ -28,6 +28,7 @@ services:
         condition: service_healthy
     volumes:
       - ./logs:/app/logs 
+      - ./uploads:/app/uploads
 
 volumes:
   postgres_data:
