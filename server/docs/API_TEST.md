@@ -9,3 +9,7 @@ curl -X POST http://localhost:3000/auth/login \
 
 # Clear tables
 curl -X POST http://localhost:3000/dev/reset-db
+
+# Transcribe audio file (.wav)
+curl -X POST http://localhost:3000/whisper/transcribe \
+-F "audio=@path/to/audio.wav"
