@@ -16,6 +16,7 @@ dist-ssr
 coverage
 *.local
 .env
+uploads
 
 # Editor directories and files
 .vscode/*

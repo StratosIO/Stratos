@@ -6,7 +6,7 @@ export const videoController = {
   upload: async (c: Context) => {
     try {
       const body = await c.req.parseBody()
-      const file = body.video as File
+      const file = body.video
       
       if (!file || !(file instanceof File)) {
         log.warn('Upload attempted with no file')
