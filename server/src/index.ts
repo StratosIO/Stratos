@@ -14,9 +14,13 @@ const app = new Hono()
 //Middleware
 app.use('/*', cors())
 
+const api = new Hono()
 //Routes
-app.route('/auth', auth)
-app.route('/videos', videos)
+api.route('/auth', auth)
+api.route('/upload', videos)
+
+
+app.route('/api', api)
 
 //this route is only defined in dev env. not part of the actual application
 if (process.env.NODE_ENV === 'development') {
