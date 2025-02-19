@@ -1,33 +1,68 @@
 import { Hono } from "hono"
 import { cors } from "hono/cors"
-import multer from "multer"
+import busboy from "busboy"
 import { transcribeAudio } from "../services/whisperService"
+import fs from "fs"
+import path from "path"
+import { Readable } from "stream"
 
 const whisper = new Hono()
-const upload = multer({ dest: "/app/uploads/" }).single("audio")
 
-whisper.use("/*", cors())
+// Middleware to log incoming requests
+whisper.use("/*", async (c, next) => {
+  console.log(`[LOG] Incoming request: ${c.req.method} ${c.req.url}`)
+  console.log(`[LOG] Headers:`, c.req.header())
+  await next()
+})
 
+// Transcribe Audio Route
 whisper.post("/transcribe", async (c) => {
-    return new Promise((resolve, reject) => {
-        upload(c.req.raw, {} as any, async (err) => {
-            if (err) {
-                return resolve(c.json({ error: "File upload failed" }, 400))
-            }
+  return new Promise(async (resolve, reject) => {
+    console.log("[LOG] Received request at /transcribe")
 
-            const file = (c.req.raw as any).file
-            if (!file) {
-                return resolve(c.json({ error: "No audio file provided" }, 400))
-            }
+    // ✅ Convert Hono's `ReadableStream` to a Node.js `Readable` stream
+    const buffer = Buffer.from(await c.req.arrayBuffer())
+    const nodeStream = Readable.from(buffer)
 
-            try {
-                const transcription = await transcribeAudio(file.path)
-                resolve(c.json({ transcription}))
-            } catch (error) {
-                resolve(c.json({ error: "Error processing transcription" }, 500))
-            }
-        })
+    const bb = busboy({ headers: c.req.header() })
+    let filePath: string | null = null
+
+    bb.on("file", (fieldname, file, info) => {
+      const filename = info.filename
+      console.log("[LOG] Receiving file:", filename)
+
+      filePath = `/app/uploads/${filename}`
+      const stream = fs.createWriteStream(filePath)
+      file.pipe(stream)
+
+      stream.on("finish", async () => {
+        console.log("[LOG] File uploaded:", filePath)
+
+        try {
+          const transcription = await transcribeAudio(filePath)
+          resolve(c.json({ transcription }))
+        } catch (error) {
+          console.error("[ERROR] Transcription failed:", error)
+          resolve(c.json({ error: "Error processing transcription" }, 500))
+        }
+      })
+
+      stream.on("error", (err) => {
+        console.error("[ERROR] File save error:", err)
+        reject(c.json({ error: "File upload failed" }, 500))
+      })
     })
+
+    bb.on("finish", () => {
+      if (!filePath) {
+        console.error("[ERROR] No file received.")
+        resolve(c.json({ error: "No audio file provided" }, 400))
+      }
+    })
+
+    // ✅ Fix: Use the correctly formatted Node.js stream
+    nodeStream.pipe(bb)
+  })
 })
 
 export default whisper

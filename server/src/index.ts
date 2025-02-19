@@ -10,8 +10,6 @@ import dev from './routes/dev.js'
 import whisper from "./routes/whisper.js"
 import log from './config/logger.js'
 
-dotenv.config()
-
 const app = new Hono()
 
 //Middleware
@@ -32,10 +30,5 @@ app.get('/', (c) => {
 
 createAdmin() // adds default admin user to db if doesn't exist
 log.info(`Server is running on http://localhost:3000`)
-
-serve({
-  fetch: app.fetch,
-  port: 3000,
-})
 
 export default app
