@@ -213,3 +213,54 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
+                /videos/{id}:
+    delete:
+      summary: Delete a video
+      description: Delete a video and its associated file
+      tags:
+        - Videos
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: UUID of the video to delete
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Video deleted successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+        '400':
+          description: Invalid UUID format
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Video not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Unauthorized - Invalid or missing token
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Server error during deletion
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'

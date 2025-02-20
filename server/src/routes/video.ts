@@ -5,4 +5,5 @@ import { authMiddleware } from '../middleware/auth.js'
 const videos = new Hono()
 
 videos.post('/', videoController.upload)
+videos.delete('/:id', videoController.delete)
 export default videos

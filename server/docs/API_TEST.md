@@ -10,6 +10,9 @@ curl -X POST http://localhost:3000/api/auth/login \
 # Uploading video
 curl http://localhost:3000/api/upload -F "video=@test.mp4"
 
+# Deleting a video
+curl -X DELETE http://localhost:3000/api/upload/:videoid
+
 # Status
 curl http://localhost:3000/api/status
 

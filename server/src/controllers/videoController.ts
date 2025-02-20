@@ -22,7 +22,7 @@ export const videoController = {
 
       log.info(`Starting video upload: ${file.name}`, {
         fileSize: file.size,
-        mimeType: file.type
+        mimeType: file.type,
       })
 
       const result = await videoService.uploadVideo(file)
@@ -46,6 +46,25 @@ export const videoController = {
         },
         500,
       )
+    }
+  },
+  delete: async (c: Context) => {
+    try {
+      const id = c.req.param('id')
+
+      // Simple UUID validation
+      if (!/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(id)) {
+        log.warn('Delete attempted with invalid ID', { id })
+        return c.json({ error: 'Invalid video ID' }, 400)
+      }
+
+      await videoService.deleteVideo(id)
+      log.info('Video deleted successfully', { id })
+
+      return c.json({ success: true })
+    } catch (error) {
+      log.error('Failed to delete video', { error: String(error) })
+      return c.json({ error: 'Failed to delete video' }, 500)
     }
   },
 }

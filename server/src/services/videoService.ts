@@ -1,20 +1,18 @@
 import sql from '../config/database.js'
-import { mkdir, chmod } from 'fs/promises'
+import { mkdir, chmod, unlink } from 'fs/promises'
 import { UPLOAD_CONFIG } from '../types/index.js'
 import path from 'path'
-
 
 export const videoService = {
   ensureUploadDirectory: async () => {
     try {
-      await mkdir(UPLOAD_CONFIG.DIR, { 
+      await mkdir(UPLOAD_CONFIG.DIR, {
         recursive: true,
-        mode: UPLOAD_CONFIG.PERMISSIONS 
+        mode: UPLOAD_CONFIG.PERMISSIONS,
       })
-      
+
       // Double-check permissions in case directory already existed
       await chmod(UPLOAD_CONFIG.DIR, UPLOAD_CONFIG.PERMISSIONS)
-      
     } catch (error) {
       throw new Error('Failed to initialize upload directory')
     }
@@ -26,7 +24,7 @@ export const videoService = {
       }
 
       await videoService.ensureUploadDirectory()
-      
+
       const fileName = `${crypto.randomUUID()}_${file.name}`
       const filePath = path.join(UPLOAD_CONFIG.DIR, fileName)
 
@@ -58,5 +56,35 @@ export const videoService = {
     } catch (error) {
       throw error
     }
+  },
+  deleteVideo: async (id: string) => {
+    // Validate UUID format
+    if (!/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(id)) {
+      throw new Error('Invalid UUID format')
+    }
+
+    // First get the file path from database
+    const video = await sql`
+      SELECT file_path 
+      FROM videos 
+      WHERE id = ${id}::uuid
+    `
+
+    if (!video || video.length === 0) {
+      throw new Error('Video not found')
+    }
+
+    // Delete the file first
+    try {
+      await unlink(video[0].file_path)
+    } catch (error) {
+      throw(error)
+    }
+
+    // Then remove from database
+    await sql`
+      DELETE FROM videos 
+      WHERE id = ${id}::uuid
+    `
   },
 }
