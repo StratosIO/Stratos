@@ -27,3 +27,7 @@ curl -X GET http://localhost:3000/api/status
 
 # Clear tables
 curl -X POST http://localhost:3000/dev/reset-db
+
+# Transcribe audio file (.wav)
+curl -X POST http://localhost:3000/ai/transcribe \
+-F "audio=@path/to/audio.wav"

@@ -11,7 +11,7 @@ permissions:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     strategy:
       matrix:
         directory: [server, web]
@@ -68,6 +68,7 @@ jobs:
         (cd web && bun run format)
 
     - name: Push Prettier Changes
+      if: github.event_name == 'push'
       run: |
         git diff --quiet && echo "No formatting changes." && exit 0
         git config --global user.name "github-actions[bot]"

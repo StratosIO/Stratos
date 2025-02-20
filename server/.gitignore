@@ -27,5 +27,6 @@ uploads
 *.njsproj
 *.sln
 *.sw?
+uploads/
 
 *.tsbuildinfo
