@@ -1,0 +1,44 @@
+version: "3.8"
+
+services:
+  db:
+    immage: postgres:latest
+    container_name: stratos-db
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U user -d stratos"]
+      interval: 3s
+      timeout: 3s
+      retries: 3
+    environment:
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: pass 
+      POSTGRES_DB: stratos
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+  
+  backend:
+    build:
+      context: ./server 
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    depends_on:
+      - db
+      - ai_service
+    environment:
+      - AI_SERVICE_URL=http://ai_service:5001
+
+  ai_service:
+    build:
+      context: ./ai-service
+      dockerfile: Dockerfile
+    ports:
+      - "5001:5001"
+    volumes:
+      - ./ai-service/uploads:/app/uploads
+      - ./ai_service/models:/app/models
+
+volumes:
+  postgres_data:
