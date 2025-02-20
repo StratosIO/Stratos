@@ -16,7 +16,7 @@ app.use('/*', cors())
 const api = new Hono()
 //Routes
 api.route('/auth', auth)
-api.route('/upload', videos)
+api.route('/videos', videos)
 api.route('/status', status)
 
 app.route('/api', api)

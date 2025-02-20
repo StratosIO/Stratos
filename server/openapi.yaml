@@ -213,7 +213,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
-                /videos/{id}:
+  /videos/{id}:
     delete:
       summary: Delete a video
       description: Delete a video and its associated file

@@ -26,12 +26,12 @@ export const videoValidation = {
     }
 
     // Check file type
-    if (!SUPPORTED_VIDEO_FORMATS.includes(file.type)) {
-      return {
-        isValid: false,
-        error: `Unsupported file type. Supported formats: ${SUPPORTED_VIDEO_FORMATS.join(', ')}`,
-      }
-    }
+    // if (!SUPPORTED_VIDEO_FORMATS.includes(file.type)) {
+    //   return {
+    //     isValid: false,
+    //     error: `Unsupported file type. Supported formats: ${SUPPORTED_VIDEO_FORMATS.join(', ')}`,
+    //   }
+    // }
 
     // Check file size
     if (file.size > MAX_FILE_SIZE) {

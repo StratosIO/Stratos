@@ -1,6 +1,7 @@
 import sql from '../config/database.js'
 import { mkdir, chmod, unlink } from 'fs/promises'
 import { UPLOAD_CONFIG } from '../types/index.js'
+import type { ListOptions,ListResult } from '../types/index.js'
 import path from 'path'
 
 export const videoService = {
@@ -87,4 +88,53 @@ export const videoService = {
       WHERE id = ${id}::uuid
     `
   },
+ listVideos: async (options: ListOptions): Promise<ListResult> => {
+    const { limit, cursor } = options
+
+    // Build the base query
+    let baseQuery = sql`
+      SELECT 
+        id,
+        file_name,
+        file_size,
+        mime_type,
+        uploaded_at,
+        file_path
+      FROM videos
+    `
+
+    // Add cursor condition if it exists
+    if (cursor) {
+      baseQuery = sql`${baseQuery} 
+        WHERE (uploaded_at, id) < (${cursor.timestamp}, ${cursor.id})`
+    }
+    
+    // Add ordering and limit
+    baseQuery = sql`${baseQuery} 
+      ORDER BY uploaded_at DESC, id DESC 
+      LIMIT ${limit + 1}`
+
+    const videos = await baseQuery
+
+    // Check if we have more items
+    const hasMore = videos.length > limit
+    const items = hasMore ? videos.slice(0, -1) : videos
+
+    // Generate next cursor if we have more items
+    let nextCursor = null
+    if (hasMore && items.length > 0) {
+      const lastItem = items[items.length - 1]
+      const cursorData = {
+        timestamp: lastItem.uploaded_at.toISOString(),
+        id: lastItem.id
+      }
+      nextCursor = Buffer.from(JSON.stringify(cursorData)).toString('base64')
+    }
+
+    return {
+      videos: items,
+      nextCursor,
+      hasMore
+    }
+  }
 }
