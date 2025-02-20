@@ -4,7 +4,7 @@ import { UPLOAD_CONFIG } from '../types/index.js'
 import type { ListOptions,ListResult } from '../types/index.js'
 import path from 'path'
 
-export const videoService = {
+export const uploadService = {
   ensureUploadDirectory: async () => {
     try {
       await mkdir(UPLOAD_CONFIG.DIR, {
@@ -18,13 +18,13 @@ export const videoService = {
       throw new Error('Failed to initialize upload directory')
     }
   },
-  uploadVideo: async (file: File) => {
+  upload: async (file: File) => {
     try {
       if (!file) {
         throw new Error('No file provided')
       }
 
-      await videoService.ensureUploadDirectory()
+      await uploadService.ensureUploadDirectory()
 
       const fileName = `${crypto.randomUUID()}_${file.name}`
       const filePath = path.join(UPLOAD_CONFIG.DIR, fileName)
@@ -58,7 +58,7 @@ export const videoService = {
       throw error
     }
   },
-  deleteVideo: async (id: string) => {
+  deleteUpload: async (id: string) => {
     // Validate UUID format
     if (!/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(id)) {
       throw new Error('Invalid UUID format')
@@ -88,7 +88,7 @@ export const videoService = {
       WHERE id = ${id}::uuid
     `
   },
- listVideos: async (options: ListOptions): Promise<ListResult> => {
+ listUploads: async (options: ListOptions): Promise<ListResult> => {
     const { limit, cursor } = options
 
     // Build the base query

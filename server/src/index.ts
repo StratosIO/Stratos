@@ -5,7 +5,7 @@ import { createAdmin } from './scripts/create-admin.js'
 import auth from './routes/auth.js'
 import dev from './routes/dev.js'
 import log from './config/logger.js'
-import videos from './routes/video.js'
+import uploads from './routes/uploads.js'
 import status from './routes/status.js'
 
 const app = new Hono()
@@ -16,7 +16,7 @@ app.use('/*', cors())
 const api = new Hono()
 //Routes
 api.route('/auth', auth)
-api.route('/videos', videos)
+api.route('/uploads', uploads)
 api.route('/status', status)
 
 app.route('/api', api)

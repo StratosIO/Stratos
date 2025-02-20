@@ -1,34 +1,34 @@
 import type { Context } from 'hono'
-import { videoService } from '../services/videoService.js'
-import { videoValidation } from '../utils/videoValidation.js'
+import { uploadService } from '../services/uploadService.js'
+import { uploadValidation } from '../utils/uploadValidation.js'
 import log from '../config/logger.js'
 import type { ListQueryParams}  from '../types/index.js'
 import { DEFAULT_PAGE_SIZE, MAX_PAGE_SIZE } from '../types/index.js'
 
-export const videoController = {
+export const uploadsController = {
   upload: async (c: Context) => {
     try {
       const body = await c.req.parseBody()
-      const file = body.video
+      const file = body.file
 
       if (!file || !(file instanceof File)) {
         log.warn('Upload attempted with no file')
         return c.json({ error: 'No file provided' }, 400)
       }
 
-      const validation = videoValidation.validateVideo(file) // Validate the uploaded video
+      const validation = uploadValidation.validate(file) // Validate the uploaded file
       if (!validation.isValid) {
-        log.warn(`Invalid video upload: ${validation.error}`)
+        log.warn(`Invalid upload: ${validation.error}`)
         return c.json({ error: validation.error }, 400)
       }
 
-      log.info(`Starting video upload: ${file.name}`, {
+      log.info(`Starting file upload: ${file.name}`, {
         fileSize: file.size,
         mimeType: file.type,
       })
 
-      const result = await videoService.uploadVideo(file)
-      log.info(`Successfully uploaded video: ${result.file_name}`)
+      const result = await uploadService.upload(file)
+      log.info(`Successfully uploaded: ${result.file_name}`)
 
       return c.json({
         success: true,
@@ -40,7 +40,7 @@ export const videoController = {
         },
       })
     } catch (error) {
-      log.error('Video upload failed', { error: String(error) })
+      log.error('Upload failed', { error: String(error) })
       return c.json(
         {
           success: false,
@@ -60,7 +60,7 @@ export const videoController = {
         return c.json({ error: 'Invalid video ID' }, 400)
       }
 
-      await videoService.deleteVideo(id)
+      await uploadService.deleteUpload(id)
       log.info('Video deleted successfully', { id })
 
       return c.json({ success: true })
@@ -90,7 +90,7 @@ export const videoController = {
         }
       }
 
-      const result = await videoService.listVideos({
+      const result = await uploadService.listUploads({
         limit: validLimit,
         cursor: cursorData
       })

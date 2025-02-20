@@ -138,7 +138,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error'
 
-  /videos:
+  /uploads:
     post:
       summary: Upload a new video
       description: Upload a video file for processing
@@ -213,7 +213,82 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
-  /videos/{id}:
+    get:
+      summary: List videos
+      description: Get a paginated list of uploaded videos
+      tags:
+        - Videos
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: limit
+          in: query
+          description: Maximum number of videos to return
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 10
+        - name: cursor
+          in: query
+          description: Base64 encoded cursor for pagination
+          required: false
+          schema:
+            type: string
+      responses:
+        '200':
+          description: List of videos retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: string
+                          format: uuid
+                        file_name:
+                          type: string
+                        file_size:
+                          type: number
+                        mime_type:
+                          type: string
+                        uploaded_at:
+                          type: string
+                          format: date-time
+                        file_path:
+                          type: string
+                  pagination:
+                    type: object
+                    properties:
+                      next_cursor:
+                        type: string
+                        description: Base64 encoded cursor for next page
+                        nullable: true
+                      has_more:
+                        type: boolean
+                        description: Indicates if more videos are available
+        '401':
+          description: Unauthorized - Invalid or missing token
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Server error while fetching videos
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /uploads/{id}:
     delete:
       summary: Delete a video
       description: Delete a video and its associated file

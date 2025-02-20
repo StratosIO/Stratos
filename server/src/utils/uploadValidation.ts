@@ -15,15 +15,8 @@ interface ValidationResult {
   error?: string
 }
 
-export const videoValidation = {
-  validateVideo: (file: File): ValidationResult => {
-    // Check if file exists
-    if (!file) {
-      return {
-        isValid: false,
-        error: 'No file provided',
-      }
-    }
+export const uploadValidation = {
+  validate: (file: File): ValidationResult => {
 
     // Check file type
     // if (!SUPPORTED_VIDEO_FORMATS.includes(file.type)) {
