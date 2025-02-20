@@ -7,7 +7,7 @@ curl -X POST http://localhost:3000/api/auth/login \
 -H "Content-Type: application/json" \
 -d '{"email":"admin@example.com","password":"admin123"}'
 
-# uploading video
+# Uploading video
 curl http://localhost:3000/api/upload -F "video=@test.mp4"
 
 # Status

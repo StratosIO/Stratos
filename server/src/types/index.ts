@@ -13,3 +13,8 @@ declare module 'hono' {
     user: User
   }
 }
+
+export const UPLOAD_CONFIG = {
+  DIR: process.env.UPLOAD_DIR || './uploads',
+  PERMISSIONS: 0o755  // rwxr-xr-x
+}

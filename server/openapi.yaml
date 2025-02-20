@@ -64,112 +64,6 @@ components:
           type: string
           description: JWT token for authentication
 
-    VideoMetadata:
-      type: object
-      required:
-        - filename
-        - fileSize
-        - format
-      properties:
-        filename:
-          type: string
-          example: "video.mp4"
-        fileSize:
-          type: integer
-          description: File size in bytes
-          example: 15000000
-        format:
-          type: string
-          example: "mp4"
-        duration:
-          type: number
-          description: Duration in seconds
-          example: 180.5
-        language:
-          type: string
-          description: Source video language
-          example: "en"
-
-    ProcessingOptions:
-      type: object
-      required:
-        - outputFormat
-      properties:
-        outputFormat:
-          type: string
-          enum: [mp4, webm, hls]
-          example: "mp4"
-        quality:
-          type: string
-          enum: [high, medium, low]
-          default: "high"
-        resolution:
-          type: string
-          enum: [original, 1080p, 720p, 480p]
-          default: "original"
-        ai:
-          type: object
-          properties:
-            transcription:
-              type: boolean
-              default: false
-            translation:
-              type: object
-              properties:
-                enabled:
-                  type: boolean
-                  default: false
-                targetLanguage:
-                  type: string
-                  example: "es"
-
-    JobCreationResponse:
-      type: object
-      properties:
-        jobId:
-          type: string
-          example: "job_123abc"
-        status:
-          type: string
-          enum: [pending, processing, completed, failed]
-          example: "pending"
-        estimatedDuration:
-          type: number
-          description: Estimated processing time in seconds
-
-    JobStatus:
-      type: object
-      properties:
-        jobId:
-          type: string
-          example: "job_123abc"
-        status:
-          type: string
-          enum: [pending, processing, completed, failed]
-          example: "processing"
-        progress:
-          type: number
-          minimum: 0
-          maximum: 100
-          example: 45.5
-        result:
-          type: object
-          properties:
-            downloadUrl:
-              type: string
-              description: URL to download the processed video
-              example: "/api/v1/downloads/job_123abc/video.mp4"
-            expiresAt:
-              type: string
-              format: date-time
-              description: When the processed file will be deleted
-            transcriptionUrl:
-              type: string
-              description: URL to download transcription file (if requested)
-              example: "/api/v1/downloads/job_123abc/transcript.txt"
-        error:
-          $ref: '#/components/schemas/Error'
-
 paths:
   /auth/register:
     post:
@@ -244,96 +138,77 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error'
 
-  /jobs:
+  /videos:
     post:
-      summary: Create a new video processing job
+      summary: Upload a new video
+      description: Upload a video file for processing
       tags:
-        - Jobs
+        - Videos
       security:
         - BearerAuth: []
       requestBody:
         required: true
         content:
-          application/json:
+          multipart/form-data:
             schema:
               type: object
               required:
-                - videoMetadata
-                - processingOptions
+                - video
               properties:
-                videoMetadata:
-                  $ref: '#/components/schemas/VideoMetadata'
-                processingOptions:
-                  $ref: '#/components/schemas/ProcessingOptions'
+                video:
+                  type: string
+                  format: binary
+                  description: The video file to upload
       responses:
         '201':
-          description: Job created successfully
+          description: Video uploaded successfully
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/JobCreationResponse'
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                    properties:
+                      id:
+                        type: string
+                        format: uuid
+                        example: "123e4567-e89b-12d3-a456-426614174000"
+                      file_name:
+                        type: string
+                        example: "processed_video.mp4"
+                      file_path:
+                        type: string
+                        example: "/uploads/processed_video.mp4"
+                  fileInfo:
+                    type: object
+                    properties:
+                      name:
+                        type: string
+                        example: "example.mp4"
+                      type:
+                        type: string
+                        example: "video/mp4"
+                      size:
+                        type: number
+                        example: 1048576
         '400':
-          description: Invalid request
+          description: Invalid input - No file provided or invalid file type
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
-
-  /jobs/{jobId}/status:
-    get:
-      summary: Get job status
-      tags:
-        - Jobs
-      security:
-        - BearerAuth: []
-      parameters:
-        - name: jobId
-          in: path
-          required: true
-          schema:
-            type: string
-      responses:
-        '200':
-          description: Job status retrieved successfully
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/JobStatus'
-        '404':
-          description: Job not found
+        '401':
+          description: Unauthorized - Invalid or missing token
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
-
-  /downloads/{jobId}/{filename}:
-    get:
-      summary: Download processed file
-      tags:
-        - Downloads
-      security:
-        - BearerAuth: []
-      parameters:
-        - name: jobId
-          in: path
-          required: true
-          schema:
-            type: string
-        - name: filename
-          in: path
-          required: true
-          schema:
-            type: string
-      responses:
-        '200':
-          description: File download
-          content:
-            application/octet-stream:
-              schema:
-                type: string
-                format: binary
-        '404':
-          description: File not found
+        '500':
+          description: Server error during upload
           content:
             application/json:
               schema:

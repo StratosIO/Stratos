@@ -1,18 +1,34 @@
 import sql from '../config/database.js'
-import { mkdir } from 'fs/promises'
+import { mkdir, chmod } from 'fs/promises'
+import { UPLOAD_CONFIG } from '../types/index.js'
+import path from 'path'
+
 
 export const videoService = {
+  ensureUploadDirectory: async () => {
+    try {
+      await mkdir(UPLOAD_CONFIG.DIR, { 
+        recursive: true,
+        mode: UPLOAD_CONFIG.PERMISSIONS 
+      })
+      
+      // Double-check permissions in case directory already existed
+      await chmod(UPLOAD_CONFIG.DIR, UPLOAD_CONFIG.PERMISSIONS)
+      
+    } catch (error) {
+      throw new Error('Failed to initialize upload directory')
+    }
+  },
   uploadVideo: async (file: File) => {
     try {
       if (!file) {
         throw new Error('No file provided')
       }
 
-      const UPLOAD_DIR = './uploads'
-      await mkdir(UPLOAD_DIR, { recursive: true })
-
+      await videoService.ensureUploadDirectory()
+      
       const fileName = `${crypto.randomUUID()}_${file.name}`
-      const filePath = `${UPLOAD_DIR}/${fileName}`
+      const filePath = path.join(UPLOAD_CONFIG.DIR, fileName)
 
       // Process file in chunks via stream
       const stream = file.stream()
