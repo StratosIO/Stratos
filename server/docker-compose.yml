@@ -21,14 +21,31 @@ services:
     build:
       context: . 
       dockerfile: Dockerfile
+    container_name: stratos-backend
     ports:
       - "3000:3000"
     depends_on:
       db:
         condition: service_healthy
+      ai_service:
+        condition: service_started
+    environment:
+      - AI_SERVICE_URL=http://ai_service:5001
     volumes:
       - ./logs:/app/logs 
       - ./uploads:/app/uploads
+
+  ai_service:
+    build:
+      context: ../ai_service
+      dockerfile: Dockerfile
+    container_name: stratos-ai-service
+    ports:
+      - "5001:5001"
+    volumes:
+      - ../ai_service/uploads:/app/ai/uploads
+      - ../ai_service/models:/app/ai/models
+    restart: always
 
 volumes:
   postgres_data:
