@@ -2,7 +2,7 @@ import type { Context } from 'hono'
 import { uploadService } from '../services/uploadService.js'
 import { uploadValidation } from '../utils/uploadValidation.js'
 import log from '../config/logger.js'
-import type { ListQueryParams}  from '../types/index.js'
+import type { ListQueryParams } from '../types/index.js'
 import { DEFAULT_PAGE_SIZE, MAX_PAGE_SIZE } from '../types/index.js'
 
 export const uploadsController = {
@@ -69,16 +69,13 @@ export const uploadsController = {
       return c.json({ error: 'Failed to delete video' }, 500)
     }
   },
-    list: async (c: Context) => {
+  list: async (c: Context) => {
     try {
       const { limit, cursor } = c.req.query()
-      
+
       // Parse and validate limit
       const parseLimit = parseInt(limit || String(DEFAULT_PAGE_SIZE))
-      const validLimit = Math.min(
-        Math.max(1, parseLimit), 
-        MAX_PAGE_SIZE
-      )
+      const validLimit = Math.min(Math.max(1, parseLimit), MAX_PAGE_SIZE)
 
       // Parse cursor if provided
       let cursorData
@@ -92,7 +89,7 @@ export const uploadsController = {
 
       const result = await uploadService.listUploads({
         limit: validLimit,
-        cursor: cursorData
+        cursor: cursorData,
       })
 
       return c.json({
@@ -100,14 +97,12 @@ export const uploadsController = {
         data: result.videos,
         pagination: {
           next_cursor: result.nextCursor,
-          has_more: result.hasMore
-        }
+          has_more: result.hasMore,
+        },
       })
-
     } catch (error) {
       log.error('Failed to list videos', { error: String(error) })
       return c.json({ error: 'Failed to fetch videos' }, 500)
     }
-  }
+  },
 }
-

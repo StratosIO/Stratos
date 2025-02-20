@@ -143,7 +143,7 @@ paths:
       summary: Upload a new video
       description: Upload a video file for processing
       tags:
-        - Videos
+        - Uploads
       security:
         - BearerAuth: []
       requestBody:
@@ -214,16 +214,16 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error'
     get:
-      summary: List videos
-      description: Get a paginated list of uploaded videos
+      summary: List uploads
+      description: Get a paginated list of uploaded files
       tags:
-        - Videos
+        - Uploads
       security:
         - BearerAuth: []
       parameters:
         - name: limit
           in: query
-          description: Maximum number of videos to return
+          description: Maximum number of uploads to return
           required: false
           schema:
             type: integer
@@ -238,7 +238,7 @@ paths:
             type: string
       responses:
         '200':
-          description: List of videos retrieved successfully
+          description: List of uploads retrieved successfully
           content:
             application/json:
               schema:
@@ -275,7 +275,7 @@ paths:
                         nullable: true
                       has_more:
                         type: boolean
-                        description: Indicates if more videos are available
+                        description: Indicates if more uploads are available
         '401':
           description: Unauthorized - Invalid or missing token
           content:
@@ -283,7 +283,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error'
         '500':
-          description: Server error while fetching videos
+          description: Server error while fetching uploads
           content:
             application/json:
               schema:
@@ -293,7 +293,7 @@ paths:
       summary: Delete a video
       description: Delete a video and its associated file
       tags:
-        - Videos
+        - Uploads
       security:
         - BearerAuth: []
       parameters:

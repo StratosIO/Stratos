@@ -19,7 +19,7 @@ export const UPLOAD_CONFIG = {
 }
 
 // types for listing videos
- 
+
 export const DEFAULT_PAGE_SIZE = 20
 export const MAX_PAGE_SIZE = 50
 

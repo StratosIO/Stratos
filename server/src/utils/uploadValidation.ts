@@ -17,7 +17,6 @@ interface ValidationResult {
 
 export const uploadValidation = {
   validate: (file: File): ValidationResult => {
-
     // Check file type
     // if (!SUPPORTED_VIDEO_FORMATS.includes(file.type)) {
     //   return {

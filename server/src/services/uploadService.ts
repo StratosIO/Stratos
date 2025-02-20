@@ -1,7 +1,7 @@
 import sql from '../config/database.js'
 import { mkdir, chmod, unlink } from 'fs/promises'
 import { UPLOAD_CONFIG } from '../types/index.js'
-import type { ListOptions,ListResult } from '../types/index.js'
+import type { ListOptions, ListResult } from '../types/index.js'
 import path from 'path'
 
 export const uploadService = {
@@ -79,7 +79,7 @@ export const uploadService = {
     try {
       await unlink(video[0].file_path)
     } catch (error) {
-      throw(error)
+      throw error
     }
 
     // Then remove from database
@@ -88,7 +88,7 @@ export const uploadService = {
       WHERE id = ${id}::uuid
     `
   },
- listUploads: async (options: ListOptions): Promise<ListResult> => {
+  listUploads: async (options: ListOptions): Promise<ListResult> => {
     const { limit, cursor } = options
 
     // Build the base query
@@ -108,7 +108,7 @@ export const uploadService = {
       baseQuery = sql`${baseQuery} 
         WHERE (uploaded_at, id) < (${cursor.timestamp}, ${cursor.id})`
     }
-    
+
     // Add ordering and limit
     baseQuery = sql`${baseQuery} 
       ORDER BY uploaded_at DESC, id DESC 
@@ -126,7 +126,7 @@ export const uploadService = {
       const lastItem = items[items.length - 1]
       const cursorData = {
         timestamp: lastItem.uploaded_at.toISOString(),
-        id: lastItem.id
+        id: lastItem.id,
       }
       nextCursor = Buffer.from(JSON.stringify(cursorData)).toString('base64')
     }
@@ -134,7 +134,7 @@ export const uploadService = {
     return {
       videos: items,
       nextCursor,
-      hasMore
+      hasMore,
     }
-  }
+  },
 }
