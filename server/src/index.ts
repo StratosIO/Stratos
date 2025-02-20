@@ -1,14 +1,12 @@
 import { Hono } from 'hono'
-import { streamSSE } from 'hono/streaming'
 import { cors } from 'hono/cors'
-import dotenv from 'dotenv'
-import sql from './config/database.js'
 import { authMiddleware, requireRole } from './middleware/auth.js'
 import { createAdmin } from './scripts/create-admin.js'
 import auth from './routes/auth.js'
 import dev from './routes/dev.js'
 import log from './config/logger.js'
 import videos from './routes/video.js'
+import status from './routes/status.js'
 
 const app = new Hono()
 
@@ -19,15 +17,7 @@ const api = new Hono()
 //Routes
 api.route('/auth', auth)
 api.route('/upload', videos)
-
-api.get('/status', async (c) => {
-  return streamSSE(c, async (stream) => {
-    while (true) {
-      await stream.writeSSE({ data: String(process.uptime()) })
-      await stream.sleep(1000)
-    }
-  })
-})
+api.route('/status', status)
 
 app.route('/api', api)
 
