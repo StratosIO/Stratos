@@ -7,7 +7,7 @@ import { authMiddleware, requireRole } from './middleware/auth.js'
 import { createAdmin } from './scripts/create-admin.js'
 import auth from './routes/auth.js'
 import dev from './routes/dev.js'
-import ai from './routes/ai.js'
+import whisper from './routes/whisper.js'
 import log from './config/logger.js'
 
 const app = new Hono()
@@ -17,7 +17,7 @@ app.use('/*', cors())
 
 //Routes
 app.route('/auth', auth)
-app.route('/ai', ai)
+app.route('/whisper', whisper)
 
 //this route is only defined in dev env. not part of the actual application
 if (process.env.NODE_ENV === 'development') {
