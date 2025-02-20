@@ -1,0 +1,46 @@
+# Ignore Python cache files
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Ignore log files
+logs/
+*.log
+*.out
+*.err
+
+# Ignore virtual environments
+venv/
+.env/
+*.venv
+
+# Ignore Docker-related files If needed
+# *.dockerignore
+# docker-compose.override.yml
+
+# Ignore uploaded audio files
+uploads/
+*.wav
+*.mp3
+*.ogg
+
+# Ignore Whisper models (can be huge)
+models/
+
+# Ignore compiled Whisper binaries
+whisper.cpp/build/
+whisper.cpp/bin/
+whisper.cpp/*.o
+whisper.cpp/*.so
+whisper.cpp/*.dylib
+whisper.cpp/*.exe
+
+# Ignore temporary files
+*.tmp
+*.swp
+*.swo
+.DS_Store
+
+# Ignore Jupyter Notebooks (if used for AI experimentation)
+*.ipynb_checkpoints/
