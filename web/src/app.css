@@ -1,3 +1,53 @@
 @import 'tailwindcss/base';
 @import 'tailwindcss/components';
 @import 'tailwindcss/utilities';
+
+.scrollbar-hidden::-webkit-scrollbar {
+  display: none;
+  scrollbar-width: none;
+}
+
+*::-webkit-scrollbar {
+  width: 8px;
+}
+
+*::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 16px;
+}
+
+*::-webkit-scrollbar-thumb {
+  background: rgba(85, 86, 87, 0.408);
+  border-radius: 16px;
+}
+
+*::-webkit-scrollbar-thumb:hover {
+  background: #4250afad;
+  border-radius: 16px;
+}
+
+:root {
+  /* light */
+  --custom-primary: 66 80 175;
+  --custom-light: 255 255 255;
+  --custom-dark: 58 58 58;
+  --custom-pale: 246 246 244;
+  --custom-success: 34 197 94;
+  --custom-danger: 180 0 0;
+  --custom-warning: 255 170 0;
+  --custom-info: 14 165 233;
+  --custom-default-border: 209 213 219;
+}
+
+.dark {
+  /* dark */
+  --custom-primary: 172 203 250;
+  --custom-light: 0 0 0;
+  --custom-dark: 229 231 235;
+  --custom-pale: 33 33 33;
+  --custom-success: 56 142 60;
+  --custom-danger: 239 68 68;
+  --custom-warning: 255 170 0;
+  --custom-info: 14 165 233;
+  --custom-default-border: 55 65 81;
+}
