@@ -21,9 +21,9 @@
 
 <h2 class="mb-4 text-xl font-bold md:text-2xl">File Details</h2>
 {#if $file}
-  <div class="flex items-center rounded-lg border-2 bg-light p-4">
+  <div class="flex items-center rounded-lg border-2 border-mild bg-light p-4">
     <div
-      class="mr-6 hidden h-28 w-36 shrink-0 items-center justify-center rounded md:flex"
+      class="mr-6 hidden h-28 w-36 shrink-0 items-center justify-center rounded-sm md:flex"
       style={$file.thumb
         ? `background-image: url(${$file.thumb}); background-size: cover; background-position: center;`
         : 'background-color: #f3f4f6'}

@@ -25,7 +25,7 @@
     <input
       type="text"
       bind:value={localEndpoint}
-      class="w-full rounded-full border px-4 py-2 focus:outline-none focus:ring-2 focus:ring-primary/50"
+      class="w-full rounded-full bg-pale px-4 py-2 focus:outline-hidden focus:ring-2 focus:ring-primary/50"
     />
     <div class="mt-4 flex justify-end space-x-2">
       <button

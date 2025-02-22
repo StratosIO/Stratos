@@ -82,7 +82,7 @@
 <button
   type="button"
   on:click={() => fileInput.click()}
-  class="flex w-full cursor-pointer flex-col items-center justify-center rounded-lg border-2 p-6 transition-colors duration-300 {dropActive
+  class="flex w-full cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-mild p-6 transition-colors duration-300 {dropActive
     ? 'border-primary/50 bg-primary/20'
     : 'bg-transparent'}"
 >

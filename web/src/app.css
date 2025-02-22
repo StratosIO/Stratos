@@ -1,6 +1,41 @@
-@import 'tailwindcss/base';
-@import 'tailwindcss/components';
-@import 'tailwindcss/utilities';
+@import 'tailwindcss';
+
+@plugin '@tailwindcss/typography';
+@plugin '@tailwindcss/forms';
+@plugin '@tailwindcss/container-queries';
+
+@theme {
+  --font-sans: Overpass, sans-serif;
+  --font-mono: Overpass Mono, monospace;
+
+  --color-primary: rgb(var(--custom-primary));
+  --color-dark: rgb(var(--custom-dark));
+  --color-light: rgb(var(--custom-light));
+  --color-success: rgb(var(--custom-success));
+  --color-danger: rgb(var(--custom-danger));
+  --color-warning: rgb(var(--custom-warning));
+  --color-info: rgb(var(--custom-info));
+  --color-pale: rgb(var(--custom-pale));
+  --color-mild: rgb(var(--custom-mild));
+}
+
+/*
+  The default border color has changed to `currentColor` in Tailwind CSS v4,
+  so we've added these compatibility styles to make sure everything still
+  looks the same as it did with Tailwind CSS v3.
+
+  If we ever want to remove these styles, we need to add an explicit border
+  color utility to any element that depends on these defaults.
+
+@layer base {
+  *,
+  ::after,
+  ::before,
+  ::backdrop,
+  ::file-selector-button {
+    border-color: rgb(var(--custom-default-border));
+  }
+} */
 
 .scrollbar-hidden::-webkit-scrollbar {
   display: none;
@@ -36,7 +71,7 @@
   --custom-danger: 180 0 0;
   --custom-warning: 255 170 0;
   --custom-info: 14 165 233;
-  --custom-default-border: 229 231 235;
+  --custom-mild: 229 231 235;
 }
 
 .dark {
@@ -49,5 +84,5 @@
   --custom-danger: 239 68 68;
   --custom-warning: 255 170 0;
   --custom-info: 14 165 233;
-  --custom-default-border: 58 58 58;
+  --custom-mild: 58 58 58;
 }
