@@ -55,8 +55,8 @@
           </button>
           <button
             on:click={(e) => deleteFile(index, e)}
-            class="material-icons transition-colors text-dark/0 hover:text-danger group-hover:text-dark/50 absolute top-1/2
-                right-2 -translate-y-1/2"
+            class="material-icons text-dark/0 hover:text-danger group-hover:text-dark/50 absolute top-1/2 right-2
+                -translate-y-1/2 transition-colors"
           >
             delete
           </button>

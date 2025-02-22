@@ -18,7 +18,7 @@ export const UPLOAD_CONFIG = {
   PERMISSIONS: 0o755, // rwxr-xr-x
 }
 
-// types for listing videos
+// types for listing files
 
 export const DEFAULT_PAGE_SIZE = 20
 export const MAX_PAGE_SIZE = 50
@@ -36,7 +36,7 @@ export interface ListOptions {
 }
 
 export interface ListResult {
-  videos: any[]
+  files: any[]
   nextCursor: string | null
   hasMore: boolean
 }

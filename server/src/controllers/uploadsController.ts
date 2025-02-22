@@ -1,6 +1,7 @@
 import type { Context } from 'hono'
 import { uploadService } from '../services/uploadService.js'
 import { uploadValidation } from '../utils/uploadValidation.js'
+import { validate as ValidUUID } from 'uuid'
 import log from '../config/logger.js'
 import type { ListQueryParams } from '../types/index.js'
 import { DEFAULT_PAGE_SIZE, MAX_PAGE_SIZE } from '../types/index.js'
@@ -10,13 +11,19 @@ export const uploadsController = {
     try {
       const body = await c.req.parseBody()
       const file = body.file
+      const id = body.id as string
 
       if (!file || !(file instanceof File)) {
         log.warn('Upload attempted with no file')
         return c.json({ error: 'No file provided' }, 400)
       }
 
-      const validation = uploadValidation.validate(file) // Validate the uploaded file
+      if (!ValidUUID(id)) {
+        log.warn('Upload attempted with invalid UUID')
+        return c.json({ error: 'Invalid UUID provided' }, 400)
+      }
+
+      const validation = uploadValidation.validate(file)
       if (!validation.isValid) {
         log.warn(`Invalid upload: ${validation.error}`)
         return c.json({ error: validation.error }, 400)
@@ -25,9 +32,10 @@ export const uploadsController = {
       log.info(`Starting file upload: ${file.name}`, {
         fileSize: file.size,
         mimeType: file.type,
+        id: id,
       })
 
-      const result = await uploadService.upload(file)
+      const result = await uploadService.upload(file, id)
       log.info(`Successfully uploaded: ${result.file_name}`)
 
       return c.json({
@@ -37,14 +45,15 @@ export const uploadsController = {
           name: file.name,
           type: file.type,
           size: file.size,
+          id: id,
         },
       })
     } catch (error) {
-      log.error('Upload failed', { error: String(error) })
+      log.error(`Upload failed: ${error}`, { error: String(error) })
       return c.json(
         {
           success: false,
-          error: 'Failed to upload video. Please try again.',
+          error: 'Failed to upload. Please try again.',
         },
         500,
       )
@@ -54,19 +63,18 @@ export const uploadsController = {
     try {
       const id = c.req.param('id')
 
-      // Simple UUID validation
-      if (!/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(id)) {
-        log.warn('Delete attempted with invalid ID', { id })
-        return c.json({ error: 'Invalid video ID' }, 400)
+      if (!ValidUUID(id)) {
+        log.warn('Delete attempted with invalid UUID', { id })
+        return c.json({ error: 'Invalid UUID' }, 400)
       }
 
       await uploadService.deleteUpload(id)
-      log.info('Video deleted successfully', { id })
+      log.info('File deleted successfully', { id })
 
       return c.json({ success: true })
     } catch (error) {
-      log.error('Failed to delete video', { error: String(error) })
-      return c.json({ error: 'Failed to delete video' }, 500)
+      log.error(`Failed to delete file: ${error}`, { error: String(error) })
+      return c.json({ error: 'Failed to delete file' }, 500)
     }
   },
   list: async (c: Context) => {
@@ -94,15 +102,15 @@ export const uploadsController = {
 
       return c.json({
         success: true,
-        data: result.videos,
+        data: result.files,
         pagination: {
           next_cursor: result.nextCursor,
           has_more: result.hasMore,
         },
       })
     } catch (error) {
-      log.error('Failed to list videos', { error: String(error) })
-      return c.json({ error: 'Failed to fetch videos' }, 500)
+      log.error('Failed to list files', { error: String(error) })
+      return c.json({ error: 'Failed to fetch files' }, 500)
     }
   },
 }

@@ -17,8 +17,8 @@
     "dotenv": "^16.4.7",
     "hono": "^4.7.2",
     "jsonwebtoken": "^9.0.2",
-    "openai": "^4.85.3",
     "postgres": "^3.4.5",
+    "uuid": "^11.1.0",
     "winston": "^3.17.0"
   },
   "devDependencies": {

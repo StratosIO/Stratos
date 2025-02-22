@@ -30,7 +30,7 @@ if (process.env.NODE_ENV === 'development') {
 }
 
 app.get('/', (c) => {
-  return c.text('Stratos Api')
+  return c.text('Stratos API')
 })
 
 createAdmin() // adds default admin user to db if doesn't exist

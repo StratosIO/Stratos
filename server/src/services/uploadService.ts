@@ -1,5 +1,6 @@
 import sql from '../config/database.js'
 import { mkdir, chmod, unlink } from 'fs/promises'
+import { validate as ValidUUID } from 'uuid'
 import { UPLOAD_CONFIG } from '../types/index.js'
 import type { ListOptions, ListResult } from '../types/index.js'
 import path from 'path'
@@ -18,20 +19,15 @@ export const uploadService = {
       throw new Error('Failed to initialize upload directory')
     }
   },
-  upload: async (file: File) => {
+  upload: async (file: File, id: string) => {
     try {
-      if (!file) {
-        throw new Error('No file provided')
-      }
-
       await uploadService.ensureUploadDirectory()
 
-      const fileName = `${crypto.randomUUID()}_${file.name}`
-      const filePath = path.join(UPLOAD_CONFIG.DIR, fileName)
+      const fileName = file.name
+      const filePath = path.join(UPLOAD_CONFIG.DIR, id)
 
-      // Process file in chunks via stream
       const stream = file.stream()
-      const chunks = []
+      const chunks: Uint8Array[] = []
 
       for await (const chunk of stream) {
         chunks.push(chunk)
@@ -40,12 +36,14 @@ export const uploadService = {
       await Bun.write(filePath, Buffer.concat(chunks))
 
       const result = await sql`
-        INSERT INTO videos (
+        INSERT INTO files (
+          id,
           file_name,
           file_path,
           file_size,
           mime_type
         ) VALUES (
+          ${id},
           ${fileName},
           ${filePath},
           ${file.size},
@@ -59,32 +57,31 @@ export const uploadService = {
     }
   },
   deleteUpload: async (id: string) => {
-    // Validate UUID format
-    if (!/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(id)) {
-      throw new Error('Invalid UUID format')
+    if (!ValidUUID(id)) {
+      throw new Error('Invalid UUID')
     }
 
     // First get the file path from database
-    const video = await sql`
+    const [{ file_path: filePath } = {}] = await sql`
       SELECT file_path 
-      FROM videos 
+      FROM files 
       WHERE id = ${id}::uuid
     `
 
-    if (!video || video.length === 0) {
-      throw new Error('Video not found')
+    if (!filePath) {
+      throw new Error('File not found')
     }
 
     // Delete the file first
     try {
-      await unlink(video[0].file_path)
+      await unlink(filePath)
     } catch (error) {
       throw error
     }
 
     // Then remove from database
     await sql`
-      DELETE FROM videos 
+      DELETE FROM files 
       WHERE id = ${id}::uuid
     `
   },
@@ -100,7 +97,7 @@ export const uploadService = {
         mime_type,
         uploaded_at,
         file_path
-      FROM videos
+      FROM files
     `
 
     // Add cursor condition if it exists
@@ -114,11 +111,11 @@ export const uploadService = {
       ORDER BY uploaded_at DESC, id DESC 
       LIMIT ${limit + 1}`
 
-    const videos = await baseQuery
+    const files = await baseQuery
 
     // Check if we have more items
-    const hasMore = videos.length > limit
-    const items = hasMore ? videos.slice(0, -1) : videos
+    const hasMore = files.length > limit
+    const items = hasMore ? files.slice(0, -1) : files
 
     // Generate next cursor if we have more items
     let nextCursor = null
@@ -132,7 +129,7 @@ export const uploadService = {
     }
 
     return {
-      videos: items,
+      files: items,
       nextCursor,
       hasMore,
     }

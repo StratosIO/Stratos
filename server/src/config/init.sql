@@ -8,7 +8,7 @@ CREATE TABLE users (
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE TABLE videos ( 
+CREATE TABLE files ( 
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   file_name VARCHAR(255) NOT NULL,
   file_path VARCHAR(255) NOT NULL,
@@ -17,4 +17,4 @@ CREATE TABLE videos (
   uploaded_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
---neeed to add a users foreign key to the videos table 
+--neeed to add a users foreign key to the files table 

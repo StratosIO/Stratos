@@ -140,8 +140,8 @@ paths:
 
   /uploads:
     post:
-      summary: Upload a new video
-      description: Upload a video file for processing
+      summary: Upload a new file
+      description: Upload a file for processing
       tags:
         - Uploads
       security:
@@ -153,15 +153,20 @@ paths:
             schema:
               type: object
               required:
-                - video
+                - file
+                - uuid
               properties:
-                video:
+                file:
                   type: string
                   format: binary
-                  description: The video file to upload
+                  description: The file to upload
+                id:
+                  type: string
+                  format: uuid
+                  description: Unique identifier for the upload
       responses:
         '201':
-          description: Video uploaded successfully
+          description: File uploaded successfully
           content:
             application/json:
               schema:
@@ -290,8 +295,8 @@ paths:
                 $ref: '#/components/schemas/Error'
   /uploads/{id}:
     delete:
-      summary: Delete a video
-      description: Delete a video and its associated file
+      summary: Delete a file
+      description: Delete a file uploaded
       tags:
         - Uploads
       security:
@@ -300,13 +305,13 @@ paths:
         - name: id
           in: path
           required: true
-          description: UUID of the video to delete
+          description: UUID of the file to delete
           schema:
             type: string
             format: uuid
       responses:
         '200':
-          description: Video deleted successfully
+          description: File deleted successfully
           content:
             application/json:
               schema:
@@ -322,7 +327,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error'
         '404':
-          description: Video not found
+          description: File not found
           content:
             application/json:
               schema:
