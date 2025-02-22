@@ -43,7 +43,7 @@
           >
             <div class="flex items-center">
               <div
-                class="mr-3 flex h-9 w-12 shrink-0 justify-center rounded"
+                class="mr-3 flex h-9 w-12 shrink-0 justify-center rounded items-center"
                 style={file.thumb
                   ? `background-image: url(${file.thumb}); background-size: cover; background-position: center;`
                   : 'background-color: #f3f4f6'}

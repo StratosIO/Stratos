@@ -29,7 +29,7 @@
       </div>
       <button
         on:click={submitCommand}
-        class="shrink-0 rounded-lg bg-pale px-4 py-2 text-dark transition-colors hover:bg-dark hover:text-light"
+        class="shrink-0 rounded-lg bg-pale px-4 py-2 transition-colors hover:bg-dark hover:text-light"
       >
         Submit
       </button>

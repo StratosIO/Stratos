@@ -9,7 +9,7 @@
   import { showConfigModal } from '$lib/stores'
 </script>
 
-<div class="flex h-screen select-none flex-col md:flex-row">
+<div class="flex h-screen select-none flex-col md:flex-row text-dark">
   <aside class="hidden flex-col md:flex md:w-1/4">
     <div class="flex-1 overflow-y-auto overflow-y-scroll p-6">
       <ServerStatus />
@@ -28,8 +28,8 @@
     <div class="px-6 py-4"><FileDetail /></div>
     <div class="mt-auto"><CommandPanel /></div>
   </div>
-</div>
 
-{#if $showConfigModal}
-  <ConfigModal />
-{/if}
+  {#if $showConfigModal}
+    <ConfigModal />
+  {/if}
+</div>
