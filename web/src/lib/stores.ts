@@ -1,5 +1,5 @@
 // lib/stores.ts
-import { browser } from '$app/environment';
+import { browser } from '$app/environment'
 import { writable } from 'svelte/store'
 
 export const files = writable<
@@ -20,7 +20,5 @@ export const serverStatus = writable<{
   countdown: 10,
   counting: false,
 })
-export const apiEndpoint = writable<string>(
-  browser ? window.location.origin + '/api' : ''
-);
+export const apiEndpoint = writable<string>(browser ? window.location.origin + '/api' : '')
 export const showConfigModal = writable<boolean>(false)

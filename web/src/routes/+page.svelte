@@ -9,7 +9,7 @@
   import { showConfigModal } from '$lib/stores'
 </script>
 
-<div class="flex h-screen select-none flex-col md:flex-row text-dark">
+<div class="text-dark flex h-screen flex-col select-none md:flex-row">
   <aside class="hidden flex-col md:flex md:w-1/4">
     <div class="flex-1 overflow-y-auto overflow-y-scroll p-6">
       <ServerStatus />

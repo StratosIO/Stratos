@@ -76,7 +76,8 @@
 
     const mention = document.createElement('span')
     mention.contentEditable = 'false'
-    mention.className = 'select-text text-primary bg-primary/20 rounded-sm px-1 hover:bg-primary hover:text-light transition-colors'
+    mention.className =
+      'select-text text-primary bg-primary/20 rounded-sm px-1 hover:bg-primary hover:text-light transition-colors'
     mention.dataset.mentionId = file.id
 
     let displayName = file.file.name
@@ -143,7 +144,7 @@
     role="textbox"
     aria-multiline="true"
     tabindex="0"
-    class="w-full lightspace-pre-wrap rounded-lg bg-pale px-4 py-2"
+    class="lightspace-pre-wrap bg-pale w-full rounded-lg px-4 py-2"
     on:input={onInput}
     on:keydown={onKeyDown}
     on:blur={onBlur}
@@ -153,7 +154,7 @@
   {#if showSuggestions}
     <ul
       role="listbox"
-      class="absolute left-0 right-0 z-10 mt-2 max-h-48 overflow-y-auto rounded-lg border border-mild bg-light shadow-lg"
+      class="border-mild bg-light absolute right-0 left-0 z-10 mt-2 max-h-48 overflow-y-auto rounded-lg border shadow-lg"
     >
       {#each filteredFiles as file, index (file.id)}
         <li

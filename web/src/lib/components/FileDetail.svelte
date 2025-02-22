@@ -21,7 +21,7 @@
 
 <h2 class="mb-4 text-xl font-bold md:text-2xl">File Details</h2>
 {#if $file}
-  <div class="flex items-center rounded-lg border-2 border-mild bg-light p-4">
+  <div class="border-mild bg-light flex items-center rounded-lg border-2 p-4">
     <div
       class="mr-6 hidden h-28 w-36 shrink-0 items-center justify-center rounded-sm md:flex"
       style={$file.thumb
@@ -32,8 +32,8 @@
         {$file.icon}
       </span>
     </div>
-    <div class="select-text truncate text-dark/70">
-      <p class="truncate text-lg font-medium text-dark">{$file.file.name}</p>
+    <div class="text-dark/70 truncate select-text">
+      <p class="text-dark truncate text-lg font-medium">{$file.file.name}</p>
       <p class="truncate text-sm">
         Size: {formatBytes($file.file.size)}
       </p>

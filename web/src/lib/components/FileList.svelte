@@ -35,7 +35,7 @@
         <li class="group relative mb-2 flex items-center">
           <button
             type="button"
-            class="min-w-0 flex-1 cursor-pointer rounded-lg p-2 transition-colors duration-200 group-hover:bg-pale {$fileSelected ===
+            class="group-hover:bg-pale min-w-0 flex-1 cursor-pointer rounded-lg p-2 transition-colors duration-200 {$fileSelected ===
             index
               ? 'bg-pale'
               : ''}"
@@ -43,20 +43,20 @@
           >
             <div class="flex items-center">
               <div
-                class="mr-3 flex h-9 w-12 shrink-0 justify-center rounded-sm items-center"
+                class="mr-3 flex h-9 w-12 shrink-0 items-center justify-center rounded-sm"
                 style={file.thumb
                   ? `background-image: url(${file.thumb}); background-size: cover; background-position: center;`
                   : 'background-color: #f3f4f6'}
               >
-                <span class="material-icons text-3xl text-dark/50">{file.icon}</span>
+                <span class="material-icons text-dark/50 text-3xl">{file.icon}</span>
               </div>
-              <span class="truncate text-dark">{file.file.name}</span>
+              <span class="text-dark truncate">{file.file.name}</span>
             </div>
           </button>
           <button
             on:click={(e) => deleteFile(index, e)}
-            class="material-icons transition-color absolute right-2 top-1/2 -translate-y-1/2 text-dark/50
-                 opacity-0 duration-200 hover:text-danger group-hover:opacity-100"
+            class="material-icons transition-colors text-dark/0 hover:text-danger group-hover:text-dark/50 absolute top-1/2
+                right-2 -translate-y-1/2"
           >
             delete
           </button>

@@ -22,35 +22,35 @@
 
 <div class="p-6">
   <div class="mb-4">
-    <label for="ffmpeg" class="mb-2 block font-medium text-dark">Command:</label>
+    <label for="ffmpeg" class="text-dark mb-2 block font-medium">Command:</label>
     <div class="flex w-full items-center gap-2">
       <div class="flex-1">
         <CommandInput />
       </div>
       <button
         on:click={submitCommand}
-        class="shrink-0 rounded-lg bg-pale px-4 py-2 transition-colors hover:bg-dark hover:text-light"
+        class="bg-pale hover:bg-dark hover:text-light shrink-0 rounded-lg px-4 py-2 transition-colors"
       >
         Submit
       </button>
     </div>
   </div>
   <div class="mb-4">
-    <p class="mb-2 block font-medium text-dark">Progress:</p>
+    <p class="text-dark mb-2 block font-medium">Progress:</p>
     <div
-      class="h-4 w-full rounded-full bg-pale"
+      class="bg-pale h-4 w-full rounded-full"
       role="progressbar"
       aria-valuenow={$progress}
       aria-valuemin="0"
       aria-valuemax="100"
     >
-      <div class="h-4 rounded-full bg-primary" style="width: {$progress}%"></div>
+      <div class="bg-primary h-4 rounded-full" style="width: {$progress}%"></div>
     </div>
   </div>
   <div>
-    <p class="mb-2 block font-medium text-dark">Output:</p>
+    <p class="text-dark mb-2 block font-medium">Output:</p>
     <div
-      class="scrollbar-hidden w-full rounded-lg bg-pale p-4 font-mono text-sm text-dark"
+      class="scrollbar-hidden bg-pale text-dark w-full rounded-lg p-4 font-mono text-sm"
       style="height: 150px; overflow-y: auto;"
     >
       {$output}
