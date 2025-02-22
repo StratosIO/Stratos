@@ -5,9 +5,8 @@
   import { get } from 'svelte/store'
 
   async function submitCommand() {
-    console.log('Command Input:', get(command))
-    /*
-    const endpoint = `${get(apiEndpoint)}/task/submit`
+
+    const endpoint = `${get(apiEndpoint)}/submit`
     const response = await fetch(endpoint, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -16,7 +15,9 @@
 
     if (!response.ok) {
       console.error('Failed to submit command')
-    } */
+    } else {
+      console.log('Command Sent:', get(command))
+    }
   }
 </script>
 
