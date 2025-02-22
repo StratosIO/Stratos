@@ -1,7 +1,7 @@
 services:
-  db:
-    image: postgres:latest
-    container_name: stratos-db
+  database:
+    image: docker.io/postgres:latest
+    container_name: stratos-database
     healthcheck: #this causes server to take a little longer to load
       test: ["CMD-SHELL", "pg_isready -U user -d stratos"]
       interval: 3s
@@ -18,13 +18,15 @@ services:
       - ./src/config/init.sql:/docker-entrypoint-initdb.d/init.sql
 
   backend:
+    container_name: stratos-server
+    image: localhost/stratos:dev
     build:
       context: . 
       dockerfile: Dockerfile
     ports:
       - "3000:3000"
     depends_on:
-      db:
+      database:
         condition: service_healthy
     volumes:
       - ./logs:/app/logs 
