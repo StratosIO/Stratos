@@ -17,10 +17,10 @@
 </script>
 
 <div
-  transition:fade={{ duration: 200 }}
-  class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50"
+  transition:fade={{ duration: 150 }}
+  class="fixed inset-0 z-50 flex items-center justify-center bg-dark bg-opacity-50"
 >
-  <div transition:fly={{ y: 20, duration: 200 }} class="w-80 rounded-3xl bg-white p-6 shadow-lg">
+  <div transition:fly={{ y: 20, duration: 200 }} class="w-80 rounded-3xl bg-light p-6 shadow-lg">
     <h2 class="mb-4 text-xl font-bold">Set API Endpoint</h2>
     <input
       type="text"
@@ -30,13 +30,13 @@
     <div class="mt-4 flex justify-end space-x-2">
       <button
         on:click={closeModal}
-        class="rounded-full px-4 py-2 text-dark transition-colors hover:bg-gray-100"
+        class="rounded-full px-4 py-2 text-dark transition-colors hover:bg-pale"
       >
         Cancel
       </button>
       <button
         on:click={saveApiEndpoint}
-        class="rounded-full bg-primary px-6 py-2 text-white transition-colors hover:bg-primary/90"
+        class="rounded-full bg-primary px-6 py-2 text-light transition-colors hover:bg-primary/90"
       >
         Save
       </button>

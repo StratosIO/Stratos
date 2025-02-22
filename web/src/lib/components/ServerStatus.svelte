@@ -1,4 +1,3 @@
-<!-- lib/components/ServerStatus.svelte -->
 <script lang="ts">
   import { onMount, onDestroy } from 'svelte'
   import { serverStatus, apiEndpoint, showConfigModal } from '$lib/stores'
@@ -7,41 +6,49 @@
   let eventSource: EventSource | null = null
   let apiEndpointUnsubscribe: () => void
   let countdownAbortController: AbortController | null = null
+  let countdownInProgress = false
 
-  function updateServerStatus(
-    updates: Partial<{
-      online: boolean
-      counting: boolean
-      countdown: number
-      uptime: string
-    }>,
-  ) {
+  const updateServerStatus = (
+    updates: Partial<{ online: boolean; counting: boolean; countdown: number; uptime: string }>,
+  ) => {
     serverStatus.update((status) => ({ ...status, ...updates }))
   }
 
-  function resetConnection() {
+  const resetConnection = () => {
     eventSource?.close()
     countdownAbortController?.abort()
     updateServerStatus({ online: false, counting: false, countdown: 0 })
   }
 
-  function setupEventSource() {
+  const setupEventSource = () => {
     resetConnection()
     eventSource = new EventSource(`${get(apiEndpoint)}/status`)
-
     eventSource.onopen = () => updateServerStatus({ online: true, countdown: 10, counting: false })
-
     eventSource.onerror = () => {
       updateServerStatus({ online: false })
-      startCountdown()
+      if (!get(serverStatus).counting && !countdownInProgress) startCountdown()
     }
-
     eventSource.onmessage = (event) => {
       updateServerStatus({ uptime: Math.floor(parseFloat(event.data)).toString() })
     }
   }
 
-  async function startCountdown() {
+  const delay = (ms: number, signal?: AbortSignal) =>
+    new Promise<void>((resolve, reject) => {
+      const timer = setTimeout(resolve, ms)
+      signal?.addEventListener(
+        'abort',
+        () => {
+          clearTimeout(timer)
+          reject(new Error('aborted'))
+        },
+        { once: true },
+      )
+    })
+
+  const startCountdown = async () => {
+    if (countdownInProgress) return
+    countdownInProgress = true
     countdownAbortController?.abort()
     countdownAbortController = new AbortController()
     const { signal } = countdownAbortController
@@ -49,30 +56,22 @@
     updateServerStatus({ counting: true, countdown: 10 })
     let count = 10
 
-    while (!get(serverStatus).online && count > 0) {
-      await new Promise((resolve, reject) => {
-        const timer = setTimeout(resolve, 1000)
-        signal.addEventListener(
-          'abort',
-          () => {
-            clearTimeout(timer)
-            reject(new Error('aborted'))
-          },
-          { once: true },
-        )
-      })
-
-      if (signal.aborted) return
-      updateServerStatus({ countdown: --count })
+    try {
+      while (!get(serverStatus).online && count > 0) {
+        await delay(1000, signal)
+        updateServerStatus({ countdown: --count })
+      }
+    } catch {
+      return
+    } finally {
+      updateServerStatus({ counting: false })
+      countdownInProgress = false
     }
-
-    updateServerStatus({ counting: false })
     if (!get(serverStatus).online) setupEventSource()
   }
 
   onMount(() => {
-    setupEventSource()
-    apiEndpointUnsubscribe = apiEndpoint.subscribe(() => setupEventSource())
+    apiEndpointUnsubscribe = apiEndpoint.subscribe(setupEventSource)
   })
 
   onDestroy(() => {
@@ -80,15 +79,13 @@
     apiEndpointUnsubscribe?.()
   })
 
-  function openModal() {
-    showConfigModal.set(true)
-  }
+  const openModal = () => showConfigModal.set(true)
 </script>
 
 <button
   type="button"
   on:click={openModal}
-  class="mb-6 flex w-full items-center rounded-lg bg-gray-100 p-6"
+  class="mb-6 flex w-full items-center rounded-lg bg-pale p-6"
 >
   <span class="mr-3 h-2.5 w-2.5 rounded-full {$serverStatus.online ? 'bg-success' : 'bg-warning'}"
   ></span>

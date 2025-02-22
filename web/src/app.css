@@ -36,7 +36,7 @@
   --custom-danger: 180 0 0;
   --custom-warning: 255 170 0;
   --custom-info: 14 165 233;
-  --custom-default-border: 209 213 219;
+  --custom-default-border: 229 231 235;
 }
 
 .dark {
@@ -49,5 +49,5 @@
   --custom-danger: 239 68 68;
   --custom-warning: 255 170 0;
   --custom-info: 14 165 233;
-  --custom-default-border: 55 65 81;
+  --custom-default-border: 58 58 58;
 }

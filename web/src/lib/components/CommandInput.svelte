@@ -1,0 +1,185 @@
+<!-- lib/components/CommandInput.svelte -->
+<script lang="ts">
+  import { command, files } from '$lib/stores'
+
+  type FileItem = { id: string; file: File; thumb: string | null; icon: string }
+
+  let inputEl: HTMLDivElement
+  let showSuggestions = false
+  let suggestionQuery = ''
+  let activeSuggestionIndex = 0
+
+  $: filteredFiles = showSuggestions
+    ? $files
+        .filter((f: FileItem) => f.file.name.toLowerCase().includes(suggestionQuery.toLowerCase()))
+        .slice(0, 3)
+    : []
+
+  function updateCommand(): void {
+    let result = ''
+    inputEl.childNodes.forEach((node) => {
+      if (node.nodeType === Node.TEXT_NODE) {
+        result += node.textContent
+      } else {
+        const el = node as HTMLElement
+        result += el.dataset.mentionId || el.textContent
+      }
+    })
+    command.set(result)
+    if (!inputEl.innerText.trim()) {
+      inputEl.innerHTML = ''
+    }
+  }
+
+  function updateSuggestions(): void {
+    const sel = window.getSelection()
+    if (!sel || sel.rangeCount === 0) {
+      showSuggestions = false
+      suggestionQuery = ''
+      return
+    }
+    const range = sel.getRangeAt(0)
+    if (range.startContainer.parentElement?.classList.contains('mention')) {
+      showSuggestions = false
+      suggestionQuery = ''
+      return
+    }
+    const text = range.startContainer.textContent || ''
+    const offset = range.startOffset
+    const atIndex = text.lastIndexOf('@', offset)
+    if (atIndex !== -1) {
+      const candidate = text.slice(atIndex + 1, offset)
+      if (!/\s/.test(candidate)) {
+        suggestionQuery = candidate
+        showSuggestions = true
+        activeSuggestionIndex = 0
+        return
+      }
+    }
+    showSuggestions = false
+    suggestionQuery = ''
+  }
+
+  function insertMention(file: FileItem): void {
+    const sel = window.getSelection()
+    if (!sel || sel.rangeCount === 0) return
+    const range = sel.getRangeAt(0)
+    if (range.startContainer.nodeType !== Node.TEXT_NODE) return
+
+    const textNode = range.startContainer
+    const text = textNode.textContent || ''
+    const atIndex = text.lastIndexOf('@', range.startOffset)
+    if (atIndex === -1) return
+
+    const beforeText = text.substring(0, atIndex)
+    const afterText = text.substring(range.startOffset)
+
+    const mention = document.createElement('span')
+    mention.contentEditable = 'false'
+    mention.className = 'select-text text-primary bg-primary/20 rounded px-1 hover:bg-primary hover:text-light transition-colors'
+    mention.dataset.mentionId = file.id
+
+    let displayName = file.file.name
+    if (displayName.length > 30) {
+      displayName = displayName.slice(0, 27) + '...'
+    }
+    mention.textContent = `@${displayName}`
+    mention.textContent = `@${displayName}`
+
+    textNode.textContent = beforeText
+    const parent = textNode.parentNode
+    if (parent) {
+      parent.insertBefore(mention, textNode.nextSibling)
+      const spaceNode = document.createTextNode(' ')
+      parent.insertBefore(spaceNode, mention.nextSibling)
+      const afterTextNode = document.createTextNode(afterText)
+      parent.insertBefore(afterTextNode, spaceNode.nextSibling)
+    }
+
+    const newRange = document.createRange()
+    const nextNode = mention.nextSibling ? mention.nextSibling : mention
+    newRange.setStartAfter(nextNode)
+    newRange.collapse(true)
+    sel.removeAllRanges()
+    sel.addRange(newRange)
+
+    updateCommand()
+    showSuggestions = false
+    inputEl.focus()
+  }
+
+  function onInput(): void {
+    updateCommand()
+    updateSuggestions()
+  }
+
+  function onKeyDown(e: KeyboardEvent): void {
+    if (!showSuggestions || filteredFiles.length === 0) return
+    if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+      e.preventDefault()
+      activeSuggestionIndex =
+        (activeSuggestionIndex + (e.key === 'ArrowDown' ? 1 : -1) + filteredFiles.length) %
+        filteredFiles.length
+    } else if (e.key === 'Enter' || e.key === 'Tab') {
+      e.preventDefault()
+      insertMention(filteredFiles[activeSuggestionIndex])
+    } else if (e.key === 'Escape') {
+      showSuggestions = false
+    }
+  }
+
+  function onBlur(): void {
+    setTimeout(() => {
+      showSuggestions = false
+      updateCommand()
+    }, 150)
+  }
+</script>
+
+<div class="relative">
+  <div
+    contenteditable="plaintext-only"
+    bind:this={inputEl}
+    role="textbox"
+    aria-multiline="true"
+    tabindex="0"
+    class="w-full lightspace-pre-wrap rounded-lg bg-pale px-4 py-2 focus:outline-none focus:ring-2 focus:ring-primary/50"
+    on:input={onInput}
+    on:keydown={onKeyDown}
+    on:blur={onBlur}
+    data-placeholder="e.g., ffmpeg -i @input.mp4 -ss 00:00:01 -vframes 1 output.png"
+  ></div>
+
+  {#if showSuggestions}
+    <ul
+      role="listbox"
+      class="absolute left-0 right-0 z-10 mt-1 max-h-48 overflow-y-auto rounded-lg border bg-light shadow-lg"
+    >
+      {#each filteredFiles as file, index (file.id)}
+        <li
+          role="option"
+          tabindex="0"
+          aria-selected={index === activeSuggestionIndex}
+          class="cursor-pointer truncate px-4 py-2 {index === activeSuggestionIndex
+            ? 'bg-primary/10'
+            : ''}"
+          on:click={() => insertMention(file)}
+          on:focus={() => (activeSuggestionIndex = index)}
+          on:keydown={(e) => e.key === 'Enter' && insertMention(file)}
+        >
+          @{file.file.name}
+        </li>
+      {:else}
+        <li class="px-4 py-2 text-dark/70">No suggestions</li>
+      {/each}
+    </ul>
+  {/if}
+</div>
+
+<style>
+  [contenteditable]:empty:before {
+    content: attr(data-placeholder);
+    color: #a0a0a0;
+    pointer-events: none;
+  }
+</style>

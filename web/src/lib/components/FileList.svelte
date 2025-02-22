@@ -28,22 +28,22 @@
 <div>
   <h2 class="mb-4 text-xl font-bold md:text-2xl">File List</h2>
   {#if $files.length === 0}
-    <p class="text-gray-500">No files uploaded yet.</p>
+    <p class="text-dark/70">No files uploaded yet.</p>
   {:else}
     <ul>
       {#each $files as file, index (file.id)}
         <li class="group relative mb-2 flex items-center">
           <button
             type="button"
-            class="min-w-0 flex-1 cursor-pointer rounded-lg p-2 transition-colors duration-200 group-hover:bg-gray-100 {$fileSelected ===
+            class="min-w-0 flex-1 cursor-pointer rounded-lg p-2 transition-colors duration-200 group-hover:bg-pale {$fileSelected ===
             index
-              ? 'bg-gray-100'
+              ? 'bg-pale'
               : ''}"
             on:click={() => selectFile(index)}
           >
             <div class="flex items-center">
               <div
-                class="mr-3 flex h-9 w-12 flex-shrink-0 justify-center rounded"
+                class="mr-3 flex h-9 w-12 shrink-0 justify-center rounded"
                 style={file.thumb
                   ? `background-image: url(${file.thumb}); background-size: cover; background-position: center;`
                   : 'background-color: #f3f4f6'}
@@ -54,12 +54,12 @@
             </div>
           </button>
           <button
-          on:click={(e) => deleteFile(index, e)}
-          class="material-icons absolute right-2 top-1/2 text-dark/50 opacity-0 group-hover:opacity-100 
-                 transition-color duration-200 hover:text-danger -translate-y-1/2"
-        >
-          delete
-        </button>            
+            on:click={(e) => deleteFile(index, e)}
+            class="material-icons transition-color absolute right-2 top-1/2 -translate-y-1/2 text-dark/50
+                 opacity-0 duration-200 hover:text-danger group-hover:opacity-100"
+          >
+            delete
+          </button>
         </li>
       {/each}
     </ul>

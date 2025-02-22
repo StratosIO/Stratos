@@ -21,9 +21,9 @@
 
 <h2 class="mb-4 text-xl font-bold md:text-2xl">File Details</h2>
 {#if $file}
-  <div class="flex items-center rounded-lg border-2 bg-white p-4">
+  <div class="flex items-center rounded-lg border-2 bg-light p-4">
     <div
-      class="mr-6 hidden h-28 w-36 flex-shrink-0 items-center justify-center rounded md:flex"
+      class="mr-6 hidden h-28 w-36 shrink-0 items-center justify-center rounded md:flex"
       style={$file.thumb
         ? `background-image: url(${$file.thumb}); background-size: cover; background-position: center;`
         : 'background-color: #f3f4f6'}
@@ -32,8 +32,8 @@
         {$file.icon}
       </span>
     </div>
-    <div class="select-text truncate text-gray-500">
-      <p class="truncate text-lg font-medium text-black">{$file.file.name}</p>
+    <div class="select-text truncate text-dark/70">
+      <p class="truncate text-lg font-medium text-dark">{$file.file.name}</p>
       <p class="truncate text-sm">
         Size: {formatBytes($file.file.size)}
       </p>
@@ -51,5 +51,5 @@
     </div>
   </div>
 {:else}
-  <p class="text-gray-500">Please upload a file to view details.</p>
+  <p class="text-dark/70">Please upload a file to view details.</p>
 {/if}

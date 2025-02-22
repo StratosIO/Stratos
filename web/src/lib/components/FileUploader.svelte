@@ -87,7 +87,7 @@
     : 'bg-transparent'}"
 >
   <span class="material-icons mb-2 text-dark/50" style="font-size: 2rem;">attach_file</span>
-  <p class="text-center text-gray-600">Drag & drop files or click here</p>
+  <p class="text-center text-dark/70">Drag & drop files or click here</p>
   <input
     type="file"
     multiple
