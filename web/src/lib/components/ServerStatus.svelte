@@ -1,10 +1,10 @@
 <script lang="ts">
   import { onMount, onDestroy } from 'svelte'
-  import { serverStatus, apiEndpoint, showConfigModal } from '$lib/stores'
+  import { serverStatus, endpoint, showConfigModal } from '$lib/stores'
   import { get } from 'svelte/store'
 
   let eventSource: EventSource | null = null
-  let apiEndpointUnsubscribe: () => void
+  let endpointUnsubscribe: () => void
   let countdownAbortController: AbortController | null = null
   let countdownInProgress = false
 
@@ -22,7 +22,7 @@
 
   const setupEventSource = () => {
     resetConnection()
-    eventSource = new EventSource(`${get(apiEndpoint)}/status`)
+    eventSource = new EventSource(`${get(endpoint)}/status`)
     eventSource.onopen = () => updateServerStatus({ online: true, countdown: 10, counting: false })
     eventSource.onerror = () => {
       updateServerStatus({ online: false })
@@ -71,12 +71,12 @@
   }
 
   onMount(() => {
-    apiEndpointUnsubscribe = apiEndpoint.subscribe(setupEventSource)
+    endpointUnsubscribe = endpoint.subscribe(setupEventSource)
   })
 
   onDestroy(() => {
     resetConnection()
-    apiEndpointUnsubscribe?.()
+    endpointUnsubscribe?.()
   })
 
   const openModal = () => showConfigModal.set(true)

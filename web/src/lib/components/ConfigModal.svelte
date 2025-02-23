@@ -1,17 +1,17 @@
 <!-- lib/components/Modal.svelte -->
 <script lang="ts">
   import { fade, fly } from 'svelte/transition'
-  import { apiEndpoint, showConfigModal } from '$lib/stores'
+  import { endpoint, showConfigModal } from '$lib/stores'
   import { get } from 'svelte/store'
 
-  let localEndpoint: string = get(apiEndpoint)
+  let current: string = get(endpoint)
 
   function closeModal() {
     showConfigModal.set(false)
   }
 
   function saveApiEndpoint() {
-    apiEndpoint.set(localEndpoint.replace(/\/$/, ''))
+    endpoint.set(current.replace(/\/$/, ''))
     closeModal()
   }
 </script>
@@ -24,7 +24,7 @@
     <h2 class="mb-4 text-xl font-bold">Set API Endpoint</h2>
     <input
       type="text"
-      bind:value={localEndpoint}
+      bind:value={current}
       class="bg-pale focus:ring-primary/50 w-full rounded-full px-4 py-2 focus:ring-2 focus:outline-hidden"
     />
     <div class="mt-4 flex justify-end space-x-2">

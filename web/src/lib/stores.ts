@@ -20,5 +20,5 @@ export const serverStatus = writable<{
   countdown: 10,
   counting: false,
 })
-export const apiEndpoint = writable<string>(browser ? window.location.origin + '/api' : '')
+export const endpoint = writable<string>(browser ? window.location.origin + '/api' : '')
 export const showConfigModal = writable<boolean>(false)

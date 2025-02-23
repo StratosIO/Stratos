@@ -1,6 +1,7 @@
 <!-- lib/components/CommandInput.svelte -->
 <script lang="ts">
-  import { command, files } from '$lib/stores'
+  import { command, files, endpoint } from '$lib/stores'
+  import { get } from 'svelte/store'
 
   type FileItem = { id: string; file: File; thumb: string | null; icon: string }
 
@@ -85,7 +86,6 @@
       displayName = displayName.slice(0, 27) + '...'
     }
     mention.textContent = `@${displayName}`
-    mention.textContent = `@${displayName}`
 
     textNode.textContent = beforeText
     const parent = textNode.parentNode
@@ -135,6 +135,24 @@
       updateCommand()
     }, 150)
   }
+
+  async function sendCommand() {
+    const path = `${get(endpoint)}/submit`
+    const message = get(command).trim()
+    const response = await fetch(path, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ command: message }),
+    })
+
+    if (!response.ok) {
+      console.error('Command send failed:', message)
+    } else {
+      console.log('Command Sent:', message)
+      inputEl.innerHTML = ''
+      command.set('')
+    }
+  }
 </script>
 
 <div class="relative">
@@ -144,7 +162,7 @@
     role="textbox"
     aria-multiline="true"
     tabindex="0"
-    class="lightspace-pre-wrap bg-pale w-full rounded-lg px-4 py-2"
+    class="bg-pale w-full rounded-lg px-4 py-2 break-all"
     on:input={onInput}
     on:keydown={onKeyDown}
     on:blur={onBlur}
@@ -175,6 +193,15 @@
       {/each}
     </ul>
   {/if}
+
+  <button
+    type="button"
+    on:click={sendCommand}
+    aria-label="Send"
+    class="absolute right-2 bottom-2 flex"
+  >
+    <i class="material-icons text-dark/50 hover:text-dark text-lg transition-colors">send</i>
+  </button>
 </div>
 
 <style>
