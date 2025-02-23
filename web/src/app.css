@@ -37,6 +37,34 @@
   }
 } */
 
+@font-face {
+  font-family: 'Overpass';
+  src: url('$lib/assets/fonts/overpass-regular.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'Overpass Mono';
+  src: url('$lib/assets/fonts/overpass-mono-regular.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'Overpass';
+  src: url('$lib/assets/fonts/overpass-semibold.woff2') format('woff2');
+  font-weight: 500;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'Overpass';
+  src: url('$lib/assets/fonts/overpass-bold.woff2') format('woff2');
+  font-weight: 700;
+  font-style: normal;
+}
+
 .scrollbar-hidden::-webkit-scrollbar {
   display: none;
   scrollbar-width: none;
