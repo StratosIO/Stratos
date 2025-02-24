@@ -208,7 +208,7 @@
 <style>
   [contenteditable]:empty:before {
     content: attr(data-placeholder);
-    color: #a0a0a0;
-    pointer-events: none;
+    color: var(--custom-dark);
+    opacity: 0.5;
   }
 </style>
