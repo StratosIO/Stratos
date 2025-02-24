@@ -1,6 +1,6 @@
 <!-- lib/components/CommandInput.svelte -->
 <script lang="ts">
-  import { command, files, endpoint } from '$lib/stores'
+  import { command, files, endpoint, showConfigModal } from '$lib/stores'
   import { get } from 'svelte/store'
 
   type FileItem = { id: string; file: File; thumb: string | null; icon: string }
@@ -147,6 +147,7 @@
 
     if (!response.ok) {
       console.error('Command send failed:', message)
+      showConfigModal.set(true)
     } else {
       console.log('Command Sent:', message)
       inputEl.innerHTML = ''

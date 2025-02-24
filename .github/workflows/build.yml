@@ -43,7 +43,7 @@ jobs:
       uses: actions/upload-artifact@v4
       with:
         name: build-artifact-${{ matrix.directory }}
-        path: ${{ matrix.directory }}/build
+        path: ${{ matrix.directory }}
 
   format:
     runs-on: ubuntu-latest
