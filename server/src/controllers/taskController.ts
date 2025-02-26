@@ -6,23 +6,36 @@ import { validate as validateUUID } from 'uuid';
 export const taskController = {
   submitCommand: async (c: Context) => {
     try {
-      const { command } = await c.req.json();
+      const body = await c.req.json();
+      const {command, type = 'ffmpeg' } = body; //default type to ffmpeg if not provided options are ffmpeg and builtin
+
       
-      if (!command || typeof command !== 'string') {
-        return c.json({ error: 'Valid command is required' }, 400);
+      if (!command) {
+        return c.json({ error: 'Command is required' }, 400);
+      }
+
+      if(type !== 'ffmpeg' && type !== 'ffprobe'){
+        return c.json({ error: 'Invalid type' }, 400);
       }
       
+      //handle command type of built in later!
+      // For built-in commands, transform to the actual FFMPEG command
+      let processedCommand = command;
+      if (type === 'builtin') {
+        // deal with builtin options here TODO
+          return c.json({ error: `Unknown built-in command: ${command}` }, 400);
+      }
       // Validate command and extract file IDs
-      const validation = await taskService.validateCommand(command);
+      const validation = await taskService.validateCommand(processedCommand); //need to work on this and ensure we sanitze the command properly for now basic uuid validation
       
       if (!validation.isValid) {
         return c.json({ error: validation.error }, 400);
       }
       
       // Create task
-      const task = await taskService.createTask(command, validation.fileIds);
+      const task = await taskService.createTask(processedCommand, validation.fileIds);
       
-      // Start processing in background (don't await)
+      // Start processing in background 
       taskService.executeCommand(task.id).catch(err => {
         log.error(`Background task execution failed for ${task.id}:`, err);
       });
