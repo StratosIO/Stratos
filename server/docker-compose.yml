@@ -2,7 +2,7 @@ services:
   database:
     image: docker.io/postgres:latest
     container_name: stratos-database
-    healthcheck: #this causes server to take a little longer to load
+    healthcheck:
       test: ["CMD-SHELL", "pg_isready -U user -d stratos"]
       interval: 3s
       timeout: 3s
@@ -28,25 +28,11 @@ services:
     depends_on:
       database:
         condition: service_healthy
-      ai:
-        condition: service_started
     environment:
        - AI_URL=http://ai:5001
     volumes:
       - ./logs:/app/logs 
       - ./uploads:/app/uploads
-
-  ai:
-    container_name: stratos-ai
-    build:
-      context: ../ai
-      dockerfile: Dockerfile
-    ports:
-      - "5001:5001"
-    volumes:
-      - ../ai/uploads:/app/ai/uploads
-      - ../ai/models:/app/ai/models
-    restart: always
     
 volumes:
   postgres_data:

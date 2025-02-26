@@ -40,3 +40,19 @@ export interface ListResult {
   nextCursor: string | null
   hasMore: boolean
 }
+
+export interface Task {
+  id: string;
+  command: string;
+  status: 'pending' | 'processing' | 'completed' | 'failed';
+  created_at: Date;
+  updated_at: Date;
+  result_path?: string;
+  error?: string;
+}
+
+export interface CommandValidationResult {
+  isValid: boolean;
+  fileIds: string[];
+  error?: string;
+}

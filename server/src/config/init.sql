@@ -17,4 +17,20 @@ CREATE TABLE files (
   uploaded_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
+CREATE TABLE tasks (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  command TEXT NOT NULL,
+  status VARCHAR(20) DEFAULT 'pending',
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+  result_path TEXT,
+  error TEXT
+);
+
+CREATE TABLE task_files (
+  task_id UUID REFERENCES tasks(id) ON DELETE CASCADE,
+  file_id UUID REFERENCES files(id) ON DELETE CASCADE,
+  PRIMARY KEY (task_id, file_id)
+);
+
 --neeed to add a users foreign key to the files table 

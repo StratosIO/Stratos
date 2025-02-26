@@ -8,6 +8,7 @@ import ai from './routes/ai.js'
 import log from './config/logger.js'
 import uploads from './routes/uploads.js'
 import status from './routes/status.js'
+import tasks from './routes/tasks.js'
 
 const app = new Hono()
 
@@ -19,6 +20,7 @@ const api = new Hono()
 api.route('/auth', auth)
 api.route('/uploads', uploads)
 api.route('/status', status)
+api.route('/tasks', tasks)
 
 app.route('/api', api)
 app.route('/auth', auth)
