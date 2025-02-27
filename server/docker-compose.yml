@@ -6,7 +6,7 @@ services:
       test: ["CMD-SHELL", "pg_isready -U user -d stratos"]
       interval: 3s
       timeout: 3s
-      retries: 3
+      retries: 4
     environment:
       POSTGRES_USER: user
       POSTGRES_PASSWORD: pass 
@@ -28,8 +28,6 @@ services:
     depends_on:
       database:
         condition: service_healthy
-    environment:
-       - AI_URL=http://ai:5001
     volumes:
       - ./logs:/app/logs 
       - ./uploads:/app/uploads

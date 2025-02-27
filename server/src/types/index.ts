@@ -56,3 +56,28 @@ export interface CommandValidationResult {
   fileIds: string[];
   error?: string;
 }
+
+// types for parsing commands
+export interface ParsedCommand {
+  type: 'ffmpeg' | 'ffprobe' | 'builtin';
+  command: string;
+  input?: string;
+  options?: Record<string, string | number | boolean>;
+  outputName?: string;
+  error?: string;
+  transformedCommand?: string;
+}
+
+export interface CommandOption {
+  name: string;
+  description: string;
+  type: 'string' | 'number' | 'boolean';
+  default?: string | number | boolean;
+}
+
+export interface BuiltinCommandDefinition {
+  name: string;
+  description: string;
+  options: CommandOption[];
+  transform: (input: string, options: Record<string, any>) => string;
+}
