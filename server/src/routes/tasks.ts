@@ -8,6 +8,7 @@ const tasks = new Hono()
 // tasks.use('/*', authMiddleware);
 
 tasks.post('/', taskController.submitCommand)
-tasks.get('/:id', taskController.getTaskStatus)
+tasks.get('/:id', taskController.getTask)
+tasks.get('/:id/status', taskController.getTaskStatus)
 
 export default tasks

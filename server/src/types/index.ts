@@ -55,6 +55,7 @@ export interface Task {
   updated_at: Date
   result_path?: string
   error?: string
+  files?: TaskFileDownloadInfo[]
 }
 
 export interface CommandValidationResult {
@@ -86,4 +87,24 @@ export interface BuiltinCommandDefinition {
   description: string
   options: CommandOption[]
   transform: (input: string, options: Record<string, any>) => string
+}
+
+export interface TaskFile {
+  filename: string
+  path: string
+  size: number
+  mime_type: string
+}
+
+export interface TaskFilesResult {
+  files: TaskFile[]
+  single: TaskFile | null
+  error?: string
+}
+
+export interface TaskFileDownloadInfo {
+  filename: string
+  download_url: string
+  size: number
+  mime_type: string
 }

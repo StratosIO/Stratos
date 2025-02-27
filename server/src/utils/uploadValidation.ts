@@ -7,7 +7,6 @@ const SUPPORTED_VIDEO_FORMATS = [
   'video/x-matroska', // .mkv
 ]
 
-// Maximum file size (100MB in bytes)
 const MAX_FILE_SIZE = 3 * 1024 * 1024 * 1024 //3GB
 
 interface ValidationResult {

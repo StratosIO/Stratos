@@ -6,6 +6,7 @@ import {
   getBuiltinCommandDetails,
 } from '../services/commandParser.js'
 import log from '../config/logger.js'
+import type { TaskFileDownloadInfo } from '../types/index.js'
 import { validate as validateUUID } from 'uuid'
 
 export const taskController = {
@@ -126,6 +127,71 @@ export const taskController = {
     } catch (error) {
       log.error('Failed to get builtin commands:', error)
       return c.json({ error: 'Failed to retrieve builtin commands' }, 500)
+    }
+  },
+  getTask: async (c: Context): Promise<Response> => {
+    const taskId = c.req.param('id')
+
+    if (!validateUUID(taskId)) {
+      return c.json({ error: 'Invalid task ID format' }, 400)
+    }
+
+    try {
+      // Get task details
+      const task = await taskService.getTask(taskId)
+
+      if (!task) {
+        return c.json({ error: 'Task not found' }, 404)
+      }
+
+      // If task isn't completed, just return task info
+      if (task.status !== 'completed') {
+        return c.json({ task })
+      }
+
+      // For completed tasks, get output files
+      const fileInfo = await taskService.getTaskFiles(taskId)
+
+      // Handle errors accessing files
+      if (fileInfo.error) {
+        task.error = fileInfo.error
+        return c.json({ task })
+      }
+
+      // No files case
+      if (fileInfo.files.length === 0) {
+        task.files = []
+        return c.json({ task })
+      }
+
+      // Single file case - direct download
+      if (fileInfo.single) {
+        const file = fileInfo.single
+
+        // Set download headers
+        c.header('Content-Disposition', `attachment; filename="${file.filename}"`)
+        c.header('Content-Length', file.size.toString())
+        c.header('Content-Type', file.mime_type)
+
+        // Stream the file
+        const fileBuffer = await Bun.file(file.path).arrayBuffer()
+        return c.body(fileBuffer)
+      }
+
+      // Multiple files case - return metadata with links temporary solution for now
+      const filesWithUrls: TaskFileDownloadInfo[] = fileInfo.files.map((file) => ({
+        filename: file.filename,
+        download_url: `/tasks/${taskId}/files/${encodeURIComponent(file.filename)}`,
+        size: file.size,
+        mime_type: file.mime_type,
+      }))
+
+      task.files = filesWithUrls
+      return c.json({ task })
+    } catch (error: unknown) {
+      log.error(`Error in getTask:`, error)
+      const errorMessage = error instanceof Error ? error.message : String(error)
+      return c.json({ error: `Server error: ${errorMessage}` }, 500)
     }
   },
 }

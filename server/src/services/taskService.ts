@@ -7,7 +7,8 @@ import { promisify } from 'util'
 import path from 'path'
 import fs from 'fs/promises'
 import { OUTPUT_CONFIG } from '../types/index.js'
-import type { CommandValidationResult, Task } from '../types/index.js'
+import type { CommandValidationResult, Task, TaskFile, TaskFilesResult } from '../types/index.js'
+import { getContentType } from '../utils/fileUtils.js'
 
 const execAsync = promisify(exec)
 
@@ -171,5 +172,58 @@ export const taskService = {
     }
 
     return task
+  },
+  getTaskFiles: async (taskId: string): Promise<TaskFilesResult> => {
+    const outputDir = path.join(OUTPUT_CONFIG.DIR, taskId)
+
+    try {
+      const files = await fs.readdir(outputDir)
+
+      if (files.length === 0) {
+        return { files: [], single: null }
+      }
+
+      // Get details for each file
+      const fileDetails: TaskFile[] = await Promise.all(
+        files.map(async (file) => {
+          const filePath = path.join(outputDir, file)
+          const stats = await fs.stat(filePath)
+
+          return {
+            filename: file,
+            path: filePath,
+            size: stats.size,
+            mime_type: getContentType(path.extname(file)),
+          }
+        }),
+      )
+
+      return {
+        files: fileDetails,
+        single: fileDetails.length === 1 ? fileDetails[0] : null,
+      }
+    } catch (error: unknown) {
+      log.warn(`Error accessing output directory for task ${taskId}:`, error)
+      const errorMessage = error instanceof Error ? error.message : String(error)
+      return { files: [], single: null, error: errorMessage }
+    }
+  },
+
+  getTaskFile: async (taskId: string, filename: string): Promise<TaskFile> => {
+    const filePath = path.join(OUTPUT_CONFIG.DIR, taskId, filename)
+
+    try {
+      const stats = await fs.stat(filePath)
+
+      return {
+        filename,
+        path: filePath,
+        size: stats.size,
+        mime_type: getContentType(path.extname(filename)),
+      }
+    } catch (error) {
+      log.warn(`Error accessing file ${filename} for task ${taskId}:`, error)
+      throw new Error(`File not found: ${filename}`)
+    }
   },
 }
