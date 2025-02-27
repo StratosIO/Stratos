@@ -1,9 +1,14 @@
+<!-- lib/components/FileUploader.svelte -->
 <script lang="ts">
   import { endpoint, files, fileSelected, showConfigModal, serverStatus } from '$lib/stores'
   import { get } from 'svelte/store'
 
   let dropActive = false
   let fileInput: HTMLInputElement
+
+  $: if ($showConfigModal) {
+    dropActive = false
+  }
 
   const getFileIcon = (file: File): string => {
     if (file.type.startsWith('video/')) return 'videocam'
@@ -36,7 +41,7 @@
     })
   }
 
-  async function waitForServerOnline() {
+  async function waitForServerOnline(): Promise<void> {
     return new Promise<void>((resolve) => {
       const unsubscribe = serverStatus.subscribe((status) => {
         if (status.online) {
@@ -47,89 +52,101 @@
     })
   }
 
-  async function uploadFile(file: File, id: string) {
+  async function uploadFile(file: File, id: string): Promise<void> {
     if (!get(serverStatus).online) {
       showConfigModal.set(true)
       await waitForServerOnline()
     }
-
     const path = `${get(endpoint)}/uploads`
     const formData = new FormData()
     formData.append('file', file)
     formData.append('id', id)
-
     const token = 'AUTH_TOKEN_PLACEHOLDER'
-
-    try {
-      const response = await fetch(path, {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-        body: formData,
-      })
-
-      const result = await response.json()
-
-      if (!response.ok) {
-        console.error('File upload failed:', result)
-      } else {
-        console.log('File upload successfully:', result)
+    return new Promise<void>((resolve, reject) => {
+      const xhr = new XMLHttpRequest()
+      xhr.open('POST', path)
+      xhr.setRequestHeader('Authorization', `Bearer ${token}`)
+      files.update((current) => current.map((f) => (f.id === id ? { ...f, xhr } : f)))
+      xhr.upload.onprogress = (event: ProgressEvent) => {
+        if (event.lengthComputable) {
+          const percent = Math.round((event.loaded / event.total) * 100)
+          files.update((current) =>
+            current.map((f) => (f.id === id ? { ...f, progress: percent } : f)),
+          )
+        }
       }
-    } catch (error) {
-      console.error('Error uploading file:', error)
-    }
+      xhr.onload = () => {
+        if (xhr.status >= 200 && xhr.status < 300) {
+          try {
+            const responseData = JSON.parse(xhr.responseText)
+            if (responseData.success) {
+              files.update((current) =>
+                current.map((f) =>
+                  f.id === id ? { ...f, progress: 100, uploaded: true } : f,
+                ),
+              )
+              resolve()
+            } else {
+              reject(xhr.response)
+            }
+          } catch (error) {
+            reject(xhr.response)
+          }
+        } else {
+          reject(xhr.response)
+        }
+      }
+      xhr.onerror = () => {
+        reject(xhr.response)
+      }
+      xhr.send(formData)
+    })
   }
 
-  async function fileInfo(fileList: FileList | File[]) {
-    const filesNew = await Promise.all(
+  async function fileInfo(fileList: FileList | File[]): Promise<void> {
+    await Promise.all(
       Array.from(fileList).map(async (file) => {
         const thumb = file.type.startsWith('image/')
           ? URL.createObjectURL(file)
           : await generateThumbnail(file)
         const id = crypto.randomUUID()
+        files.update((current) => [
+          ...current,
+          { id, file, icon: thumb ? '' : getFileIcon(file), thumb, progress: 0, uploaded: false },
+        ])
         uploadFile(file, id)
-        return {
-          id,
-          file,
-          icon: thumb ? '' : getFileIcon(file),
-          thumb,
-        }
       }),
     )
-
-    files.update((current) => [...current, ...filesNew])
     fileSelected.set(get(files).length > 0 ? 0 : -1)
     if (fileInput) fileInput.value = ''
   }
 
   const handleDrop = async (e: DragEvent) => {
     e.preventDefault()
+    e.stopPropagation()
     dropActive = false
     if (e.dataTransfer?.files.length) {
       await fileInfo(e.dataTransfer.files)
     }
   }
-</script>
 
-<svelte:window
-  on:dragover={(e) => {
+  function handleDragOver(e: DragEvent) {
     e.preventDefault()
     dropActive = true
-  }}
-  on:dragleave={(e) => {
+  }
+
+  function handleDragLeave(e: DragEvent) {
     e.preventDefault()
     dropActive = false
-  }}
-  on:drop={handleDrop}
-/>
+  }
+</script>
+
+<svelte:window on:dragover={handleDragOver} on:dragleave={handleDragLeave} on:drop={handleDrop} />
 
 <button
   type="button"
   on:click={() => fileInput.click()}
-  class="border-mild flex w-full cursor-pointer flex-col items-center justify-center rounded-lg border-2 p-6 transition-colors duration-300 {dropActive
-    ? 'border-primary/50 bg-primary/20'
-    : 'bg-transparent'}"
+  class="border-mild flex w-full cursor-pointer flex-col items-center justify-center rounded-lg border-2 p-6 transition-colors duration-300 {dropActive ? 'border-primary/50 bg-primary/20' : 'bg-transparent'}"
 >
   <span class="material-icons text-dark/50 mb-2" style="font-size: 2rem;">attach_file</span>
   <p class="text-dark/70 text-center">Drag & drop files or click here</p>
@@ -140,5 +157,6 @@
     class="hidden"
     bind:this={fileInput}
     on:change={(e) => fileInfo((e.target as HTMLInputElement).files!)}
+    on:drop={(e) => e.preventDefault()}
   />
 </button>

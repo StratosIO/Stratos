@@ -1,3 +1,4 @@
+<!-- lib/components/ServerStatus.svelte -->
 <script lang="ts">
   import { onMount, onDestroy } from 'svelte'
   import { serverStatus, endpoint, showConfigModal } from '$lib/stores'

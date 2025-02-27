@@ -3,7 +3,14 @@ import { browser } from '$app/environment'
 import { writable } from 'svelte/store'
 
 export const files = writable<
-  Array<{ id: string; file: File; thumb: string | null; icon: string }>
+  Array<{
+    id: string
+    file: File
+    thumb: string | null
+    icon: string
+    progress: number
+    uploaded: boolean
+  }>
 >([])
 export const fileSelected = writable<number>(-1)
 export const command = writable<string>('')

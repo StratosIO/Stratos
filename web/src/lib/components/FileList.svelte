@@ -3,19 +3,16 @@
   import { files, fileSelected, endpoint } from '$lib/stores'
   import { get } from 'svelte/store'
 
-  async function deleteFileFromServer(id: string) {
+  async function deleteFileFromServer(id: string): Promise<void> {
     const token = 'AUTH_TOKEN_PLACEHOLDER'
     const path = `${get(endpoint)}/uploads/${id}`
     try {
       const response = await fetch(path, {
         method: 'DELETE',
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
+        headers: { Authorization: `Bearer ${token}` },
       })
       const result = await response.json()
       if (!response.ok) {
-        const errorData = await response.json()
         console.error('File deletion failed:', result)
       } else {
         console.log('File deleted successfully:', result)
@@ -25,15 +22,20 @@
     }
   }
 
-  function selectFile(index: number) {
+  function selectFile(index: number): void {
     fileSelected.set(index)
   }
 
-  function deleteFile(index: number, e: Event) {
+  function deleteFile(index: number, e: Event): void {
     e.stopPropagation()
     const currentFiles = get(files)
     const fileToDelete = currentFiles[index]
-    deleteFileFromServer(fileToDelete.id)
+    if (fileToDelete.xhr && typeof fileToDelete.xhr.abort === 'function') {
+      fileToDelete.xhr.abort()
+    }
+    if (fileToDelete.uploaded) {
+      deleteFileFromServer(fileToDelete.id)
+    }
     files.update((current) => {
       const filesNew = [...current]
       filesNew.splice(index, 1)
@@ -60,22 +62,28 @@
         <li class="group relative mb-2 flex items-center">
           <button
             type="button"
-            class="group-hover:bg-pale min-w-0 flex-1 cursor-pointer rounded-lg p-2 transition-colors duration-200 {$fileSelected ===
-            index
-              ? 'bg-pale'
-              : ''}"
+            class="group-hover:bg-pale relative min-w-0 flex-1 cursor-pointer rounded-lg p-2 transition-colors duration-200"
+            class:bg-pale={$fileSelected === index}
+            class:animate-pulse={!file.uploaded && file.progress === 0}
             on:click={() => selectFile(index)}
           >
-            <div class="flex items-center">
+            {#if file.progress > 0}
+              <div
+                class="bg-primary/20 absolute inset-0 h-full rounded-lg transition-all duration-200"
+                style="width: {file.progress}%;"
+                class:opacity-100={!file.uploaded}
+                class:opacity-0={file.uploaded}
+              ></div>
+            {/if}
+            <div class="relative flex items-center">
               <div
                 class="mr-3 flex h-9 w-12 shrink-0 items-center justify-center rounded-sm"
-                style={file.thumb
-                  ? `background-image: url(${file.thumb}); background-size: cover; background-position: center;`
-                  : 'background-color: #f3f4f6'}
+                class:bg-pale={!file.thumb}
+                style={file.thumb && `background-image: url(${file.thumb}); background-size: cover; background-position: center;`}
               >
                 <span class="material-icons text-dark/50 text-3xl">{file.icon}</span>
               </div>
-              <span class="text-dark truncate">{file.file.name}</span>
+              <span class="text-dark relative truncate">{file.file.name}</span>
             </div>
           </button>
           <button

@@ -24,10 +24,9 @@
   <div class="border-mild bg-light flex items-center rounded-lg border-2 p-4">
     <div
       class="mr-6 hidden h-28 w-36 shrink-0 items-center justify-center rounded-sm md:flex"
-      style={$file.thumb
-        ? `background-image: url(${$file.thumb}); background-size: cover; background-position: center;`
-        : 'background-color: #f3f4f6'}
-    >
+      class:bg-pale={!$file.thumb}
+      style={$file.thumb && `background-image: url(${$file.thumb}); background-size: cover; background-position: center;`}
+    >  
       <span class="material-icons text-dark/50" style="font-size: 3rem;">
         {$file.icon}
       </span>
