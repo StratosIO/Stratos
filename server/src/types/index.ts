@@ -18,6 +18,12 @@ export const UPLOAD_CONFIG = {
   PERMISSIONS: 0o755, // rwxr-xr-x
 }
 
+// Configuration for output files
+export const OUTPUT_CONFIG = {
+  DIR: process.env.OUTPUT_DIR || './outputs',
+  PERMISSIONS: 0o755, // rwxr-xr-x
+}
+
 // types for listing files
 
 export const DEFAULT_PAGE_SIZE = 20
@@ -42,42 +48,42 @@ export interface ListResult {
 }
 
 export interface Task {
-  id: string;
-  command: string;
-  status: 'pending' | 'processing' | 'completed' | 'failed';
-  created_at: Date;
-  updated_at: Date;
-  result_path?: string;
-  error?: string;
+  id: string
+  command: string
+  status: 'pending' | 'processing' | 'completed' | 'failed'
+  created_at: Date
+  updated_at: Date
+  result_path?: string
+  error?: string
 }
 
 export interface CommandValidationResult {
-  isValid: boolean;
-  fileIds: string[];
-  error?: string;
+  isValid: boolean
+  fileIds: string[]
+  error?: string
 }
 
 // types for parsing commands
 export interface ParsedCommand {
-  type: 'ffmpeg' | 'ffprobe' | 'builtin';
-  command: string;
-  input?: string;
-  options?: Record<string, string | number | boolean>;
-  outputName?: string;
-  error?: string;
-  transformedCommand?: string;
+  type: 'ffmpeg' | 'ffprobe' | 'builtin'
+  command: string
+  input?: string
+  options?: Record<string, string | number | boolean>
+  outputName?: string
+  error?: string
+  transformedCommand?: string
 }
 
 export interface CommandOption {
-  name: string;
-  description: string;
-  type: 'string' | 'number' | 'boolean';
-  default?: string | number | boolean;
+  name: string
+  description: string
+  type: 'string' | 'number' | 'boolean'
+  default?: string | number | boolean
 }
 
 export interface BuiltinCommandDefinition {
-  name: string;
-  description: string;
-  options: CommandOption[];
-  transform: (input: string, options: Record<string, any>) => string;
+  name: string
+  description: string
+  options: CommandOption[]
+  transform: (input: string, options: Record<string, any>) => string
 }
