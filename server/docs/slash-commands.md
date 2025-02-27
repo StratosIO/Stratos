@@ -1,6 +1,6 @@
-# Built-in FFmpeg Commands Documentation
+# Built-in slash Commands Documentation
 
-The Stratos API provides a set of built-in commands that simplify common FFmpeg operations and make performing video processing operations simple!
+The Stratos API provides a set of built-in slash commands that simplify common FFmpeg operations and make performing video processing operations simple!
 
 ## Command Syntax
 

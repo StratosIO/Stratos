@@ -14,7 +14,7 @@ services:
     ports:
       - "5432:5432"
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      - ./postgres:/var/lib/postgresql/data
       - ./src/config/init.sql:/docker-entrypoint-initdb.d/init.sql
 
   backend:
@@ -29,8 +29,6 @@ services:
       database:
         condition: service_healthy
     volumes:
-      - ./logs:/app/logs 
+      - ./logs:/app/logs
       - ./uploads:/app/uploads
-    
-volumes:
-  postgres_data:
+      - ./outputs:/app/outputs

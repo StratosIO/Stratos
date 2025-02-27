@@ -1,7 +1,7 @@
 import { Hono } from 'hono'
 import { cors } from 'hono/cors'
 import { authMiddleware, requireRole } from './middleware/auth.js'
-import { createAdmin } from './scripts/create-admin.js'
+import { createAdmin } from './scripts/createAdmin.js'
 import auth from './routes/auth.js'
 import dev from './routes/dev.js'
 import ai from './routes/ai.js'

@@ -16,7 +16,9 @@ dist-ssr
 coverage
 *.local
 .env
+postgres
 uploads
+outputs
 
 # Editor directories and files
 .vscode/*
@@ -27,6 +29,5 @@ uploads
 *.njsproj
 *.sln
 *.sw?
-uploads/
 
 *.tsbuildinfo

@@ -1,6 +1,6 @@
 import { Hono } from 'hono'
 import sql from '../config/database.js'
-import { createAdmin } from '../scripts/create-admin.js'
+import { createAdmin } from '../scripts/createAdmin.js'
 
 // this file contains endpoints that I am using for development / testing purposes.
 // These are not part of the application!

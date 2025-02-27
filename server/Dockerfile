@@ -1,4 +1,4 @@
-FROM docker.io/oven/bun:1.2.2
+FROM docker.io/oven/bun:1.2.4
 
 # Install FFmpeg with more resilient approach
 RUN apt-get update && \
