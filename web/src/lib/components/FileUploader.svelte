@@ -1,6 +1,5 @@
-<!-- lib/components/FileUploader.svelte -->
 <script lang="ts">
-  import { files, fileSelected } from '$lib/stores'
+  import { endpoint, files, fileSelected, showConfigModal, serverStatus } from '$lib/stores'
   import { get } from 'svelte/store'
 
   let dropActive = false
@@ -37,15 +36,61 @@
     })
   }
 
+  async function waitForServerOnline() {
+    return new Promise<void>((resolve) => {
+      const unsubscribe = serverStatus.subscribe((status) => {
+        if (status.online) {
+          unsubscribe()
+          resolve()
+        }
+      })
+    })
+  }
+
+  async function uploadFile(file: File, id: string) {
+    if (!get(serverStatus).online) {
+      showConfigModal.set(true)
+      await waitForServerOnline()
+    }
+
+    const path = `${get(endpoint)}/uploads`
+    const formData = new FormData()
+    formData.append('file', file)
+    formData.append('id', id)
+
+    const token = 'AUTH_TOKEN_PLACEHOLDER'
+
+    try {
+      const response = await fetch(path, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+        body: formData,
+      })
+
+      const result = await response.json()
+
+      if (!response.ok) {
+        console.error('File upload failed:', result)
+      } else {
+        console.log('File upload successfully:', result)
+      }
+    } catch (error) {
+      console.error('Error uploading file:', error)
+    }
+  }
+
   async function fileInfo(fileList: FileList | File[]) {
     const filesNew = await Promise.all(
       Array.from(fileList).map(async (file) => {
         const thumb = file.type.startsWith('image/')
           ? URL.createObjectURL(file)
           : await generateThumbnail(file)
-
+        const id = crypto.randomUUID()
+        uploadFile(file, id)
         return {
-          id: crypto.randomUUID(),
+          id,
           file,
           icon: thumb ? '' : getFileIcon(file),
           thumb,

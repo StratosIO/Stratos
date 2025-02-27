@@ -137,7 +137,7 @@
   }
 
   async function sendCommand() {
-    const path = `${get(endpoint)}/submit`
+    const path = `${get(endpoint)}/tasks`
     const message = get(command).trim()
     const response = await fetch(path, {
       method: 'POST',

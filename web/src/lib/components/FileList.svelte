@@ -1,7 +1,29 @@
 <!-- lib/components/FileList.svelte -->
 <script lang="ts">
-  import { files, fileSelected } from '$lib/stores'
+  import { files, fileSelected, endpoint } from '$lib/stores'
   import { get } from 'svelte/store'
+
+  async function deleteFileFromServer(id: string) {
+    const token = 'AUTH_TOKEN_PLACEHOLDER'
+    const path = `${get(endpoint)}/uploads/${id}`
+    try {
+      const response = await fetch(path, {
+        method: 'DELETE',
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      })
+      const result = await response.json()
+      if (!response.ok) {
+        const errorData = await response.json()
+        console.error('File deletion failed:', result)
+      } else {
+        console.log('File deleted successfully:', result)
+      }
+    } catch (error) {
+      console.error('Error deleting file:', error)
+    }
+  }
 
   function selectFile(index: number) {
     fileSelected.set(index)
@@ -9,6 +31,9 @@
 
   function deleteFile(index: number, e: Event) {
     e.stopPropagation()
+    const currentFiles = get(files)
+    const fileToDelete = currentFiles[index]
+    deleteFileFromServer(fileToDelete.id)
     files.update((current) => {
       const filesNew = [...current]
       filesNew.splice(index, 1)
@@ -55,8 +80,7 @@
           </button>
           <button
             on:click={(e) => deleteFile(index, e)}
-            class="material-icons text-dark/0 hover:text-danger group-hover:text-dark/50 absolute top-1/2 right-2
-                -translate-y-1/2 transition-colors"
+            class="material-icons text-dark/0 hover:text-danger group-hover:text-dark/50 absolute top-1/2 right-2 -translate-y-1/2 transition-colors"
           >
             delete
           </button>
