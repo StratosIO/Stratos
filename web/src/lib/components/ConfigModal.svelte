@@ -18,22 +18,22 @@
 
 <div
   transition:fade={{ duration: 150 }}
-  class="bg-dark/50 fixed inset-0 z-50 flex items-center justify-center"
+  class="bg-base-content/50 fixed inset-0 z-50 flex items-center justify-center"
 >
-  <div transition:fly={{ y: 20, duration: 200 }} class="bg-light w-80 rounded-3xl p-6 shadow-lg">
+  <div transition:fly={{ y: 20, duration: 200 }} class="bg-base-100 w-80 rounded-3xl p-6 shadow-lg">
     <h2 class="mb-4 text-xl font-bold">Set API Endpoint</h2>
     <input
       type="text"
       bind:value={current}
-      class="bg-pale focus:ring-primary/50 w-full rounded-full px-4 py-2 focus:ring-2 focus:outline-hidden"
+      class="bg-base-200 focus:ring-primary/50 w-full rounded-full px-4 py-2 focus:ring-2 focus:outline-hidden"
     />
     <div class="mt-4 flex justify-end space-x-2">
-      <button on:click={closeModal} class="hover:bg-pale rounded-full px-4 py-2 transition-colors">
+      <button on:click={closeModal} class="hover:bg-base-200 rounded-full px-4 py-2 transition-colors">
         Cancel
       </button>
       <button
         on:click={saveApiEndpoint}
-        class="bg-primary text-light hover:bg-primary/90 rounded-full px-6 py-2 transition-colors"
+        class="bg-primary text-base-100 hover:bg-primary/90 rounded-full px-6 py-2 transition-colors"
       >
         Save
       </button>

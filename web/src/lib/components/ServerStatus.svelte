@@ -86,11 +86,11 @@
 <button
   type="button"
   on:click={openModal}
-  class="bg-pale mb-6 flex w-full items-center rounded-lg p-6"
+  class="bg-base-200 mb-6 flex w-full items-center rounded-lg p-6"
 >
   <span class="mr-3 h-2.5 w-2.5 rounded-full {$serverStatus.online ? 'bg-success' : 'bg-warning'}"
   ></span>
-  <span class="text-dark mt-[2.5px] truncate">
+  <span class="text-base-content mt-[2.5px] truncate">
     {#if $serverStatus.online}
       Server Online - Uptime: {$serverStatus.uptime}
     {:else if $serverStatus.counting}

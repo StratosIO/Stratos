@@ -143,12 +143,12 @@
 <button
   type="button"
   on:click={() => fileInput.click()}
-  class="border-mild flex w-full cursor-pointer flex-col items-center justify-center rounded-lg border-2 p-6 transition-colors duration-300 {dropActive
+  class="border-base-300 flex w-full cursor-pointer flex-col items-center justify-center rounded-lg border-2 p-6 transition-colors duration-300 {dropActive
     ? 'border-primary/50 bg-primary/20'
     : 'bg-transparent'}"
 >
-  <span class="material-icons text-dark/50 mb-2" style="font-size: 2rem;">attach_file</span>
-  <p class="text-dark/70 text-center">Drag & drop files or click here</p>
+  <span class="material-icons-round text-base-content/50 mb-2" style="font-size: 2rem;">attach_file</span>
+  <p class="text-base-content/70 text-center">Drag & drop files or click here</p>
   <input
     type="file"
     multiple

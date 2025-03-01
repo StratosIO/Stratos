@@ -78,7 +78,7 @@
     const mention = document.createElement('span')
     mention.contentEditable = 'false'
     mention.className =
-      'select-text text-primary bg-primary/20 rounded-sm px-1 hover:bg-primary hover:text-light transition-colors'
+      'select-text text-primary bg-primary/20 rounded-sm px-1 hover:bg-primary hover:text-base-100 transition-colors'
     mention.dataset.mentionId = file.id
 
     let displayName = file.file.name
@@ -163,7 +163,7 @@
     role="textbox"
     aria-multiline="true"
     tabindex="0"
-    class="bg-pale w-full rounded-lg px-4 py-2 break-all"
+    class="bg-base-200 w-full rounded-lg px-4 py-2 break-all"
     on:input={onInput}
     on:keydown={onKeyDown}
     on:blur={onBlur}
@@ -173,7 +173,7 @@
   {#if showSuggestions}
     <ul
       role="listbox"
-      class="border-mild bg-light absolute right-0 left-0 z-10 mt-2 max-h-48 overflow-y-auto rounded-lg border shadow-lg"
+      class="border-base-300 bg-base-100 absolute right-0 left-0 z-10 mt-2 max-h-48 overflow-y-auto rounded-lg border shadow-lg"
     >
       {#each filteredFiles as file, index (file.id)}
         <li
@@ -190,7 +190,7 @@
           @{file.file.name}
         </li>
       {:else}
-        <li class="px-4 py-2 text-dark/70">No suggestions</li>
+        <li class="px-4 py-2 text-base-content/70">No suggestions</li>
       {/each}
     </ul>
   {/if}
@@ -201,14 +201,14 @@
     aria-label="Send"
     class="absolute right-2 bottom-2 flex"
   >
-    <i class="material-icons text-dark/50 hover:text-dark text-lg transition-colors">send</i>
+    <i class="material-icons-round text-base-content/50 hover:text-base-content text-lg transition-colors">send</i>
   </button>
 </div>
 
 <style>
   [contenteditable]:empty:before {
     content: attr(data-placeholder);
-    color: var(--custom-dark);
+    color: var(--color-base);
     opacity: 0.5;
   }
 </style>

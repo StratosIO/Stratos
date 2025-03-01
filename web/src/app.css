@@ -1,41 +1,17 @@
 @import 'tailwindcss';
 
-@plugin '@tailwindcss/typography';
-@plugin '@tailwindcss/forms';
-@plugin '@tailwindcss/container-queries';
+@plugin "daisyui" {
+  themes: light --default, dark --prefersdark;
+}
 
 @theme {
   --font-sans: Overpass, sans-serif;
   --font-mono: Overpass Mono, monospace;
-
-  --color-primary: rgb(var(--custom-primary));
-  --color-dark: rgb(var(--custom-dark));
-  --color-light: rgb(var(--custom-light));
-  --color-success: rgb(var(--custom-success));
-  --color-danger: rgb(var(--custom-danger));
-  --color-warning: rgb(var(--custom-warning));
-  --color-info: rgb(var(--custom-info));
-  --color-pale: rgb(var(--custom-pale));
-  --color-mild: rgb(var(--custom-mild));
 }
 
-/*
-  The default border color has changed to `currentColor` in Tailwind CSS v4,
-  so we've added these compatibility styles to make sure everything still
-  looks the same as it did with Tailwind CSS v3.
-
-  If we ever want to remove these styles, we need to add an explicit border
-  color utility to any element that depends on these defaults.
-
-@layer base {
-  *,
-  ::after,
-  ::before,
-  ::backdrop,
-  ::file-selector-button {
-    border-color: rgb(var(--custom-default-border));
-  }
-} */
+* {
+	scrollbar-width: thin;
+}
 
 @font-face {
   font-family: 'Overpass';
@@ -56,6 +32,22 @@
   src: url('$lib/assets/fonts/overpass-italic.ttf') format('truetype-variations');
   font-weight: 100 900;
   font-style: normal;
+}
+
+/*
+@theme {
+  --font-sans: Overpass, sans-serif;
+  --font-mono: Overpass Mono, monospace;
+
+  --color-primary: rgb(var(--custom-primary));
+  --color-dark: rgb(var(--custom-dark));
+  --color-light: rgb(var(--custom-light));
+  --color-success: rgb(var(--custom-success));
+  --color-danger: rgb(var(--custom-danger));
+  --color-warning: rgb(var(--custom-warning));
+  --color-info: rgb(var(--custom-info));
+  --color-pale: rgb(var(--custom-pale));
+  --color-mild: rgb(var(--custom-mild));
 }
 
 .scrollbar-hidden::-webkit-scrollbar {
@@ -83,7 +75,6 @@
 }
 
 :root {
-  /* light */
   --custom-primary: 66 80 175;
   --custom-light: 255 255 255;
   --custom-dark: 58 58 58;
@@ -96,7 +87,6 @@
 }
 
 .dark {
-  /* dark */
   --custom-primary: 172 203 250;
   --custom-light: 0 0 0;
   --custom-dark: 229 231 235;
@@ -106,4 +96,4 @@
   --custom-warning: 255 170 0;
   --custom-info: 14 165 233;
   --custom-mild: 58 58 58;
-}
+} */

@@ -21,19 +21,19 @@
 
 <h2 class="mb-4 text-xl font-bold md:text-2xl">File Details</h2>
 {#if $file}
-  <div class="border-mild bg-light flex items-center rounded-lg border-2 p-4">
+  <div class="border-base-300 bg-base-100 flex items-center rounded-lg border-2 p-4">
     <div
       class="mr-6 hidden h-28 w-36 shrink-0 items-center justify-center rounded-sm md:flex"
-      class:bg-pale={!$file.thumb}
+      class:bg-base-200={!$file.thumb}
       style={$file.thumb &&
         `background-image: url(${$file.thumb}); background-size: cover; background-position: center;`}
     >
-      <span class="material-icons text-dark/50" style="font-size: 3rem;">
+      <span class="material-icons-round text-base-content/50" style="font-size: 3rem;">
         {$file.icon}
       </span>
     </div>
-    <div class="text-dark/70 truncate select-text">
-      <p class="text-dark truncate text-lg font-medium">{$file.file.name}</p>
+    <div class="text-base-content/70 truncate select-text">
+      <p class="text-base-content truncate text-lg font-medium">{$file.file.name}</p>
       <p class="truncate text-sm">
         Size: {formatBytes($file.file.size)}
       </p>
@@ -51,5 +51,5 @@
     </div>
   </div>
 {:else}
-  <p class="text-dark/70">Please upload a file to view details.</p>
+  <p class="text-base-content/70">Please upload a file to view details.</p>
 {/if}
