@@ -1,42 +1,33 @@
-<!-- lib/components/Modal.svelte -->
+<!-- lib/components/ConfigModal.svelte -->
 <script lang="ts">
-  import { fade, fly } from 'svelte/transition'
-  import { endpoint, showConfigModal } from '$lib/stores'
-  import { get } from 'svelte/store'
+	import { endpoint, showConfigModal } from '$lib/stores'
+	import { get } from 'svelte/store'
+	import { fade, fly } from 'svelte/transition'
 
-  let current: string = get(endpoint)
+	let current: string = get(endpoint)
 
-  function closeModal() {
-    showConfigModal.set(false)
-  }
+	function closeModal() {
+		showConfigModal.set(false)
+	}
 
-  function saveApiEndpoint() {
-    endpoint.set(current.replace(/\/$/, ''))
-    closeModal()
-  }
+	function saveApiEndpoint() {
+		endpoint.set(current.replace(/\/$/, ''))
+		closeModal()
+	}
 </script>
 
-<div
-  transition:fade={{ duration: 150 }}
-  class="bg-dark/50 fixed inset-0 z-50 flex items-center justify-center"
->
-  <div transition:fly={{ y: 20, duration: 200 }} class="bg-light w-80 rounded-3xl p-6 shadow-lg">
-    <h2 class="mb-4 text-xl font-bold">Set API Endpoint</h2>
-    <input
-      type="text"
-      bind:value={current}
-      class="bg-pale focus:ring-primary/50 w-full rounded-full px-4 py-2 focus:ring-2 focus:outline-hidden"
-    />
-    <div class="mt-4 flex justify-end space-x-2">
-      <button on:click={closeModal} class="hover:bg-pale rounded-full px-4 py-2 transition-colors">
-        Cancel
-      </button>
-      <button
-        on:click={saveApiEndpoint}
-        class="bg-primary text-light hover:bg-primary/90 rounded-full px-6 py-2 transition-colors"
-      >
-        Save
-      </button>
-    </div>
-  </div>
+<div transition:fade={{ duration: 150 }} class="modal modal-open !transition-none">
+	<div class="modal-box" transition:fly={{ y: 20, duration: 150 }}>
+		<h3 class="mb-4 text-lg font-bold">Set API Endpoint</h3>
+		<input
+			type="text"
+			bind:value={current}
+			placeholder="Enter API Endpoint"
+			class="input w-full transition-colors focus:outline-none"
+		/>
+		<div class="modal-action">
+			<button on:click={closeModal} class="btn btn-ghost">Cancel</button>
+			<button on:click={saveApiEndpoint} class="btn btn-primary">Save</button>
+		</div>
+	</div>
 </div>
