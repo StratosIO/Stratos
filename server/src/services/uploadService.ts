@@ -25,15 +25,16 @@ export const uploadService = {
 
       const fileName = file.name
       const filePath = path.join(UPLOAD_CONFIG.DIR, id)
-
+      const fileWriter = Bun.file(filePath).writer()
       const stream = file.stream()
-      const chunks: Uint8Array[] = []
+      let fileSize = 0
 
       for await (const chunk of stream) {
-        chunks.push(chunk)
+        fileWriter.write(chunk)
+        fileSize += chunk.byteLength
       }
 
-      await Bun.write(filePath, Buffer.concat(chunks))
+      await fileWriter.end()
 
       const result = await sql`
         INSERT INTO files (
@@ -46,7 +47,7 @@ export const uploadService = {
           ${id},
           ${fileName},
           ${filePath},
-          ${file.size},
+          ${fileSize},
           ${file.type}
         ) RETURNING id, file_name, file_path
       `
