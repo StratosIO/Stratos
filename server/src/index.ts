@@ -38,18 +38,15 @@ app.get('/', (c) => {
 createAdmin() // adds default admin user to db if doesn't exist
 log.info(`Server is running on http://localhost:3000`)
 
-
-
 // const server = Bun.serve({
 //   fetch: app.fetch,
 //   port: 3000,
-//   hostname: "0.0.0.0", //important for Docker 
+//   hostname: "0.0.0.0", //important for Docker
 //   maxRequestBodySize: 3 * 1024 * 1024 * 1024, // 3GB in bytes
 // })
 export default {
   port: 3000,
-  hostname: "0.0.0.0",
+  hostname: '0.0.0.0',
   maxRequestBodySize: 3 * 1024 * 1024 * 1024, // 3GB in bytes
-  fetch: app.fetch
+  fetch: app.fetch,
 }
-
