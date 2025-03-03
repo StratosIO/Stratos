@@ -91,7 +91,7 @@
 @font-face {
 	font-family: 'Overpass';
 	src: url('$lib/assets/fonts/overpass.ttf') format('truetype-variations');
-	font-weigt: 100 900;
+	font-weight: 100 900;
 	font-style: normal;
 }
 
