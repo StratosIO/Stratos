@@ -125,6 +125,95 @@ const BUILTIN_COMMANDS: Record<string, BuiltinCommandDefinition> = {
       return `ffmpeg -i ${input} -ss ${start} -t ${duration} -vf "fps=${fps},scale=${width}:-1:flags=lanczos,split[s0][s1];[s0]palettegen[p];[s1][p]paletteuse" output.gif`
     },
   },
+  'trim-video': {
+    name: 'trim-video',
+    description: 'Trim video to a specific segment',
+    options: [
+      {
+        name: 'start',
+        description: 'Start time (e.g., 00:01:23)',
+        type: 'string',
+        default: '00:00:00',
+      },
+      {
+        name: 'duration',
+        description: 'Duration in seconds',
+        type: 'number',
+      },
+      {
+        name: 'end',
+        description: 'End time (e.g., 00:02:45)',
+        type: 'string',
+      },
+      {
+        name: 'fast',
+        description: 'Use fast copy mode (may be less precise)',
+        type: 'boolean',
+        default: true,
+      },
+    ],
+    transform: (input, options) => {
+      const start = options.start || '00:00:00'
+      const fastMode = options.fast !== undefined ? options.fast : true
+
+      // Codec options - fast mode just copies streams without re-encoding
+      const codecOptions = fastMode ? '-c:v copy -c:a copy' : '-c:v libx264 -c:a aac'
+
+      if (options.duration) {
+        return `ffmpeg -i ${input} -ss ${start} -t ${options.duration} ${codecOptions} output.mp4`
+      } else if (options.end) {
+        return `ffmpeg -i ${input} -ss ${start} -to ${options.end} ${codecOptions} output.mp4`
+      } else {
+        return `ffmpeg -i ${input} -ss ${start} ${codecOptions} output.mp4`
+      }
+    },
+  },
+  'compress-video': {
+    name: 'compress-video',
+    description: 'Compress video to reduce file size',
+    options: [
+      {
+        name: 'preset',
+        description: 'Compression preset (ultrafast, fast, medium, slow, veryslow)',
+        type: 'string',
+        default: 'medium',
+      },
+      {
+        name: 'crf',
+        description: 'Quality (0-51, lower is better quality, 18-28 is reasonable)',
+        type: 'number',
+        default: 23,
+      },
+      {
+        name: 'format',
+        description: 'Output format (mp4, webm)',
+        type: 'string',
+        default: 'mp4',
+      },
+      {
+        name: 'width',
+        description: 'Resize to width (keeps aspect ratio)',
+        type: 'number',
+      },
+    ],
+    transform: (input, options) => {
+      const preset = options.preset || 'medium'
+      const crf = options.crf || 23
+      const format = options.format || 'mp4'
+
+      // Scale parameter if width is specified
+      const scale = options.width ? `-vf scale=${options.width}:-2` : ''
+
+      if (format === 'mp4') {
+        return `ffmpeg -i ${input} ${scale} -c:v libx264 -preset ${preset} -crf ${crf} -c:a aac -b:a 128k output.mp4`
+      } else if (format === 'webm') {
+        return `ffmpeg -i ${input} ${scale} -c:v libvpx-vp9 -crf ${crf} -b:v 0 -c:a libopus output.webm`
+      } else {
+        // Default to MP4
+        return `ffmpeg -i ${input} ${scale} -c:v libx264 -preset ${preset} -crf ${crf} -c:a aac -b:a 128k output.${format}`
+      }
+    },
+  },
 }
 
 /**
