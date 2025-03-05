@@ -54,7 +54,7 @@
 </script>
 
 <div>
-	<h2 class="mb-4 text-xl font-bold md:text-2xl">File List</h2>
+	<h2 class="mb-2 text-xl font-bold md:text-2xl">File List</h2>
 	{#if $files.length === 0}
 		<p class="text-base-content/70">No files uploaded yet.</p>
 	{:else}

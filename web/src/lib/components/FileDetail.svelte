@@ -19,7 +19,7 @@
 	}
 </script>
 
-<h2 class="mb-4 text-xl font-bold md:text-2xl">File Details</h2>
+<h2 class="mb-2 text-xl font-bold md:text-2xl">File Details</h2>
 {#if $file}
 	<div class="border-base-300 bg-base-100 rounded-field flex items-center border-2 p-4">
 		<div

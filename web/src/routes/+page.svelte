@@ -1,4 +1,3 @@
-<!-- src/routes/+page.svelte -->
 <script>
 	import CommandPanel from '$lib/components/CommandPanel.svelte'
 	import ConfigModal from '$lib/components/ConfigModal.svelte'
@@ -9,27 +8,33 @@
 	import { showConfigModal } from '$lib/stores'
 </script>
 
-<div class="text-base-content flex h-screen flex-col select-none md:flex-row">
-	<aside class="hidden flex-col md:flex md:w-sm">
-		<div class="flex-1 overflow-y-auto overflow-y-scroll p-6">
-			<ServerStatus />
-			<div class="mb-6"><FileUploader /></div>
-			<FileList />
+<div class="hidden h-screen md:flex">
+	<aside class="flex w-sm flex-col p-6">
+		<ServerStatus />
+		<div class="pb-8">
+			<FileUploader />
 		</div>
+		<FileList />
 	</aside>
-
-	<div class="flex min-w-0 flex-1 flex-col">
-		<!-- Mobile Only -->
-		<div class="md:hidden">
-			<div class="px-6 pt-4"><ServerStatus /></div>
-			<div class="px-6 pb-4"><FileUploader /></div>
-			<div class="px-6 py-4"><FileList /></div>
+	<main class="flex flex-1 flex-col px-4 py-6">
+		<FileDetail />
+		<div class="mt-auto">
+			<CommandPanel />
 		</div>
-		<div class="px-6 py-4"><FileDetail /></div>
-		<div class="mt-auto"><CommandPanel /></div>
-	</div>
-
-	{#if $showConfigModal}
-		<ConfigModal />
-	{/if}
+	</main>
 </div>
+
+<!-- Mobile layout -->
+<div class="flex h-screen flex-col md:hidden">
+	<main class="p-6">
+		<div><ServerStatus /></div>
+		<div class="pb-8"><FileUploader /></div>
+		<div class="pb-8"><FileList /></div>
+		<div class="pb-8"><FileDetail /></div>
+		<div><CommandPanel /></div>
+	</main>
+</div>
+
+{#if $showConfigModal}
+	<ConfigModal />
+{/if}
