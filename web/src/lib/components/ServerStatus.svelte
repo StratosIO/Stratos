@@ -4,10 +4,9 @@
 	import { onDestroy, onMount } from 'svelte'
 	import { get } from 'svelte/store'
 
-	let eventSource: EventSource | null = null
 	let endpointUnsubscribe: () => void
-	let countdownAbortController: AbortController | null = null
-	let countdownInProgress = false
+	let eventSource: EventSource | null = null
+	let countdownInterval: number | undefined = undefined
 
 	const updateServerStatus = (
 		updates: Partial<{
@@ -22,7 +21,10 @@
 
 	const resetConnection = () => {
 		eventSource?.close()
-		countdownAbortController?.abort()
+		if (countdownInterval !== undefined) {
+			clearInterval(countdownInterval)
+			countdownInterval = undefined
+		}
 		updateServerStatus({ online: false, counting: false, countdown: 0 })
 	}
 
@@ -33,10 +35,10 @@
 		eventSource.onerror = () => {
 			updateServerStatus({ online: false })
 			setTimeout(() => {
-				if (!get(serverStatus).counting && !countdownInProgress) {
+				if (!get(serverStatus).counting && countdownInterval === undefined) {
 					startCountdown()
 				}
-			}, 500)
+			}, 800)
 		}
 		eventSource.onmessage = (event) => {
 			updateServerStatus({
@@ -45,41 +47,24 @@
 		}
 	}
 
-	const delay = (ms: number, signal?: AbortSignal) =>
-		new Promise<void>((resolve, reject) => {
-			const timer = setTimeout(resolve, ms)
-			signal?.addEventListener(
-				'abort',
-				() => {
-					clearTimeout(timer)
-					reject(new Error('aborted'))
-				},
-				{ once: true },
-			)
-		})
-
-	const startCountdown = async () => {
-		if (countdownInProgress) return
-		countdownInProgress = true
-		countdownAbortController?.abort()
-		countdownAbortController = new AbortController()
-		const { signal } = countdownAbortController
+	const startCountdown = () => {
+		if (countdownInterval !== undefined) return
 
 		updateServerStatus({ counting: true, countdown: 10 })
 		let count = 10
 
-		try {
-			while (!get(serverStatus).online && count > 0) {
-				await delay(1000, signal)
+		countdownInterval = setInterval(() => {
+			if (get(serverStatus).online || count <= 0) {
+				if (countdownInterval !== undefined) {
+					clearInterval(countdownInterval)
+					countdownInterval = undefined
+				}
+				updateServerStatus({ counting: false })
+				if (!get(serverStatus).online) setupEventSource()
+			} else {
 				updateServerStatus({ countdown: --count })
 			}
-		} catch {
-			return
-		} finally {
-			updateServerStatus({ counting: false })
-			countdownInProgress = false
-		}
-		if (!get(serverStatus).online) setupEventSource()
+		}, 1000)
 	}
 
 	onMount(() => {
@@ -110,7 +95,7 @@
 		{:else}
 			<span class="status status-warning mr-3"></span>
 		{/if}
-		<span class="text-base-content mt-[2.5px] truncate">
+		<span class="text-base-content mt-1 truncate">
 			{#if $serverStatus.online}
 				Server Online - Uptime: {$serverStatus.uptime}
 			{:else if $serverStatus.counting}
