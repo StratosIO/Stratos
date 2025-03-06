@@ -199,6 +199,7 @@ export const taskController = {
     const taskId = c.req.param('id')
 
     if (!validateUUID(taskId)) {
+      log.warn('Delete task attempted with invalid UUID', { taskId })
       return c.json({ error: 'Invalid task ID format' }, 400)
     }
 
@@ -206,12 +207,14 @@ export const taskController = {
       const deleted = await taskService.deleteTask(taskId)
       
       if (!deleted) {
+        log.warn('Task not found for deletion', { taskId })
         return c.json({ error: 'Task not found' }, 404)
       }
 
+      log.info('Task deleted successfully', { taskId })
       return c.json({ success: true }, 200)
     } catch (error) {
-      log.error('Failed to delete task:', error)
+      log.error(`Failed to delete task: ${error}`, { taskId, error: String(error) })
       return c.json({ error: 'Failed to delete task' }, 500)
     }
   }

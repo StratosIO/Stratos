@@ -233,7 +233,7 @@ export const taskService = {
     }
 
     try {
-      // First check if task exists and get its details
+      // check if task exists and get its details
       const [task] = await sql`
         SELECT id, result_path 
         FROM tasks 
@@ -244,12 +244,11 @@ export const taskService = {
         return false
       }
 
-      // Delete task output directory if it exists
+      // Delete task output directory if exists
       const outputDir = path.join(OUTPUT_CONFIG.DIR, taskId)
       try {
         await fs.rm(outputDir, { recursive: true, force: true })
       } catch (error) {
-        // Log warning but continue with database cleanup
         log.warn(`Error deleting output directory for task ${taskId}:`, error)
       }
 

@@ -73,7 +73,6 @@ export const uploadsController = {
 
       return c.json({ success: true })
     } catch (error) {
-      log.error(`Failed to delete file: ${error}`, { error: String(error) })
       return c.json({ error: 'Failed to delete file' }, 500)
     }
   },
