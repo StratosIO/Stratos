@@ -59,6 +59,7 @@ export function insertSlashCommandAtCursor(cmd: string): void {
 	const before = text.slice(0, atIndex)
 	const after = text.slice(range.startOffset)
 	const command = document.createElement('span')
+	command.contentEditable = 'false' // 设置为不可编辑，使其成为原子节点
 	command.className = 'font-bold'
 	command.textContent = `/${cmd}`
 	textNode.textContent = before

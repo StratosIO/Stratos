@@ -46,45 +46,68 @@
 	function updateSuggestions(): void {
 		const sel = window.getSelection()
 		if (!sel || sel.rangeCount === 0) {
-			showSuggestions = false
-			suggestionQuery = ''
-			showSlashSuggestions = false
-			slashQuery = ''
+			resetAllSuggestions()
 			return
 		}
+
 		const range = sel.getRangeAt(0)
 		const text = range.startContainer.textContent || ''
 		const offset = range.startOffset
+
 		if (text.startsWith('/')) {
-			const candidate = text.slice(1, offset)
+			const candidate = text.slice(1, offset).trim()
 			if (!/\s/.test(candidate)) {
-				slashQuery = candidate
-				showSlashSuggestions = true
-				activeSlashIndex = 0
-			} else {
-				showSlashSuggestions = false
-				slashQuery = ''
+				const exactMatch = slashCommands.find(
+					(cmd) => cmd.toLowerCase() === candidate.toLowerCase(),
+				)
+				if (exactMatch) {
+					insertSlashCommandAtCursor(exactMatch)
+					resetSlashSuggestions()
+					return
+				}
+				setSlashSuggestions(candidate)
+				return
 			}
-			showSuggestions = false
-			suggestionQuery = ''
+			resetSlashSuggestions()
 			return
 		}
+
 		const atIndex = text.lastIndexOf('@', offset)
 		if (atIndex !== -1) {
 			const candidate = text.slice(atIndex + 1, offset)
 			if (!/\s/.test(candidate)) {
-				suggestionQuery = candidate
-				showSuggestions = true
-				activeSuggestionIndex = 0
-				showSlashSuggestions = false
-				slashQuery = ''
+				setMentionSuggestions(candidate)
 				return
 			}
 		}
+
+		resetAllSuggestions()
+	}
+
+	function resetAllSuggestions(): void {
 		showSuggestions = false
 		suggestionQuery = ''
+		resetSlashSuggestions()
+	}
+
+	function resetSlashSuggestions(): void {
 		showSlashSuggestions = false
 		slashQuery = ''
+	}
+
+	function setSlashSuggestions(query: string): void {
+		slashQuery = query
+		showSlashSuggestions = true
+		activeSlashIndex = 0
+		showSuggestions = false
+		suggestionQuery = ''
+	}
+
+	function setMentionSuggestions(query: string): void {
+		suggestionQuery = query
+		showSuggestions = true
+		activeSuggestionIndex = 0
+		resetSlashSuggestions()
 	}
 
 	function onInput(): void {
