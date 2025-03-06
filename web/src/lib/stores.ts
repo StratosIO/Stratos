@@ -43,3 +43,10 @@ export const command = writable<string>('')
 export const endpoint = writable<string>(browser ? `${window.location.origin}/api` : '')
 export const showConfigModal = writable<boolean>(false)
 export const currentTab = writable<string>('files')
+
+export const slashCommands: string[] = [
+	'extract-audio',
+	'convert-video',
+	'create-thumbnail',
+	'create-gif',
+]

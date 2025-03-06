@@ -23,12 +23,12 @@
 			}
 			console.log('Task deleted successfully:', result)
 			// only remove from store if deletion was successful
-			tasks.update(current => {
+			tasks.update((current) => {
 				const newTasks = [...current]
 				newTasks.splice(index, 1)
 				return newTasks
 			})
-			taskSelected.update(currentIndex => {
+			taskSelected.update((currentIndex) => {
 				if (currentIndex === index) {
 					return get(tasks).length ? 0 : -1
 				}
@@ -46,7 +46,7 @@
 		taskSelected.set(index)
 	}
 
-    // TODO: This should be replaced by SSE
+	// TODO: This should be replaced by SSE
 	async function pollTaskStatus() {
 		const currentTasks = get(tasks)
 		const updatedTasks = await Promise.all(

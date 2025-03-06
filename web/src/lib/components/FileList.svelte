@@ -31,12 +31,12 @@
 				return
 			}
 		}
-		files.update(current => {
+		files.update((current) => {
 			const newFiles = [...current]
 			newFiles.splice(index, 1)
 			return newFiles
 		})
-		fileSelected.update(currentIndex => {
+		fileSelected.update((currentIndex) => {
 			if (currentIndex === index) {
 				return get(files).length ? 0 : -1
 			}
