@@ -13,9 +13,9 @@ RUN wget -q https://github.com/oven-sh/bun/releases/download/bun-v${version}/bun
 
 COPY package.json bun.lock .
 RUN bun install
-RUN bun add -d tsx
 
-COPY . .
+COPY .env .env
+COPY src src
 
 EXPOSE 3000
 
