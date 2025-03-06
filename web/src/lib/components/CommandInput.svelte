@@ -1,6 +1,14 @@
 <!-- lib/components/CommandInput.svelte -->
 <script lang="ts">
-	import { command, endpoint, files, showConfigModal } from '$lib/stores'
+	import {
+		command,
+		endpoint,
+		files,
+		tasks,
+		taskSelected,
+		showConfigModal,
+		currentTab,
+	} from '$lib/stores'
 	import { get } from 'svelte/store'
 
 	type FileItem = { id: string; file: File; thumb: string | null; icon: string }
@@ -149,9 +157,15 @@
 			console.error('Command send failed:', message)
 			showConfigModal.set(true)
 		} else {
+			const data = await response.json()
 			console.log('Command Sent:', message)
 			inputEl.innerHTML = ''
 			command.set('')
+			if (data.success && data.task) {
+				tasks.update((current) => [...current, data.task])
+				taskSelected.set(get(tasks).length - 1)
+				currentTab.set('tasks')
+			}
 		}
 	}
 </script>

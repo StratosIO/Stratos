@@ -1,10 +1,9 @@
 <!-- lib/components/ServerStatus.svelte -->
 <script lang="ts">
 	import { endpoint, serverStatus, showConfigModal } from '$lib/stores'
-	import { onDestroy, onMount } from 'svelte'
+	import { onMount } from 'svelte'
 	import { get } from 'svelte/store'
 
-	let endpointUnsubscribe: () => void
 	let eventSource: EventSource | null = null
 	let countdownInterval: number | undefined = undefined
 
@@ -20,7 +19,10 @@
 	}
 
 	const resetConnection = () => {
-		eventSource?.close()
+		if (eventSource) {
+			eventSource.close()
+			eventSource = null
+		}
 		if (countdownInterval !== undefined) {
 			clearInterval(countdownInterval)
 			countdownInterval = undefined
@@ -31,7 +33,9 @@
 	const setupEventSource = () => {
 		resetConnection()
 		eventSource = new EventSource(`${get(endpoint)}/status`)
-		eventSource.onopen = () => updateServerStatus({ online: true, countdown: 10, counting: false })
+		eventSource.onopen = () => {
+			updateServerStatus({ online: true, countdown: 10, counting: false })
+		}
 		eventSource.onerror = () => {
 			updateServerStatus({ online: false })
 			setTimeout(() => {
@@ -68,12 +72,11 @@
 	}
 
 	onMount(() => {
-		endpointUnsubscribe = endpoint.subscribe(setupEventSource)
-	})
-
-	onDestroy(() => {
-		resetConnection()
-		endpointUnsubscribe?.()
+		const unsubscribe = endpoint.subscribe(setupEventSource)
+		return () => {
+			unsubscribe()
+			resetConnection()
+		}
 	})
 
 	const openModal = () => showConfigModal.set(true)
@@ -82,7 +85,7 @@
 <button
 	type="button"
 	on:click={openModal}
-	class="bg-base-200 rounded-field mb-6 flex w-full items-center p-6"
+	class="bg-base-200 rounded-field flex w-full items-center p-6"
 >
 	<div class="flex items-center">
 		{#if $serverStatus.online}

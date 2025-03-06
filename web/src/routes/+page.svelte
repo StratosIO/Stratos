@@ -3,35 +3,67 @@
 	import ConfigModal from '$lib/components/ConfigModal.svelte'
 	import FileDetail from '$lib/components/FileDetail.svelte'
 	import FileList from '$lib/components/FileList.svelte'
+	import TaskDetail from '$lib/components/TaskDetail.svelte'
+	import TaskList from '$lib/components/TaskList.svelte'
 	import FileUploader from '$lib/components/FileUploader.svelte'
 	import ServerStatus from '$lib/components/ServerStatus.svelte'
-	import { showConfigModal } from '$lib/stores'
+	import { currentTab, showConfigModal } from '$lib/stores'
 </script>
 
+<!-- Desktop layout -->
 <div class="hidden h-screen md:flex">
 	<aside class="flex w-sm flex-col p-6">
-		<ServerStatus />
-		<div class="pb-8">
-			<FileUploader />
+		<div class="mb-6"><ServerStatus /></div>
+		<div class="mb-2"><FileUploader /></div>
+		<div class="tabs tabs-border mb-4">
+			<input type="radio" class="tab" value="files" bind:group={$currentTab} aria-label="Files" />
+			<input type="radio" class="tab" value="tasks" bind:group={$currentTab} aria-label="Tasks" />
+			<input type="radio" class="tab" value="other" bind:group={$currentTab} aria-label="Other" />
 		</div>
-		<FileList />
+
+		{#if $currentTab === 'files'}
+			<FileList />
+		{:else if $currentTab === 'tasks'}
+			<TaskList />
+		{:else if $currentTab === 'other'}
+			<div class="skeleton h-32 w-full"></div>
+		{/if}
 	</aside>
+
 	<main class="flex flex-1 flex-col px-4 py-6">
-		<FileDetail />
-		<div class="mt-auto">
-			<CommandPanel />
-		</div>
+		{#if $currentTab === 'files'}
+			<FileDetail />
+			<div class="mt-auto">
+				<CommandPanel />
+			</div>
+		{:else if $currentTab === 'tasks'}
+			<TaskDetail />
+		{:else if $currentTab === 'other'}
+			<div class="skeleton h-32 w-full"></div>
+		{/if}
 	</main>
 </div>
 
 <!-- Mobile layout -->
 <div class="flex h-screen flex-col md:hidden">
 	<main class="p-6">
-		<div><ServerStatus /></div>
-		<div class="pb-8"><FileUploader /></div>
-		<div class="pb-8"><FileList /></div>
-		<div class="pb-8"><FileDetail /></div>
-		<div><CommandPanel /></div>
+		<div class="mb-6"><ServerStatus /></div>
+		<div class="mb-2"><FileUploader /></div>
+		<div class="tabs tabs-border mb-4">
+			<input type="radio" class="tab" value="files" bind:group={$currentTab} aria-label="Files" />
+			<input type="radio" class="tab" value="tasks" bind:group={$currentTab} aria-label="Tasks" />
+			<input type="radio" class="tab" value="other" bind:group={$currentTab} aria-label="Other" />
+		</div>
+		{#if $currentTab === 'files'}
+			<div class="mb-8"><FileList /></div>
+			<div class="mb-8"><FileDetail /></div>
+			<CommandPanel />
+		{:else if $currentTab === 'tasks'}
+			<div class="mb-8"><TaskList /></div>
+			<TaskDetail />
+		{:else if $currentTab === 'other'}
+			<div class="skeleton h-32 w-full"></div>
+		{/if}
 	</main>
 </div>
 

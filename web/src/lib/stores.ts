@@ -13,10 +13,18 @@ export const files = writable<
 		xhr?: XMLHttpRequest
 	}>
 >([])
-export const fileSelected = writable<number>(-1)
-export const command = writable<string>('')
-export const progress = writable<number>(0)
-export const output = writable<string>('Placeholder output text...')
+
+export const tasks = writable<
+	Array<{
+		id: string
+		status: string
+		created_at: string
+		updated_at?: string
+		result_path?: string
+		error?: string | null
+	}>
+>([])
+
 export const serverStatus = writable<{
 	online: boolean
 	uptime: string
@@ -28,5 +36,10 @@ export const serverStatus = writable<{
 	countdown: 10,
 	counting: false,
 })
+
+export const fileSelected = writable<number>(-1)
+export const taskSelected = writable<number>(-1)
+export const command = writable<string>('')
 export const endpoint = writable<string>(browser ? `${window.location.origin}/api` : '')
 export const showConfigModal = writable<boolean>(false)
+export const currentTab = writable<string>('files')

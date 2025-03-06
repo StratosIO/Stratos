@@ -1,7 +1,6 @@
 <!-- lib/components/CommandPanel.svelte -->
 <script lang="ts">
 	import CommandInput from '$lib/components/CommandInput.svelte'
-	import { output, progress } from '$lib/stores'
 </script>
 
 <div class="mb-4">
@@ -10,23 +9,13 @@
 		<div class="flex-1"><CommandInput /></div>
 	</div>
 </div>
-<div class="mb-4">
-	<p class="text-base-content mb-2 block font-medium">Progress:</p>
-	<div
-		class="bg-base-200 h-4 w-full rounded-full"
-		role="progressbar"
-		aria-valuenow={$progress}
-		aria-valuemin="0"
-		aria-valuemax="100"
-	>
-		<div class="bg-primary h-4 rounded-full" style="width: {$progress}%"></div>
-	</div>
-</div>
-<div>
-	<p class="text-base-content mb-2 block font-medium">Output:</p>
-	<div
-		class="scrollbar-hidden bg-base-200 text-base-content rounded-field h-40 w-full p-4 font-mono text-sm"
-	>
-		{$output}
-	</div>
+
+<div class="card rounded-field p-4 mt-4 text-sm text-base-content/80">
+	<p class="font-medium">Tips:</p>
+	<p>
+		Press <kbd class="kbd kbd-sm">/</kbd> to enter a slash command.
+	</p>
+	<p>
+		Press <kbd class="kbd kbd-sm">@</kbd> to mention a file from your uploads.
+	</p>
 </div>

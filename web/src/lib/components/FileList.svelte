@@ -3,45 +3,40 @@
 	import { endpoint, fileSelected, files } from '$lib/stores'
 	import { get } from 'svelte/store'
 
-	async function deleteFileFromServer(id: string): Promise<void> {
-		const token = 'AUTH_TOKEN_PLACEHOLDER'
-		const path = `${get(endpoint)}/uploads/${id}`
-		try {
-			const response = await fetch(path, {
-				method: 'DELETE',
-				headers: { Authorization: `Bearer ${token}` },
-			})
-			const result = await response.json()
-			if (!response.ok) {
-				console.error('File deletion failed:', result)
-			} else {
-				console.log('File deleted successfully:', result)
-			}
-		} catch (error) {
-			console.error('Error deleting file:', error)
-		}
-	}
-
-	function selectFile(index: number): void {
-		fileSelected.set(index)
-	}
-
-	function deleteFile(index: number, e: Event): void {
+	async function deleteFile(index: number, e: Event): Promise<void> {
 		e.stopPropagation()
 		const currentFiles = get(files)
 		const fileToDelete = currentFiles[index]
+
 		if (fileToDelete.xhr && typeof fileToDelete.xhr.abort === 'function') {
 			fileToDelete.xhr.abort()
 		}
+
 		if (fileToDelete.uploaded) {
-			deleteFileFromServer(fileToDelete.id)
+			const token = 'AUTH_TOKEN_PLACEHOLDER'
+			const path = `${get(endpoint)}/uploads/${fileToDelete.id}`
+			try {
+				const response = await fetch(path, {
+					method: 'DELETE',
+					headers: { Authorization: `Bearer ${token}` },
+				})
+				const result = await response.json()
+				if (!response.ok) {
+					console.error('File deletion failed:', result)
+					return
+				}
+				console.log('File deleted successfully:', result)
+			} catch (error) {
+				console.error('Error deleting file:', error)
+				return
+			}
 		}
-		files.update((current) => {
-			const filesNew = [...current]
-			filesNew.splice(index, 1)
-			return filesNew
+		files.update(current => {
+			const newFiles = [...current]
+			newFiles.splice(index, 1)
+			return newFiles
 		})
-		fileSelected.update((currentIndex) => {
+		fileSelected.update(currentIndex => {
 			if (currentIndex === index) {
 				return get(files).length ? 0 : -1
 			}
@@ -50,6 +45,10 @@
 			}
 			return currentIndex
 		})
+	}
+
+	function selectFile(index: number): void {
+		fileSelected.set(index)
 	}
 </script>
 
