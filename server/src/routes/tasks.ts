@@ -10,5 +10,6 @@ const tasks = new Hono()
 tasks.post('/', taskController.submitCommand)
 tasks.get('/:id', taskController.getTask)
 tasks.get('/:id/status', taskController.getTaskStatus)
+tasks.delete('/:id', taskController.delete)
 
 export default tasks

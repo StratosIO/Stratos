@@ -194,4 +194,26 @@ export const taskController = {
       return c.json({ error: `Server error: ${errorMessage}` }, 500)
     }
   },
+
+  delete: async (c: Context): Promise<Response> => {
+    const taskId = c.req.param('id')
+
+    if (!validateUUID(taskId)) {
+      return c.json({ error: 'Invalid task ID format' }, 400)
+    }
+
+    try {
+      const deleted = await taskService.deleteTask(taskId)
+      
+      if (!deleted) {
+        return c.json({ error: 'Task not found' }, 404)
+      }
+
+      return c.json({ success: true }, 200)
+    } catch (error) {
+      log.error('Failed to delete task:', error)
+      return c.json({ error: 'Failed to delete task' }, 500)
+    }
+  }
 }
+

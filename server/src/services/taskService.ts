@@ -226,4 +226,51 @@ export const taskService = {
       throw new Error(`File not found: ${filename}`)
     }
   },
+
+  deleteTask: async (taskId: string): Promise<boolean> => {
+    if (!validateUUID(taskId)) {
+      throw new Error('Invalid UUID')
+    }
+
+    try {
+      // First check if task exists and get its details
+      const [task] = await sql`
+        SELECT id, result_path 
+        FROM tasks 
+        WHERE id = ${taskId}
+      `
+
+      if (!task) {
+        return false
+      }
+
+      // Delete task output directory if it exists
+      const outputDir = path.join(OUTPUT_CONFIG.DIR, taskId)
+      try {
+        await fs.rm(outputDir, { recursive: true, force: true })
+      } catch (error) {
+        // Log warning but continue with database cleanup
+        log.warn(`Error deleting output directory for task ${taskId}:`, error)
+      }
+
+      // Delete related records and task from database in a transaction
+      await sql.begin(async (sql) => {
+        // delete task_files entries
+        await sql`
+          DELETE FROM task_files 
+          WHERE task_id = ${taskId}
+        `
+        // delete the task itself
+        await sql`
+          DELETE FROM tasks 
+          WHERE id = ${taskId}
+        `
+      })
+
+      return true
+    } catch (error) {
+      log.error(`Error deleting task ${taskId}:`, error)
+      throw new Error('Failed to delete task')
+    }
+  }
 }
