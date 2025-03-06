@@ -83,6 +83,8 @@ components:
         id:
           type: string
           format: uuid
+        command:
+          type: string
         status:
           type: string
           enum: [pending, processing, completed, failed]
@@ -103,6 +105,12 @@ components:
           items:
             $ref: '#/components/schemas/TaskFile'
           nullable: true
+        fileIds:
+          type: array
+          items:
+            type: string
+            format: uuid
+          description: IDs of input files associated with this task
     
     TaskFile:
       type: object
@@ -153,6 +161,50 @@ components:
           type: boolean
         task:
           $ref: '#/components/schemas/Task'
+
+    TaskList:
+      type: object
+      properties:
+        success:
+          type: boolean
+        data:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: string
+                format: uuid
+              command:
+                type: string
+              status:
+                type: string
+                enum: [pending, processing, completed, failed]
+              created_at:
+                type: string
+                format: date-time
+              updated_at:
+                type: string
+                format: date-time
+              result_path:
+                type: string
+                nullable: true
+              error:
+                type: string
+                nullable: true
+              fileIds:
+                type: array
+                items:
+                  type: string
+                  format: uuid
+        pagination:
+          type: object
+          properties:
+            next_cursor:
+              type: string
+              nullable: true
+            has_more:
+              type: boolean
     
     FileUpload:
       type: object
@@ -413,6 +465,44 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
+    
+    get:
+      summary: List all tasks
+      tags:
+        - Tasks
+      parameters:
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+          description: Maximum number of tasks to return
+        - name: cursor
+          in: query
+          required: false
+          schema:
+            type: string
+          description: Pagination cursor for fetching next page
+      responses:
+        '200':
+          description: List of tasks
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TaskList'
+        '400':
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
   
   /tasks/{id}:
     get:
@@ -437,6 +527,47 @@ paths:
                 properties:
                   task:
                     $ref: '#/components/schemas/Task'
+        '400':
+          description: Invalid ID
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Task not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    
+    delete:
+      summary: Delete a task
+      tags:
+        - Tasks
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: ID of the task to delete
+      responses:
+        '200':
+          description: Task deleted successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
         '400':
           description: Invalid ID
           content:
