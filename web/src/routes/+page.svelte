@@ -12,9 +12,9 @@
 
 <!-- Desktop layout -->
 <div class="hidden h-screen md:flex">
-	<aside class="flex w-sm flex-col p-6">
+	<aside class="border-base-300 flex w-sm flex-col border-r-2 p-6">
 		<div class="mb-6"><ServerStatus /></div>
-		<div class="mb-2"><FileUploader /></div>
+		<div class="mb-4"><FileUploader /></div>
 		<div class="tabs tabs-border mb-6">
 			<input type="radio" class="tab" value="files" bind:group={$currentTab} aria-label="Files" />
 			<input type="radio" class="tab" value="tasks" bind:group={$currentTab} aria-label="Tasks" />
@@ -30,7 +30,7 @@
 		{/if}
 	</aside>
 
-	<main class="flex flex-1 flex-col px-4 py-6">
+	<main class="flex flex-1 flex-col p-6">
 		{#if $currentTab === 'files'}
 			<FileDetail />
 			<div class="mt-auto">
@@ -48,7 +48,7 @@
 <div class="flex h-screen flex-col md:hidden">
 	<main class="p-6">
 		<div class="mb-6"><ServerStatus /></div>
-		<div class="mb-2"><FileUploader /></div>
+		<div class="mb-4"><FileUploader /></div>
 		<div class="tabs tabs-border mb-6">
 			<input type="radio" class="tab" value="files" bind:group={$currentTab} aria-label="Files" />
 			<input type="radio" class="tab" value="tasks" bind:group={$currentTab} aria-label="Tasks" />
