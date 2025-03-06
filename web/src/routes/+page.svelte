@@ -15,7 +15,7 @@
 	<aside class="flex w-sm flex-col p-6">
 		<div class="mb-6"><ServerStatus /></div>
 		<div class="mb-2"><FileUploader /></div>
-		<div class="tabs tabs-border mb-4">
+		<div class="tabs tabs-border mb-6">
 			<input type="radio" class="tab" value="files" bind:group={$currentTab} aria-label="Files" />
 			<input type="radio" class="tab" value="tasks" bind:group={$currentTab} aria-label="Tasks" />
 			<input type="radio" class="tab" value="other" bind:group={$currentTab} aria-label="Other" />
@@ -49,7 +49,7 @@
 	<main class="p-6">
 		<div class="mb-6"><ServerStatus /></div>
 		<div class="mb-2"><FileUploader /></div>
-		<div class="tabs tabs-border mb-4">
+		<div class="tabs tabs-border mb-6">
 			<input type="radio" class="tab" value="files" bind:group={$currentTab} aria-label="Files" />
 			<input type="radio" class="tab" value="tasks" bind:group={$currentTab} aria-label="Tasks" />
 			<input type="radio" class="tab" value="other" bind:group={$currentTab} aria-label="Other" />
