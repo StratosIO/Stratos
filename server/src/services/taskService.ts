@@ -7,7 +7,7 @@ import { promisify } from 'util'
 import path from 'path'
 import fs from 'fs/promises'
 import { OUTPUT_CONFIG } from '../types/index.js'
-import type { CommandValidationResult, Task, TaskFile, TaskFilesResult } from '../types/index.js'
+import type { CommandValidationResult, Task, TaskFile, TaskFilesResult, ListOptions, TaskListResult } from '../types/index.js'
 import { getContentType } from '../utils/fileUtils.js'
 
 const execAsync = promisify(exec)
@@ -270,6 +270,80 @@ export const taskService = {
     } catch (error) {
       log.error(`Error deleting task ${taskId}:`, error)
       throw new Error('Failed to delete task')
+    }
+  },
+  listTasks: async (options: ListOptions): Promise<TaskListResult> => {
+    const { limit, cursor } = options
+
+    // Build the base query
+    let baseQuery = sql`
+      SELECT 
+        id,
+        command,
+        status,
+        created_at,
+        updated_at,
+        result_path,
+        error
+      FROM tasks
+    `
+
+    // Add cursor condition if it exists
+    if (cursor) {
+      baseQuery = sql`${baseQuery} 
+        WHERE (created_at, id) < (${cursor.timestamp}, ${cursor.id})`
+    }
+
+    // Add ordering and limit
+    baseQuery = sql`${baseQuery} 
+      ORDER BY created_at DESC, id DESC 
+      LIMIT ${limit + 1}`
+
+    const tasks = await baseQuery
+
+    // Check if we have more items
+    const hasMore = tasks.length > limit
+    const items = hasMore ? tasks.slice(0, -1) : tasks
+
+    // Generate next cursor if we have more items
+    let nextCursor = null
+    if (hasMore && items.length > 0) {
+      const lastItem = items[items.length - 1]
+      const cursorData = {
+        timestamp: lastItem.created_at.toISOString(),
+        id: lastItem.id,
+      }
+      nextCursor = Buffer.from(JSON.stringify(cursorData)).toString('base64')
+    }
+
+    // Enhance each task with its associated file IDs
+    const enhancedTasks = await Promise.all(
+      items.map(async (task) => {
+        const fileAssociations = await sql`
+          SELECT file_id
+          FROM task_files
+          WHERE task_id = ${task.id}
+        `
+        const fileIds = fileAssociations.map(association => association.file_id)
+        
+        // Ensure we keep all Task properties and add fileIds
+        return {
+          id: task.id,
+          command: task.command,
+          status: task.status,
+          created_at: task.created_at,
+          updated_at: task.updated_at,
+          result_path: task.result_path,
+          error: task.error,
+          fileIds
+        } as Task & { fileIds: string[] }
+      })
+    )
+
+    return {
+      tasks: enhancedTasks,
+      nextCursor,
+      hasMore,
     }
   }
 }

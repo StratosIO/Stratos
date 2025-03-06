@@ -47,6 +47,13 @@ export interface ListResult {
   hasMore: boolean
 }
 
+// Task list result type
+export interface TaskListResult {
+  tasks: (Task & { fileIds?: string[] })[];
+  nextCursor: string | null;
+  hasMore: boolean;
+}
+
 export interface Task {
   id: string
   command: string
@@ -101,6 +108,7 @@ export interface TaskFilesResult {
   single: TaskFile | null
   error?: string
 }
+
 
 export interface TaskFileDownloadInfo {
   filename: string

@@ -7,6 +7,7 @@ import {
 } from '../services/commandParser.js'
 import log from '../config/logger.js'
 import type { TaskFileDownloadInfo } from '../types/index.js'
+import { DEFAULT_PAGE_SIZE, MAX_PAGE_SIZE } from '../types/index.js'
 import { validate as validateUUID } from 'uuid'
 
 export const taskController = {
@@ -216,6 +217,42 @@ export const taskController = {
     } catch (error) {
       log.error(`Failed to delete task: ${error}`, { taskId, error: String(error) })
       return c.json({ error: 'Failed to delete task' }, 500)
+    }
+  },
+  listTasks: async (c: Context) => {
+    try {
+      const { limit, cursor } = c.req.query()
+
+      // Parse and validate limit
+      const parseLimit = parseInt(limit || String(DEFAULT_PAGE_SIZE))
+      const validLimit = Math.min(Math.max(1, parseLimit), MAX_PAGE_SIZE)
+
+      // Parse cursor if provided
+      let cursorData
+      if (cursor) {
+        try {
+          cursorData = JSON.parse(Buffer.from(cursor, 'base64').toString())
+        } catch (e) {
+          return c.json({ error: 'Invalid cursor' }, 400)
+        }
+      }
+
+      const result = await taskService.listTasks({
+        limit: validLimit,
+        cursor: cursorData,
+      })
+
+      return c.json({
+        success: true,
+        data: result.tasks,
+        pagination: {
+          next_cursor: result.nextCursor,
+          has_more: result.hasMore,
+        },
+      })
+    } catch (error) {
+      log.error('Failed to list tasks', { error: String(error) })
+      return c.json({ error: 'Failed to fetch tasks' }, 500)
     }
   }
 }
