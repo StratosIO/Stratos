@@ -1,37 +1,27 @@
-import type { BuiltinCommandDefinition } from '../../types/index.js'
+import type { AICommandDefinition } from '../../types/index.js'
+
 /**
- * Definitions for all AI-based built-in commands
- * These commands utilize AI capabilities for processing media files
+ * Definitions for all AI commands
  */
-export const AI_COMMANDS: Record<string, BuiltinCommandDefinition> = {
-  'transcribe-audio': {
-    name: 'transcribe-audio',
-    description: 'Transcribe audio to text using AI',
+export const AI_COMMANDS: Record<string, AICommandDefinition> = {
+  'transcribe': {
+    name: 'transcribe',
+    description: 'Transcribe audio from a video or audio file to text',
     options: [
       {
         name: 'language',
-        description: 'Language of the audio (en, es, fr, etc.)',
+        description: 'Source language (auto for automatic detection)',
         type: 'string',
-        default: 'en',
+        default: 'auto',
       },
       {
         name: 'format',
         description: 'Output format (txt, srt, vtt)',
         type: 'string',
         default: 'txt',
-      }
+      },
     ],
-    transform: (input, options) => {
-      // This is a placeholder for the actual AI implementation
-      const language = options.language || 'en'
-      const format = options.format || 'txt'
-      
-      // This is just a placeholder command 
-      return `echo "AI transcription placeholder for ${input} in ${language}" > output.${format}`
-    },
-  },
-  
-  // Add more AI commands as needed
+  }
 }
 
 /**

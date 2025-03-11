@@ -1,5 +1,6 @@
 import type { Context } from 'hono'
 import { taskService } from '../services/taskService.js'
+import { aiService } from '../services/commands/aiService.js'
 import {
   parseCommand,
   getBuiltinCommands,
@@ -32,7 +33,12 @@ export const taskController = {
         return c.json({ error: commandResult.error }, 400)
       }
 
-      // Get the actual command to execute
+      // Special handling for AI commands
+      if (commandResult.type === 'ai') {
+        return await handleAICommand(c, commandResult)
+      }
+
+      // Get the actual command to execute for non-AI commands
       let processedCommand = commandResult.command
 
       if (commandResult.type === 'builtin' && commandResult.transformedCommand) {
@@ -255,4 +261,42 @@ export const taskController = {
       return c.json({ error: 'Failed to fetch tasks' }, 500)
     }
   },
+}
+/**
+ * Helper function to handle AI command submission
+ */
+async function handleAICommand(c: Context, commandResult: any): Promise<Response> {
+  try {
+    // Validate that file exists
+    const fileId = commandResult.input
+    const validation = await taskService.validateCommand(fileId)
+
+    if (!validation.isValid) {
+      return c.json({ error: validation.error }, 400)
+    }
+
+    // Create a task record with original command
+    const originalCommand = `/ai-${commandResult.command} ${fileId}`
+    const task = await taskService.createTask(originalCommand, validation.fileIds)
+
+    // Start AI processing in background
+    aiService.processAITask(task.id, commandResult).catch((err) => {
+      log.error(`Background AI task execution failed for ${task.id}:`, err)
+    })
+
+    return c.json(
+      {
+        success: true,
+        task: {
+          id: task.id,
+          status: task.status,
+          created_at: task.created_at,
+        },
+      },
+      201
+    )
+  } catch (error) {
+    log.error('Failed to process AI command:', error)
+    return c.json({ error: 'Failed to process AI command' }, 500)
+  }
 }

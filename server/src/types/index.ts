@@ -73,7 +73,7 @@ export interface CommandValidationResult {
 
 // types for parsing commands
 export interface ParsedCommand {
-  type: 'ffmpeg' | 'ffprobe' | 'builtin'
+  type: 'ffmpeg' | 'ffprobe' | 'builtin' | 'ai'
   command: string
   input?: string
   options?: Record<string, string | number | boolean>
@@ -94,6 +94,12 @@ export interface BuiltinCommandDefinition {
   description: string
   options: CommandOption[]
   transform: (input: string, options: Record<string, any>) => string
+}
+
+export interface AICommandDefinition {
+  name: string
+  description: string
+  options: CommandOption[]
 }
 
 export interface TaskFile {
