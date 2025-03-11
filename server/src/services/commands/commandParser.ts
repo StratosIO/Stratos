@@ -1,6 +1,10 @@
 import { validate as validateUUID } from 'uuid'
 import type { ParsedCommand } from '../../types/index.js'
-import { BUILTIN_COMMANDS, getBuiltinCommands, getBuiltinCommandDetails } from './builtinCommands.js'
+import {
+  BUILTIN_COMMANDS,
+  getBuiltinCommands,
+  getBuiltinCommandDetails,
+} from './builtinCommands.js'
 import { AI_COMMANDS, getAICommandDetails, getAICommands } from './aiCommands.js'
 
 /**
@@ -10,12 +14,12 @@ export function parseCommand(commandStr: string): ParsedCommand {
   // Trim the command string
   commandStr = commandStr.trim()
 
-  // Check if it's an AI command 
+  // Check if it's an AI command
   if (commandStr.startsWith('/ai-')) {
     return parseAICommand(commandStr)
   }
 
-  // Check if it's a built-in command 
+  // Check if it's a built-in command
   if (commandStr.startsWith('/')) {
     return parseBuiltinCommand(commandStr)
   }
@@ -151,7 +155,7 @@ function parseAICommand(commandStr: string): ParsedCommand {
   if (parts.length < 2) {
     return {
       type: 'ai',
-      command: parts[0] || '', 
+      command: parts[0] || '',
       error: 'AI command requires at least a command name and input file ID',
     }
   }
@@ -163,7 +167,7 @@ function parseAICommand(commandStr: string): ParsedCommand {
   if (!commandName || !AI_COMMANDS[commandName]) {
     return {
       type: 'ai',
-      command: commandName || '', 
+      command: commandName || '',
       input,
       error: `Unknown AI command: ${commandName || 'empty'}`,
     }
@@ -232,4 +236,4 @@ function parseAICommand(commandStr: string): ParsedCommand {
 }
 
 export { getBuiltinCommands, getBuiltinCommandDetails }
-export {getAICommands, getAICommandDetails}
+export { getAICommands, getAICommandDetails }

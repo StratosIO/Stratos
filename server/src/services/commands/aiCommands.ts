@@ -4,7 +4,7 @@ import type { AICommandDefinition } from '../../types/index.js'
  * Definitions for all AI commands
  */
 export const AI_COMMANDS: Record<string, AICommandDefinition> = {
-  'transcribe': {
+  transcribe: {
     name: 'transcribe',
     description: 'Transcribe audio from a video or audio file to text',
     options: [
@@ -21,7 +21,7 @@ export const AI_COMMANDS: Record<string, AICommandDefinition> = {
         default: 'txt',
       },
     ],
-  }
+  },
 }
 
 /**

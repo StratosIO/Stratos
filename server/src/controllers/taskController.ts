@@ -293,7 +293,7 @@ async function handleAICommand(c: Context, commandResult: any): Promise<Response
           created_at: task.created_at,
         },
       },
-      201
+      201,
     )
   } catch (error) {
     log.error('Failed to process AI command:', error)
