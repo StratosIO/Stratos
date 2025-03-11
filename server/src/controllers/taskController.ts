@@ -4,7 +4,7 @@ import {
   parseCommand,
   getBuiltinCommands,
   getBuiltinCommandDetails,
-} from '../services/commandParser.js'
+} from '../services/commands/commandParser.js'
 import log from '../config/logger.js'
 import type { TaskFileDownloadInfo } from '../types/index.js'
 import { DEFAULT_PAGE_SIZE, MAX_PAGE_SIZE } from '../types/index.js'
