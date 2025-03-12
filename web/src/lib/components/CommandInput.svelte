@@ -27,11 +27,13 @@
 
 	$: filteredFiles = showSuggestions
 		? $files
-				.filter((f) => f.file.name.toLowerCase().includes(suggestionQuery.toLowerCase()))
-				.slice(0, 3)
+			.filter((f) => f.file.name.toLowerCase().includes(suggestionQuery.toLowerCase()))
+			.slice(0, 5)
 		: []
 	$: filteredSlash = showSlashSuggestions
-		? slashCommands.filter((cmd) => cmd.toLowerCase().includes(slashQuery.toLowerCase()))
+		? slashCommands
+			.filter((cmd) => cmd.toLowerCase().includes(slashQuery.toLowerCase()))
+			.slice(0, 5)
 		: []
 
 	function updateCommand(): void {
