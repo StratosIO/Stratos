@@ -47,6 +47,29 @@ Convert a video file to a different format with optional quality settings.
 /convert-video 5c12ecc5-f2f8-438b-892d-e23348cb1d81 --format=webm --quality=high
 /convert-video 5c12ecc5-f2f8-438b-892d-e23348cb1d81 --resolution=1920x1080 --output=high-res
 ```
+### /trim-video
+
+Extract a specific segment from a video file.
+
+**Options:**
+- `--start`: Start time position (format: `HH:MM:SS`, default: `00:00:00`)
+- `--end`: End time position (format: `HH:MM:SS`)
+- `--duration`: Duration in seconds (alternative to end time)
+- `--quality`: Output quality (`low`, `medium`, `high`, `copy`, default: `copy`)
+- `--format`: Output format (`mp4`, `mov`, `webm`, default: `mp4`)
+
+**Examples:**
+```
+/trim-video 5c12ecc5-f2f8-438b-892d-e23348cb1d81 --start=00:01:30 --duration=20
+/trim-video 5c12ecc5-f2f8-438b-892d-e23348cb1d81 --start=00:05:00 --end=00:07:30
+/trim-video 5c12ecc5-f2f8-438b-892d-e23348cb1d81 --start=00:10:00 --duration=60 --quality=high --format=mov --output=clip
+```
+
+**Notes:**
+- `copy` quality mode preserves the original quality and is much faster (no re-encoding)
+- You can specify either `--end` time or `--duration` (in seconds); if both are provided, duration takes precedence
+- Using precise start/end times may result in tiny variations due to keyframe alignment
+- For highest precision trimming, use `--quality=high` instead of `--quality=copy`
 
 ### /compress-video
 

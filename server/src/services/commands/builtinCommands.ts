@@ -190,11 +190,88 @@ export const BUILTIN_COMMANDS: Record<string, BuiltinCommandDefinition> = {
       } else if (codec === 'vp9') {
         return `ffmpeg -i ${input} ${scale} -c:v libvpx-vp9 -crf ${crf} -b:v 0 -c:a libopus -b:a 96k output.${format === 'mp4' ? 'webm' : format}`
       }
-
       // Default fallback
       return `ffmpeg -i ${input} ${scale} -c:v libx264 -crf ${crf} -preset ${preset} -c:a aac -b:a 96k output.mp4`
     },
   },
+  'trim-video': {
+  name: 'trim-video',
+  description: 'Extract a segment from a video file',
+  options: [
+    {
+      name: 'start',
+      description: 'Start time (format: HH:MM:SS)',
+      type: 'string',
+      default: '00:00:00',
+    },
+    {
+      name: 'end',
+      description: 'End time (format: HH:MM:SS)',
+      type: 'string',
+      default: '',
+    },
+    {
+      name: 'duration',
+      description: 'Duration in seconds (alternative to end time)',
+      type: 'number',
+      default: 0,
+    },
+    {
+      name: 'quality',
+      description: 'Output quality (low, medium, high, copy)',
+      type: 'string',
+      default: 'copy',
+    },
+    {
+      name: 'format',
+      description: 'Output format (mp4, mov, webm)',
+      type: 'string',
+      default: 'mp4',
+    },
+  ],
+  transform: (input, options) => {
+    const start = options.start || '00:00:00';
+    const format = options.format || 'mp4';
+    
+    // Handle duration vs end time (duration takes precedence if both are provided)
+    let durationParam = '';
+    if (options.duration && options.duration > 0) {
+      durationParam = `-t ${options.duration}`;
+    } else if (options.end && options.end.trim() !== '') {
+      durationParam = `-to ${options.end}`;
+    }
+    
+    // Quality settings
+    const quality = options.quality || 'copy';
+    let videoCodec, audioCodec, extraParams = '';
+    
+    if (quality === 'copy') {
+      // Fast, lossless stream copy (no re-encoding)
+      videoCodec = '-c:v copy';
+      audioCodec = '-c:a copy';
+    } else {
+      // Re-encoding with quality settings
+      if (format === 'mp4') {
+        videoCodec = '-c:v libx264';
+        audioCodec = '-c:a aac -b:a 128k';
+        const crf = quality === 'high' ? '18' : quality === 'low' ? '28' : '23';
+        extraParams = `-crf ${crf} -preset medium`;
+      } else if (format === 'mov') {
+        videoCodec = '-c:v prores';
+        audioCodec = '-c:a pcm_s16le';
+        const profile = quality === 'high' ? '3' : quality === 'low' ? '0' : '2';
+        extraParams = `-profile:v ${profile}`;
+      } else if (format === 'webm') {
+        videoCodec = '-c:v libvpx-vp9';
+        audioCodec = '-c:a libopus';
+        const crf = quality === 'high' ? '18' : quality === 'low' ? '30' : '24';
+        extraParams = `-crf ${crf} -b:v 0`;
+      }
+    }
+    
+    return `ffmpeg -ss ${start} -i ${input} ${durationParam} ${videoCodec} ${extraParams} ${audioCodec} output.${format}`;
+  },
+},
 }
 
 /**
