@@ -127,6 +127,74 @@ export const BUILTIN_COMMANDS: Record<string, BuiltinCommandDefinition> = {
       return `ffmpeg -i ${input} -ss ${start} -t ${duration} -vf "fps=${fps},scale=${width}:-1:flags=lanczos,split[s0][s1];[s0]palettegen[p];[s1][p]paletteuse" output.gif`
     },
   },
+  'compress-video': {
+    name: 'compress-video',
+    description: 'Compress a video to reduce file size while maintaining acceptable quality',
+    options: [
+      {
+        name: 'level',
+        description: 'Compression level (light, medium, heavy)',
+        type: 'string',
+        default: 'medium',
+      },
+      {
+        name: 'keep-resolution',
+        description: 'Maintain original resolution',
+        type: 'boolean',
+        default: true,
+      },
+      {
+        name: 'codec',
+        description: 'Video codec (h264, h265, vp9)',
+        type: 'string',
+        default: 'h264',
+      },
+      {
+        name: 'format',
+        description: 'Output format (mp4, webm)',
+        type: 'string',
+        default: 'mp4',
+      },
+    ],
+    transform: (input, options) => {
+      const level = options.level || 'medium'
+      const keepResolution = options['keep-resolution'] !== false
+      const codec = options.codec || 'h264'
+      const format = options.format || 'mp4'
+
+      // CRF values - higher = more compression
+      let crf, preset
+      if (level === 'light') {
+        crf = '23'
+        preset = 'medium'
+      } else if (level === 'medium') {
+        crf = '28'
+        preset = 'medium'
+      } else if (level === 'heavy') {
+        crf = '32'
+        preset = 'slow'
+      } else {
+        // Default to medium if an invalid level is provided
+        crf = '28'
+        preset = 'medium'
+      }
+
+      // Resolution scaling (if needed)
+      const scale = keepResolution ? '' : '-vf "scale=trunc(oh*a/2)*2:720"'
+
+      // Codec and container format combinations
+      if (codec === 'h264') {
+        return `ffmpeg -i ${input} ${scale} -c:v libx264 -crf ${crf} -preset ${preset} -c:a aac -b:a 96k output.${format === 'webm' ? 'mp4' : format}`
+      } else if (codec === 'h265') {
+        return `ffmpeg -i ${input} ${scale} -c:v libx265 -crf ${crf} -preset ${preset} -c:a aac -b:a 96k output.${format === 'webm' ? 'mp4' : format}`
+      } else if (codec === 'vp9') {
+        return `ffmpeg -i ${input} ${scale} -c:v libvpx-vp9 -crf ${crf} -b:v 0 -c:a libopus -b:a 96k output.${format === 'mp4' ? 'webm' : format}`
+      }
+
+      // Default fallback
+      return `ffmpeg -i ${input} ${scale} -c:v libx264 -crf ${crf} -preset ${preset} -c:a aac -b:a 96k output.mp4`
+    },
+  },
 }
 
 /**

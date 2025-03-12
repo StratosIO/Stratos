@@ -48,6 +48,29 @@ Convert a video file to a different format with optional quality settings.
 /convert-video 5c12ecc5-f2f8-438b-892d-e23348cb1d81 --resolution=1920x1080 --output=high-res
 ```
 
+### /compress-video
+
+Compress a video to reduce file size while maintaining acceptable quality.
+
+**Options:**
+- `--level`: Compression level (`light`, `medium`, `heavy`, default: `medium`)
+- `--keep-resolution`: Maintain original resolution (`true`, `false`, default: `true`)
+- `--codec`: Video codec (`h264`, `h265`, `vp9`, default: `h264`)
+- `--format`: Output format (`mp4`, `webm`, default: `mp4`)
+
+**Examples:**
+```
+/compress-video 5c12ecc5-f2f8-438b-892d-e23348cb1d81
+/compress-video 5c12ecc5-f2f8-438b-892d-e23348cb1d81 --level=heavy --codec=h265
+/compress-video 5c12ecc5-f2f8-438b-892d-e23348cb1d81 --keep-resolution=false --output=compressed
+```
+
+**Notes:**
+- `light` compression preserves higher quality but results in larger files
+- `heavy` compression creates smaller files but may reduce visual quality
+- The `h265` codec generally provides better compression than `h264` but may not be compatible with all devices
+- When using `vp9` codec, the output format will automatically be set to `webm`
+
 ### /create-thumbnail
 
 Create a thumbnail image from a specific time point in a video.
