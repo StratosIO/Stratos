@@ -49,4 +49,6 @@ export const slashCommands: string[] = [
 	'convert-video',
 	'create-thumbnail',
 	'create-gif',
+	'compress-video',
+	'trim-video',
 ]
