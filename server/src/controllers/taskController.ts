@@ -1,6 +1,6 @@
 import type { Context } from 'hono'
 import { taskService } from '../services/taskService.js'
-import { aiService } from '../services/commands/aiService.js'
+import { aiService } from '../services/aiService.js'
 import {
   parseCommand,
   getBuiltinCommands,
