@@ -6,15 +6,15 @@ WORKDIR /app
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Install Whisper.cpp
-RUN apt-get update && apt-get install -y build-essential cmake git wget ffmpeg
+# Install and Make Whisper CLI
+RUN apt-get update && apt-get install -y cmake
 RUN git clone https://github.com/ggerganov/whisper.cpp.git
 WORKDIR /app/whisper.cpp
 RUN make
 
 # Download Whisper model
 WORKDIR /app
-RUN mkdir -p models uploads
+RUN mkdir -p models
 RUN wget -O models/ggml-base.en.bin https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-base.en.bin
 
 # Copy application files
