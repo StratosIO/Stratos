@@ -6,15 +6,10 @@ WORKDIR /app
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-<<<<<<< HEAD
 # Install system dependencies
 RUN apk update && apk add --no-cache build-base cmake git
 
 # Install and Make Whisper CLI
-=======
-# Install and Make Whisper CLI
-RUN apt-get update && apt-get install -y cmake
->>>>>>> e6c698fdb56c358adbe1ff986976ffcc162628c3
 RUN git clone https://github.com/ggerganov/whisper.cpp.git
 WORKDIR /app/whisper.cpp
 RUN make
