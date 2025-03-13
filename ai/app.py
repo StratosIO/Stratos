@@ -1,33 +1,32 @@
-from flask import Flask, request, jsonify
-import os
+from flask import Flask, jsonify
 import subprocess
 
-UPLOAD_FOLDER = "/app/uploads"
-WHISPER_MODEL = "/app/models/ggml-base.en.bin"
 WHISPER_BIN = "/app/whisper.cpp/build/bin/whisper-cli"
+WHISPER_MODEL_BASE_EN = "/app/models/ggml-base.en.bin"
 
 app = Flask(__name__)
-app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
 
-os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+@app.route("/transcribe/<file_path>/<options>", methods=["POST"])
+def transcribe(file_path, options):
 
-@app.route("/transcribe", methods=["POST"])
-def transcribe():
-    if "audio" not in request.files:
-        return jsonify({"error" : "No audio file provided"}), 400
-    
-    audio_file = request.files["audio"]
-    file_path = os.path.join(app.config["UPLOAD_FOLDER"], audio_file.filename)
-    audio_file.save(file_path)
+    file_path = file_path.replace("+", "/")
+    base_name = file_path.split("/")[-1].replace("-audio.wav", "-transcript.txt")
+    output_path = "/".join(file_path.split("/")[:-1]) + "/" + base_name
+    options = options.split("-")
 
     try:
         result = subprocess.run(
-            [WHISPER_BIN, "-m", WHISPER_MODEL, "-f", file_path],
+            [WHISPER_BIN, "-m", WHISPER_MODEL_BASE_EN, "-f", file_path],
             capture_output=True,
             text=True,
             check=True,
         )
-        return jsonify({"transcription": result.stdout.strip()})
+        # Write the output to a file
+        with open(output_path, "w") as f:
+            f.write(result.stdout.strip())
+
+        # just return a success json message for now
+        return jsonify({"transcription": "Transcription completed"}), 200
     except subprocess.CalledProcessError as e:
         return jsonify({"error": "Error processing transcription", "details": str(e)}), 500
     
