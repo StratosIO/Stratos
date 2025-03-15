@@ -25,10 +25,9 @@ def transcribe(file_path, options):
         with open(output_path, "w") as f:
             f.write(result.stdout.strip())
 
-        # just return a success json message for now
-        return jsonify({"transcription": "Transcription completed"}), 200
+        return jsonify({"message": "Transcription completed"}), 200
     except subprocess.CalledProcessError as e:
-        return jsonify({"error": "Error processing transcription", "details": str(e)}), 500
+        return jsonify({"error": str(e)}), 500
     
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5001, debug=True) 

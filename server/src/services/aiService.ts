@@ -7,8 +7,6 @@ import { promisify } from 'util'
 import { OUTPUT_CONFIG } from '../types/index.js'
 import type { ParsedCommand } from '../types/index.js'
 import axios from 'axios'
-import FormData from 'form-data'
-import { readFileSync } from 'fs'
 
 const execAsync = promisify(exec)
 const AI_URL = process.env.AI_URL || 'http://ai:5001'
@@ -36,6 +34,9 @@ export const aiService = {
 
       // We'll use the first file as the input
       const inputFile = taskFiles[0]
+      const inputFileInfo = { file_path: inputFile.file_path, 
+                              file_name: inputFile.file_name, 
+                              mime_type: inputFile.mime_type }
 
       // Create task-specific output directory if it doesn't exist
       const outputDir = path.join(OUTPUT_CONFIG.DIR, taskId)
@@ -45,17 +46,7 @@ export const aiService = {
       let resultFilePath = ''
 
       if (commandResult.command === 'transcribe') {
-        // Create a properly shaped object from the database row
-        const fileInfo = {
-          file_path: inputFile.file_path,
-          file_name: inputFile.file_name,
-          mime_type: inputFile.mime_type,
-        }
-        resultFilePath = await processTranscription(
-          fileInfo,
-          outputDir,
-          commandResult.options || {},
-        )
+        resultFilePath = await processTranscription(commandResult, inputFileInfo, outputDir)
       } else {
         throw new Error(`Unsupported AI command: ${commandResult.command}`)
       }
@@ -86,13 +77,11 @@ export const aiService = {
 }
 
 /**
- * Process a transcription task
+ * Process Transcription task
  */
-async function processTranscription(
-  inputFile: { file_path: string; file_name: string; mime_type: string },
-  outputDir: string,
-  options: Record<string, string | number | boolean>,
-): Promise<string> {
+async function processTranscription(commandResult: ParsedCommand,
+  inputFile: { file_path: string; file_name: string; mime_type: string }, outputDir: string) : Promise<string> {
+  const options = commandResult.options || {}
   const language = (options.language as string) || 'auto'
   const format = (options.format as string) || 'txt'
 
@@ -104,26 +93,24 @@ async function processTranscription(
   const audioPath = path.join(outputDir, audioFile)
 
   // Extract audio using FFmpeg
-  try {
-    await extractAudio(inputFile.file_path, audioPath)
-    log.info(`Successfully extracted audio to ${audioPath}`)
-  } catch (error) {
-    log.error(`Failed to extract audio: ${error}`)
-    throw new Error(`Audio extraction failed: ${error}`)
-  }
+  await extractAudio(inputFile.file_path, audioPath)
+  log.info(`Successfully extracted audio to ${audioPath}`)
 
-  // Define output file path
+  // Define output file path for transcription result
   const transcriptionFile = `${baseName}-transcription.${format}`
-  const transcriptionPath = path.join(outputDir, transcriptionFile)
+  let resultFilePath = path.join(outputDir, transcriptionFile)
 
+  // optionsString : "language-auto-format-txt"
+  // safeFilePath  : Replace '/' with '+' in the filePath for URL safety
+  const optionsString = Object.entries({ language, format }).map(([key, value]) => `${key}-${value}`)
+  const safeFilePath = audioPath.replace(/\//g, '+')
+
+  log.info(`Sending file to AI service: transcribe with ${audioPath}`)
   try {
     // Call the external AI service for transcription
-    const transcriptionResult = await sendToAIService('transcribe', audioPath, {
-      language,
-      format,
-    })
+    await axios.post(`${AI_URL}/transcribe/${safeFilePath}/${optionsString}`)
 
-    log.info(`Transcription saved at ${transcriptionPath}`)
+    log.info(`Transcription saved at ${resultFilePath}`)
 
     // Clean up: Delete the temporary audio file since we don't need it anymore
     try {
@@ -133,56 +120,20 @@ async function processTranscription(
       // Don't fail the whole operation if cleanup fails
       log.warn(`Failed to clean up audio file ${audioPath}: ${cleanupError}`)
     }
+
   } catch (error) {
     log.error(`Failed to get transcription from AI service: ${error}`)
 
     // Create a placeholder file in case of error
     await fs.writeFile(
-      transcriptionPath,
+      resultFilePath,
       `Error transcribing ${inputFile.file_name}: ${error}\n\nAudio file is available at ${audioPath}`,
       'utf8',
     )
 
     throw new Error(`Transcription service error: ${error}`)
   }
-
-  // Return the transcription file path
-  return transcriptionPath
-}
-
-/**
- * Send audio file to AI service
- */
-async function sendToAIService(
-  jobName: string,
-  filePath: string,
-  options: Record<string, string | number | boolean> = {},
-) {
-  // Create a hyphen separated string of options for logging
-  const optionsString = Object.entries(options)
-    .map(([key, value]) => `${key}-${value}`)
-    .join('-')
-
-  // Replace '/' with '+' in the filePath for URL safety
-  const safeFilePath = filePath.replace(/\//g, '+')
-
-  try {
-    log.info(`Sending file to AI service: ${jobName} with ${filePath}`)
-    const response = await axios.post(`${AI_URL}/${jobName}/${safeFilePath}/${optionsString}`)
-
-    // Log what we received for debugging
-    log.info(`Received response from AI service: ${typeof response.data}`)
-
-    if (typeof response.data === 'object') {
-      // Log a sample of the response object's keys
-      log.info(`Response keys: ${Object.keys(response.data).join(', ')}`)
-    }
-
-    return response.data
-  } catch (error) {
-    log.error(`[ERROR] Failed AI job: ${jobName}`, error)
-    throw new Error('AI processing failed.')
-  }
+  return resultFilePath
 }
 
 /**
