@@ -6,6 +6,23 @@ WHISPER_MODEL_BASE_EN = "/app/models/ggml-base.en.bin"
 
 app = Flask(__name__)
 
+@app.route("/slowmo/<file_path>", methods=["POST"])
+def slowmo(file_path):
+    file_path = file_path.replace("+", "/")
+    base_name = file_path.split("/")[-1].replace(".mp4", "-slowmo.mkv")
+    output_path = "/".join(file_path.split("/")[:-1]) + "/" + base_name
+
+    try:
+        result = subprocess.run(
+            ["python", "video_to_slomo.py", "--video", file_path, "--sf", "4", "--checkpoint", "models/SuperSloMo.ckpt", "--fps", "30", "--output", output_path],
+            capture_output=True,
+            text=True,
+            check=True,
+        )
+        return jsonify({"message": "Slowmo completed"}), 200
+    except subprocess.CalledProcessError as e:
+        return jsonify({"error": str(e)}), 500
+
 @app.route("/transcribe/<file_path>/<options>", methods=["POST"])
 def transcribe(file_path, options):
 
