@@ -7,6 +7,7 @@ import { promisify } from 'util'
 import path from 'path'
 import fs from 'fs/promises'
 import { OUTPUT_CONFIG } from '../types/index.js'
+import { progressEmitter,startProgressMonitor } from '../services/progressEmitter.js'
 import type {
   CommandValidationResult,
   Task,
@@ -102,16 +103,16 @@ export const taskService = {
     try {
       // Ensure the output directory exists
       await taskService.ensureOutputDirectory()
-
+  
       // Update task status to processing
       await sql`UPDATE tasks SET status = 'processing' WHERE id = ${taskId}`
-
+  
       // Get task details
       const [task] = await sql`SELECT * FROM tasks WHERE id = ${taskId}`
       if (!task) {
         throw new Error('Task not found')
       }
-
+  
       // Get file paths for all files associated with the task
       const taskFiles = await sql`
         SELECT f.id, f.file_path 
@@ -119,11 +120,14 @@ export const taskService = {
         JOIN task_files tf ON f.id = tf.file_id
         WHERE tf.task_id = ${taskId}
       `
-
+  
       // Create task-specific output directory if it doesn't exist
       const outputDir = path.join(OUTPUT_CONFIG.DIR, taskId)
       await fs.mkdir(outputDir, { recursive: true })
-
+  
+      // Create progress file path
+      const progressFilePath = path.join(outputDir, 'progress.txt')
+  
       // Prepare command by replacing file IDs with absolute file paths
       let processedCommand = task.command
       for (const file of taskFiles) {
@@ -131,14 +135,27 @@ export const taskService = {
         const absoluteFilePath = path.resolve(file.file_path)
         processedCommand = processedCommand.replace(new RegExp(file.id, 'g'), absoluteFilePath)
       }
-
+  
+      // Add progress parameter to FFmpeg command if it's an FFmpeg command
+      if (processedCommand.startsWith('ffmpeg ')) {
+        processedCommand = processedCommand.replace(
+          'ffmpeg ',
+          `ffmpeg -progress "${progressFilePath}" -nostats `
+        )
+      }
+  
+      // Start a background process to monitor progress
+      startProgressMonitor(taskId, progressFilePath)
+  
       // Execute FFmpeg command
       const { stdout, stderr } = await execAsync(`cd ${outputDir} && ${processedCommand}`)
-
+  
       // Find output file(s)
       const outputFiles = await fs.readdir(outputDir)
-      const resultPath = outputFiles.length > 0 ? path.join(outputDir, outputFiles[0]) : null
-
+      // Filter out progress.txt file
+      const resultFiles = outputFiles.filter(file => file !== 'progress.txt')
+      const resultPath = resultFiles.length > 0 ? path.join(outputDir, resultFiles[0]) : null
+  
       // Update task as completed
       await sql`
         UPDATE tasks 
@@ -147,11 +164,30 @@ export const taskService = {
             updated_at = NOW() 
         WHERE id = ${taskId}
       `
-
+  
+      // Emit a final progress event (100%)
+      progressEmitter.emit('progress', {
+        taskId,
+        progress: 100,
+        status: 'completed',
+        frame: 0,
+        fps: 0,
+        speed: 0,
+        time: 0,
+      })
+  
       log.info(`Task ${taskId} completed successfully`)
     } catch (error) {
       log.error(`Error executing task ${taskId}:`, error)
-
+  
+      // Emit error event
+      progressEmitter.emit('progress', {
+        taskId,
+        progress: 0,
+        status: 'failed',
+        error: String(error)
+      })
+  
       // Update task as failed
       await sql`
         UPDATE tasks 
@@ -294,7 +330,6 @@ export const taskService = {
         error
       FROM tasks
     `
-
     // Add cursor condition if it exists
     if (cursor) {
       baseQuery = sql`${baseQuery} 

@@ -6,6 +6,7 @@ import {
   getBuiltinCommands,
   getBuiltinCommandDetails,
 } from '../services/commands/commandParser.js'
+import { subscribeToTask, unsubscribeFromTask } from '../services/progressEmitter.js'
 import log from '../config/logger.js'
 import type { TaskFileDownloadInfo } from '../types/index.js'
 import { DEFAULT_PAGE_SIZE, MAX_PAGE_SIZE } from '../types/index.js'
@@ -261,7 +262,49 @@ export const taskController = {
       return c.json({ error: 'Failed to fetch tasks' }, 500)
     }
   },
+  streamTaskProgress: async (c: Context) => {
+    const taskId = c.req.param('id')
+    
+    if (!validateUUID(taskId)) {
+      return c.json({ error: 'Invalid task ID' }, 400)
+    }
+    
+    const task = await taskService.getTask(taskId)
+    
+    if (!task) {
+      return c.json({ error: 'Task not found' }, 404)
+    }
+    
+    // Set up SSE headers
+    c.header('Content-Type', 'text/event-stream')
+    c.header('Cache-Control', 'no-cache')
+    c.header('Connection', 'keep-alive')
+    
+    // Create SSE response
+    const response = c.body('', 200)
+    
+    // Handle client disconnect using AbortSignal instead of socket
+    c.req.raw.signal.addEventListener('abort', () => {
+      unsubscribeFromTask(taskId, response)
+    })
+    
+    // Send initial status event
+    const initialStatus = {
+      taskId,
+      status: task.status,
+      progress: task.status === 'completed' ? 100 : 0
+    }
+    
+    // @ts-ignore - Write to the SSE stream
+    response.write(`data: ${JSON.stringify(initialStatus)}\n\n`)
+    
+    // Subscribe to task progress updates
+    subscribeToTask(taskId, response)
+    
+    return response
+  }
 }
+
 /**
  * Helper function to handle AI command submission
  */
