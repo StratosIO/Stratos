@@ -14,7 +14,8 @@ CREATE TABLE files (
   file_path VARCHAR(255) NOT NULL,
   file_size BIGINT NOT NULL,
   mime_type VARCHAR(100) NOT NULL,
-  uploaded_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+  uploaded_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+  user_id INTEGER REFERENCES users(id) ON DELETE CASCADE
 );
 
 CREATE TABLE tasks (
@@ -24,7 +25,8 @@ CREATE TABLE tasks (
   created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
   result_path TEXT,
-  error TEXT
+  error TEXT,
+  user_id INTEGER REFERENCES users(id) ON DELETE CASCADE
 );
 
 CREATE TABLE task_files (
@@ -33,4 +35,4 @@ CREATE TABLE task_files (
   PRIMARY KEY (task_id, file_id)
 );
 
---neeed to add a users foreign key to the files table 
+
