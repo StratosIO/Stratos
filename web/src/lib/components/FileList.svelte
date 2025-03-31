@@ -62,7 +62,7 @@
 				<li class="group relative mb-2 flex items-center">
 					<button
 						type="button"
-						on:click={() => selectFile(index)}
+						onclick={() => selectFile(index)}
 						class="group-hover:bg-base-200 rounded-field relative min-w-0 flex-1 cursor-pointer p-2 transition-colors duration-200 {$fileSelected ===
 						index
 							? 'bg-base-200'
@@ -91,7 +91,7 @@
 						</div>
 					</button>
 					<button
-						on:click={(e) => deleteFile(index, e)}
+						onclick={(e) => deleteFile(index, e)}
 						class="material-icons-round text-base-content/0 hover:text-error group-hover:text-base-content/50 absolute top-1/2 right-2 -translate-y-1/2 transition-colors"
 					>
 						delete

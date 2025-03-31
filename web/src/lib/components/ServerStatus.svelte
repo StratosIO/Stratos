@@ -84,7 +84,7 @@
 
 <button
 	type="button"
-	on:click={openModal}
+	onclick={openModal}
 	class="bg-base-200 rounded-field flex w-full items-center p-6"
 >
 	<div class="flex items-center">

@@ -18,23 +18,27 @@
 	} from '$lib/utils/commandUtils'
 
 	let inputElement: HTMLDivElement
-	let showSuggestions = false
-	let suggestionQuery = ''
-	let activeSuggestionIndex = 0
-	let showSlashSuggestions = false
-	let slashQuery = ''
-	let activeSlashIndex = 0
+	let showSuggestions = $state(false)
+	let suggestionQuery = $state('')
+	let activeSuggestionIndex = $state(0)
+	let showSlashSuggestions = $state(false)
+	let slashQuery = $state('')
+	let activeSlashIndex = $state(0)
 
-	$: filteredFiles = showSuggestions
-		? $files
-				.filter((f) => f.file.name.toLowerCase().includes(suggestionQuery.toLowerCase()))
-				.slice(0, 5)
-		: []
-	$: filteredSlash = showSlashSuggestions
-		? slashCommands
-				.filter((cmd) => cmd.toLowerCase().includes(slashQuery.toLowerCase()))
-				.slice(0, 5)
-		: []
+	let filteredFiles = $derived(
+		showSuggestions
+			? $files
+					.filter((f) => f.file.name.toLowerCase().includes(suggestionQuery.toLowerCase()))
+					.slice(0, 5)
+			: [],
+	)
+	let filteredSlash = $derived(
+		showSlashSuggestions
+			? slashCommands
+					.filter((cmd) => cmd.toLowerCase().includes(slashQuery.toLowerCase()))
+					.slice(0, 5)
+			: [],
+	)
 
 	function updateCommand(): void {
 		if (!inputElement) return
@@ -190,9 +194,9 @@
 		aria-multiline="true"
 		tabindex="0"
 		class="textarea bg-base-200 rounded-field w-full break-all transition-colors focus:outline-none"
-		on:input={onInput}
-		on:keydown={onKeyDown}
-		on:blur={onBlur}
+		oninput={onInput}
+		onkeydown={onKeyDown}
+		onblur={onBlur}
 		data-placeholder="e.g., ffmpeg -i @input.mp4 -ss 00:00:01 -vframes 1 output.png"
 	></div>
 	{#if showSlashSuggestions}
@@ -206,13 +210,13 @@
 					tabindex="0"
 					aria-selected={index === activeSlashIndex}
 					class={index === activeSlashIndex ? 'bg-base-content/10 rounded-selector' : ''}
-					on:click={() => {
+					onclick={() => {
 						insertSlashCommandAtCursor(cmd)
 						updateCommand()
 					}}
-					on:focus={() => (activeSlashIndex = index)}
-					on:keydown={(e) => e.key === 'Enter' && insertSlashCommandAtCursor(cmd)}
-					on:mouseover={() => (activeSlashIndex = index)}
+					onfocus={() => (activeSlashIndex = index)}
+					onkeydown={(e) => e.key === 'Enter' && insertSlashCommandAtCursor(cmd)}
+					onmouseover={() => (activeSlashIndex = index)}
 				>
 					<button class="rounded-selector w-full text-left">/{cmd}</button>
 				</li>
@@ -231,13 +235,13 @@
 					tabindex="0"
 					aria-selected={index === activeSuggestionIndex}
 					class={index === activeSuggestionIndex ? 'bg-base-content/10 rounded-selector' : ''}
-					on:click={() => {
+					onclick={() => {
 						insertMentionAtCursor(file)
 						updateCommand()
 					}}
-					on:focus={() => (activeSuggestionIndex = index)}
-					on:keydown={(e) => e.key === 'Enter' && insertMentionAtCursor(file)}
-					on:mouseover={() => (activeSuggestionIndex = index)}
+					onfocus={() => (activeSuggestionIndex = index)}
+					onkeydown={(e) => e.key === 'Enter' && insertMentionAtCursor(file)}
+					onmouseover={() => (activeSuggestionIndex = index)}
 				>
 					<button class="rounded-selector w-full text-left">@{file.file.name}</button>
 				</li>
@@ -248,7 +252,7 @@
 	{/if}
 	<button
 		type="button"
-		on:click={sendCommand}
+		onclick={sendCommand}
 		aria-label="Send"
 		class="btn btn-square btn-sm rounded-selector btn-ghost absolute right-3 bottom-3"
 	>

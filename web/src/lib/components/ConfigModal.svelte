@@ -4,7 +4,7 @@
 	import { get } from 'svelte/store'
 	import { fade, fly } from 'svelte/transition'
 
-	let current: string = get(endpoint)
+	let current: string = $state(get(endpoint))
 
 	function closeModal() {
 		showConfigModal.set(false)
@@ -26,8 +26,8 @@
 			class="input w-full transition-colors focus:outline-none"
 		/>
 		<div class="modal-action">
-			<button on:click={closeModal} class="btn btn-ghost">Cancel</button>
-			<button on:click={saveApiEndpoint} class="btn btn-primary">Save</button>
+			<button onclick={closeModal} class="btn btn-ghost">Cancel</button>
+			<button onclick={saveApiEndpoint} class="btn btn-primary">Save</button>
 		</div>
 	</div>
 </div>

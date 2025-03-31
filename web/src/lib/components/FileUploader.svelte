@@ -3,9 +3,9 @@
 	import { endpoint, fileSelected, files, serverStatus, showConfigModal } from '$lib/stores'
 	import { get } from 'svelte/store'
 
-	let dragCounter = 0
-	$: dropActive = dragCounter > 0
-	let fileInput: HTMLInputElement | null = null
+	let dragCounter = $state(0)
+	let dropActive = $derived(dragCounter > 0)
+	let fileInput: HTMLInputElement | null = $state(null)
 
 	const getFileIcon = (file: File): string => {
 		if (file.type.startsWith('video/')) return 'videocam'
@@ -143,10 +143,10 @@
 </script>
 
 <svelte:window
-	on:dragenter={handleDragEnter}
-	on:dragover={(e) => e.preventDefault()}
-	on:dragleave={handleDragLeave}
-	on:drop={handleDrop}
+	ondragenter={handleDragEnter}
+	ondragover={(e) => e.preventDefault()}
+	ondragleave={handleDragLeave}
+	ondrop={handleDrop}
 />
 
 <div class="form-control">
@@ -155,8 +155,8 @@
 		multiple
 		accept="*/*"
 		bind:this={fileInput}
-		on:change={(e) => fileInfo((e.target as HTMLInputElement).files!)}
-		on:drop={(e) => e.preventDefault()}
+		onchange={(e) => fileInfo((e.target as HTMLInputElement).files!)}
+		ondrop={(e) => e.preventDefault()}
 		class="file-input w-full transition-colors focus:outline-none"
 		class:file-input-primary={dropActive}
 	/>

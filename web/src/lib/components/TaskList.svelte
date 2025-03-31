@@ -94,7 +94,7 @@
 						type="button"
 						class="group-hover:bg-base-200 rounded-field relative min-w-0 flex-1 cursor-pointer p-2 transition-colors duration-200"
 						class:bg-base-200={$taskSelected === index}
-						on:click={() => selectTask(index)}
+						onclick={() => selectTask(index)}
 					>
 						<div class="relative flex items-center">
 							<div
@@ -106,7 +106,7 @@
 						</div>
 					</button>
 					<button
-						on:click={(e) => deleteTask(index, e)}
+						onclick={(e) => deleteTask(index, e)}
 						class="material-icons-round text-base-content/0 hover:text-error group-hover:text-base-content/50 absolute top-1/2 right-2 -translate-y-1/2 transition-colors"
 					>
 						delete
