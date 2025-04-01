@@ -12,7 +12,7 @@
 
 <!-- Desktop layout -->
 <div class="hidden h-screen md:flex">
-	<aside class="border-base-300 flex w-sm flex-col border-r-2 p-6">
+	<aside class="flex w-sm flex-col p-6 overflow-y-scroll max-h-screen">
 		<div class="mb-6"><ServerStatus /></div>
 		<div class="mb-4"><FileUploader /></div>
 		<div class="tabs tabs-border mb-6">

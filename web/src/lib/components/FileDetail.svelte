@@ -41,7 +41,7 @@
 				Type: {$file.type || 'Unknown'}
 			</p>
 			<p class="truncate text-sm">
-				Last Modified: <span class="font-mono">{$file.time}</span>
+				Uploaded at: <span class="font-mono">{$file.time}</span>
 			</p>
 			<p class="truncate text-sm">
 				UUID: <span class="font-mono">{$file.id}</span>
