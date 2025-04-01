@@ -41,7 +41,7 @@ services:
     container_name: stratos-ai
     image: localhost/stratos-ai:dev
     build:
-      context: ./ai
+      context: ai
       dockerfile: Dockerfile
     ports:
       - "5001:5001"
