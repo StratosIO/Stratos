@@ -36,7 +36,6 @@ app.use('/*', serveStatic({ root: './dist' }))
 
 app.get('*', serveStatic({ path: './dist/index.html' }))
 
-
 createAdmin() // adds default admin user to db if doesn't exist
 log.info(`Server is running on http://localhost:3000`)
 

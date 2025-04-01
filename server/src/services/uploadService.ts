@@ -89,7 +89,7 @@ export const uploadService = {
   },
   listUploads: async (options: ListOptions): Promise<FileListResult> => {
     const { limit, cursor } = options
-  
+
     // Build the base query
     let baseQuery = sql`
       SELECT 
@@ -101,34 +101,34 @@ export const uploadService = {
         file_path
       FROM files
     `
-  
+
     // Add cursor condition if it exists
     if (cursor) {
       baseQuery = sql`${baseQuery} 
         WHERE id < ${cursor}`
     }
-  
+
     // Add ordering and limit
     baseQuery = sql`${baseQuery} 
       ORDER BY id DESC 
       LIMIT ${limit + 1}`
-  
+
     const files = await baseQuery
-  
+
     // Check if we have more items
     const hasMore = files.length > limit
     const items = hasMore ? files.slice(0, -1) : files
-  
+
     // Generate next cursor if we have more items
     let nextCursor = null
     if (hasMore && items.length > 0) {
       nextCursor = items[items.length - 1].id
     }
-  
+
     return {
       files: items,
       nextCursor,
       hasMore,
     }
-  },  
+  },
 }

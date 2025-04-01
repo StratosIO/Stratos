@@ -281,7 +281,7 @@ export const taskService = {
   },
   listTasks: async (options: ListOptions): Promise<TaskListResult> => {
     const { limit, cursor } = options
-  
+
     // Build the base query
     let baseQuery = sql`
       SELECT 
@@ -294,30 +294,30 @@ export const taskService = {
         error
       FROM tasks
     `
-  
+
     // Add cursor condition if it exists
     if (cursor) {
       baseQuery = sql`${baseQuery} 
         WHERE id < ${cursor}`
     }
-  
+
     // Add ordering and limit
     baseQuery = sql`${baseQuery} 
       ORDER BY id DESC 
       LIMIT ${limit + 1}`
-  
+
     const tasks = await baseQuery
-  
+
     // Check if we have more items
     const hasMore = tasks.length > limit
     const items = hasMore ? tasks.slice(0, -1) : tasks
-  
+
     // Generate next cursor if we have more items
     let nextCursor = null
     if (hasMore && items.length > 0) {
       nextCursor = items[items.length - 1].id
     }
-  
+
     // Enhance each task with its associated file IDs
     const enhancedTasks = await Promise.all(
       items.map(async (task) => {
@@ -327,7 +327,7 @@ export const taskService = {
           WHERE task_id = ${task.id}
         `
         const fileIds = fileAssociations.map((association) => association.file_id)
-  
+
         // Ensure we keep all Task properties and add fileIds
         return {
           id: task.id,
@@ -339,14 +339,13 @@ export const taskService = {
           error: task.error,
           fileIds,
         } as Task & { fileIds: string[] }
-      })
+      }),
     )
-  
+
     return {
       tasks: enhancedTasks,
       nextCursor,
       hasMore,
     }
-  }
-  
+  },
 }
