@@ -1,45 +1,37 @@
 <!-- lib/components/TaskList.svelte -->
 <script lang="ts">
 	import { endpoint, taskSelected, tasks } from '$lib/stores'
-	import { get } from 'svelte/store'
+	import { deleteRemoteItem } from '$lib/utils/items'
 	import { onMount, onDestroy } from 'svelte'
+	import { get } from 'svelte/store'
 
 	async function deleteTask(index: number, e: Event): Promise<void> {
 		e.stopPropagation()
 		const currentTasks = get(tasks)
 		const taskToDelete = currentTasks[index]
-		const token = 'AUTH_TOKEN_PLACEHOLDER'
-		const path = `${get(endpoint)}/tasks/${taskToDelete.id}`
 
-		try {
-			const response = await fetch(path, {
-				method: 'DELETE',
-				headers: { Authorization: `Bearer ${token}` },
-			})
-			const result = await response.json()
-			if (!response.ok) {
-				console.error('Task deletion failed:', result)
-				return
+		const ok = await deleteRemoteItem({
+			id: taskToDelete.id,
+			endpoint: get(endpoint),
+			resource: 'tasks',
+		})
+		if (!ok) return
+
+		tasks.update((current) => {
+			const newTasks = [...current]
+			newTasks.splice(index, 1)
+			return newTasks
+		})
+
+		taskSelected.update((currentIndex) => {
+			if (currentIndex === index) {
+				return get(tasks).length ? 0 : -1
 			}
-			console.log('Task deleted successfully:', result)
-			// only remove from store if deletion was successful
-			tasks.update((current) => {
-				const newTasks = [...current]
-				newTasks.splice(index, 1)
-				return newTasks
-			})
-			taskSelected.update((currentIndex) => {
-				if (currentIndex === index) {
-					return get(tasks).length ? 0 : -1
-				}
-				if (currentIndex > index) {
-					return currentIndex - 1
-				}
-				return currentIndex
-			})
-		} catch (error) {
-			console.error('Error deleting task:', error)
-		}
+			if (currentIndex > index) {
+				return currentIndex - 1
+			}
+			return currentIndex
+		})
 	}
 
 	function selectTask(index: number): void {

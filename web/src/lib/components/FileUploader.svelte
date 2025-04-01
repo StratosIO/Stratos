@@ -83,7 +83,7 @@
 					}
 					if (responseData.success) {
 						files.update((current) =>
-							current.map((f) => (f.id === id ? { ...f, progress: 100, uploaded: true } : f)),
+							current.map((f) => (f.id === id ? { ...f, progress: 100 } : f)),
 						)
 						return resolve()
 					}
@@ -108,11 +108,13 @@
 					...current,
 					{
 						id,
-						file,
+						name: file.name,
+						size: file.size,
+						type: file.type,
+						time: file.lastModified,
 						icon: thumb ? '' : getFileIcon(file),
 						thumb,
 						progress: 0,
-						uploaded: false,
 					},
 				])
 				uploadFile(file, id)

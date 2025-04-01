@@ -33,17 +33,15 @@
 			</span>
 		</div>
 		<div class="text-base-content/70 w-0 max-w-full flex-1 truncate select-text">
-			<p class="text-base-content truncate text-lg font-medium">{$file.file.name}</p>
+			<p class="text-base-content truncate text-lg font-medium">{$file.name}</p>
 			<p class="truncate text-sm">
-				Size: {formatBytes($file.file.size)}
+				Size: {formatBytes($file.size)}
 			</p>
 			<p class="truncate text-sm">
-				Type: {$file.file.type || 'Unknown'}
+				Type: {$file.type || 'Unknown'}
 			</p>
 			<p class="truncate text-sm">
-				Last Modified: <span class="font-mono"
-					>{new Date($file.file.lastModified).toISOString()}</span
-				>
+				Last Modified: <span class="font-mono">{new Date($file.time).toISOString()}</span>
 			</p>
 			<p class="truncate text-sm">
 				UUID: <span class="font-mono">{$file.id}</span>

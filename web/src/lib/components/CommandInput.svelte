@@ -15,7 +15,7 @@
 		getCommandText,
 		insertMentionAtCursor,
 		insertSlashCommandAtCursor,
-	} from '$lib/utils/commandUtils'
+	} from '$lib/utils/input'
 
 	let inputElement: HTMLDivElement
 	let showSuggestions = $state(false)
@@ -28,7 +28,7 @@
 	let filteredFiles = $derived(
 		showSuggestions
 			? $files
-					.filter((f) => f.file.name.toLowerCase().includes(suggestionQuery.toLowerCase()))
+					.filter((file) => file.name.toLowerCase().includes(suggestionQuery.toLowerCase()))
 					.slice(0, 5)
 			: [],
 	)
@@ -243,7 +243,7 @@
 					onkeydown={(e) => e.key === 'Enter' && insertMentionAtCursor(file)}
 					onmouseover={() => (activeSuggestionIndex = index)}
 				>
-					<button class="rounded-selector w-full text-left">@{file.file.name}</button>
+					<button class="rounded-selector w-full text-left">@{file.name}</button>
 				</li>
 			{:else}
 				<li class="px-4 py-2 text-base-content/70">No suggestions</li>

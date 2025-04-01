@@ -2,28 +2,29 @@
 import { browser } from '$app/environment'
 import { writable } from 'svelte/store'
 
-export const files = writable<
-	Array<{
-		id: string
-		file: File
-		thumb: string | null
-		icon: string
-		progress: number
-		uploaded: boolean
-		xhr?: XMLHttpRequest
-	}>
->([])
+export type FileItem = {
+	id: string
+	name: string
+	size: number
+	type: string
+	time: number
+	thumb: string | null
+	icon: string
+	progress: number
+	xhr?: XMLHttpRequest
+}
 
-export const tasks = writable<
-	Array<{
-		id: string
-		status: string
-		created_at: string
-		updated_at?: string
-		result_path?: string
-		error?: string | null
-	}>
->([])
+export type TaskItem = {
+	id: string
+	status: string
+	created_at: string
+	updated_at?: string
+	result_path?: string
+	error?: string | null
+}
+
+export const files = writable<FileItem[]>([])
+export const tasks = writable<TaskItem[]>([])
 
 export const serverStatus = writable<{
 	online: boolean

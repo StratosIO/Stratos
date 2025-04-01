@@ -1,4 +1,6 @@
-// lib/utils/commandUtils.ts
+// lib/utils/input.ts
+import type { FileItem } from '$lib/stores'
+
 export function getCommandText(inputElement: HTMLDivElement): string {
 	let text = ''
 	for (const node of inputElement.childNodes) {
@@ -12,7 +14,7 @@ export function getCommandText(inputElement: HTMLDivElement): string {
 	return text
 }
 
-export function insertMentionAtCursor(file: { id: string; file: File }): void {
+export function insertMentionAtCursor(file: FileItem): void {
 	const sel = window.getSelection()
 	if (!sel || sel.rangeCount === 0) return
 	const range = sel.getRangeAt(0)
@@ -28,7 +30,7 @@ export function insertMentionAtCursor(file: { id: string; file: File }): void {
 	mention.className =
 		'select-text text-primary-content bg-primary/20 rounded-sm px-1 hover:bg-accent hover:text-accent-content transition-colors'
 	mention.dataset.mentionId = file.id
-	let name = file.file.name
+	let name = file.name
 	if (name.length > 30) name = `${name.slice(0, 27)}...`
 	mention.textContent = `@${name}`
 	textNode.textContent = before
@@ -59,7 +61,7 @@ export function insertSlashCommandAtCursor(cmd: string): void {
 	const before = text.slice(0, atIndex)
 	const after = text.slice(range.startOffset)
 	const command = document.createElement('span')
-	command.contentEditable = 'false' // 设置为不可编辑，使其成为原子节点
+	command.contentEditable = 'false'
 	command.className = 'font-bold'
 	command.textContent = `/${cmd}`
 	textNode.textContent = before

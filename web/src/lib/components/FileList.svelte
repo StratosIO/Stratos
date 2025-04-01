@@ -1,6 +1,7 @@
 <!-- lib/components/FileList.svelte -->
 <script lang="ts">
 	import { endpoint, fileSelected, files } from '$lib/stores'
+	import { deleteRemoteItem } from '$lib/utils/items'
 	import { get } from 'svelte/store'
 
 	async function deleteFile(index: number, e: Event): Promise<void> {
@@ -8,34 +9,23 @@
 		const currentFiles = get(files)
 		const fileToDelete = currentFiles[index]
 
-		if (fileToDelete.xhr && typeof fileToDelete.xhr.abort === 'function') {
-			fileToDelete.xhr.abort()
+		fileToDelete.xhr?.abort?.()
+
+		if (fileToDelete.progress === 100) {
+			const ok = await deleteRemoteItem({
+				id: fileToDelete.id,
+				endpoint: get(endpoint),
+				resource: 'uploads',
+			})
+			if (!ok) return
 		}
 
-		if (fileToDelete.uploaded) {
-			const token = 'AUTH_TOKEN_PLACEHOLDER'
-			const path = `${get(endpoint)}/uploads/${fileToDelete.id}`
-			try {
-				const response = await fetch(path, {
-					method: 'DELETE',
-					headers: { Authorization: `Bearer ${token}` },
-				})
-				const result = await response.json()
-				if (!response.ok) {
-					console.error('File deletion failed:', result)
-					return
-				}
-				console.log('File deleted successfully:', result)
-			} catch (error) {
-				console.error('Error deleting file:', error)
-				return
-			}
-		}
 		files.update((current) => {
 			const newFiles = [...current]
 			newFiles.splice(index, 1)
 			return newFiles
 		})
+
 		fileSelected.update((currentIndex) => {
 			if (currentIndex === index) {
 				return get(files).length ? 0 : -1
@@ -66,14 +56,14 @@
 						class="group-hover:bg-base-200 rounded-field relative min-w-0 flex-1 cursor-pointer p-2 transition-colors duration-200 {$fileSelected ===
 						index
 							? 'bg-base-200'
-							: ''} {!file.uploaded && file.progress === 0 ? 'animate-pulse' : ''}"
+							: ''} {file.progress === 0 ? 'animate-pulse' : ''}"
 					>
 						{#if file.progress > 0}
 							<div
 								class="bg-primary/20 rounded-field absolute inset-0 h-full transition-all duration-200"
 								style="width: {file.progress}%;"
-								class:opacity-100={!file.uploaded}
-								class:opacity-0={file.uploaded}
+								class:opacity-100={file.progress < 100}
+								class:opacity-0={file.progress === 100}
 							></div>
 						{/if}
 						<div class="relative flex items-center">
@@ -87,7 +77,7 @@
 							>
 								<span class="material-icons-round text-base-content/50 text-3xl">{file.icon}</span>
 							</div>
-							<span class="text-base-content relative truncate">{file.file.name}</span>
+							<span class="text-base-content relative truncate">{file.name}</span>
 						</div>
 					</button>
 					<button
