@@ -111,9 +111,9 @@
 						name: file.name,
 						size: file.size,
 						type: file.type,
-						time: file.lastModified,
+						time: new Date(file.lastModified).toISOString(),
 						icon: thumb ? '' : getFileIcon(file),
-						thumb,
+						...(thumb && { thumb }),
 						progress: 0,
 					},
 				])

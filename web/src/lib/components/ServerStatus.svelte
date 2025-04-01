@@ -1,7 +1,6 @@
 <!-- lib/components/ServerStatus.svelte -->
 <script lang="ts">
 	import { endpoint, serverStatus, showConfigModal } from '$lib/stores'
-	import { onMount } from 'svelte'
 	import { get } from 'svelte/store'
 
 	let eventSource: EventSource | null = null
@@ -71,7 +70,7 @@
 		}, 1000)
 	}
 
-	onMount(() => {
+	$effect(() => {
 		const unsubscribe = endpoint.subscribe(setupEventSource)
 		return () => {
 			unsubscribe()

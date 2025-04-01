@@ -1,8 +1,7 @@
 <!-- lib/components/TaskList.svelte -->
 <script lang="ts">
-	import { endpoint, taskSelected, tasks } from '$lib/stores'
-	import { deleteRemoteItem } from '$lib/utils/items'
-	import { onMount, onDestroy } from 'svelte'
+	import { endpoint, serverStatus, taskSelected, tasks } from '$lib/stores'
+	import { deleteRemoteItem, fetchAllRemoteItems } from '$lib/utils/items'
 	import { get } from 'svelte/store'
 
 	async function deleteTask(index: number, e: Event): Promise<void> {
@@ -65,12 +64,9 @@
 
 	let intervalId: ReturnType<typeof setInterval>
 
-	onMount(() => {
-		intervalId = setInterval(pollTaskStatus, 5000)
-	})
-
-	onDestroy(() => {
-		clearInterval(intervalId)
+	$effect(() => {
+		const id = setInterval(pollTaskStatus, 5000)
+		return () => clearInterval(id)
 	})
 </script>
 
@@ -92,7 +88,7 @@
 							<div
 								class="rounded-selector bg-base-200 mr-3 flex h-9 w-12 shrink-0 items-center justify-center"
 							>
-								<span class="material-icons-round text-base-content/50 text-3xl">cloud_sync</span>
+								<span class="material-icons-round text-base-content/50 text-3xl">task</span>
 							</div>
 							<span class="text-base-content relative truncate">{task.id}</span>
 						</div>

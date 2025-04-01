@@ -7,10 +7,10 @@ export type FileItem = {
 	name: string
 	size: number
 	type: string
-	time: number
-	thumb: string | null
+	time: string
 	icon: string
 	progress: number
+	thumb?: string
 	xhr?: XMLHttpRequest
 }
 
