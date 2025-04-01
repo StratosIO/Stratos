@@ -233,19 +233,9 @@ export const taskController = {
       const parseLimit = parseInt(limit || String(DEFAULT_PAGE_SIZE))
       const validLimit = Math.min(Math.max(1, parseLimit), MAX_PAGE_SIZE)
 
-      // Parse cursor if provided
-      let cursorData
-      if (cursor) {
-        try {
-          cursorData = JSON.parse(Buffer.from(cursor, 'base64').toString())
-        } catch (e) {
-          return c.json({ error: 'Invalid cursor' }, 400)
-        }
-      }
-
       const result = await taskService.listTasks({
         limit: validLimit,
-        cursor: cursorData,
+        cursor,
       })
 
       return c.json({
