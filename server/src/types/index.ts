@@ -37,11 +37,11 @@ export interface ListQueryParams {
 
 export interface ListOptions {
   limit: number
-  cursor?: { timestamp: string; id: string }
+  cursor?: string
   // userId?: string
 }
 
-export interface ListResult {
+export interface FileListResult {
   files: any[]
   nextCursor: string | null
   hasMore: boolean

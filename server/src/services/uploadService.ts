@@ -2,7 +2,7 @@ import sql from '../config/database.js'
 import { mkdir, chmod, unlink } from 'fs/promises'
 import { validate as ValidUUID } from 'uuid'
 import { UPLOAD_CONFIG } from '../types/index.js'
-import type { ListOptions, ListResult } from '../types/index.js'
+import type { ListOptions, FileListResult } from '../types/index.js'
 import path from 'path'
 
 export const uploadService = {
@@ -24,6 +24,7 @@ export const uploadService = {
       await uploadService.ensureUploadDirectory()
 
       const fileName = file.name
+      const fileType = file.type
       const filePath = path.join(UPLOAD_CONFIG.DIR, id)
       const fileWriter = Bun.file(filePath).writer()
       const stream = file.stream()
@@ -48,7 +49,7 @@ export const uploadService = {
           ${fileName},
           ${filePath},
           ${fileSize},
-          ${file.type}
+          ${fileType}
         ) RETURNING id, file_name, file_path
       `
 
@@ -86,53 +87,48 @@ export const uploadService = {
       WHERE id = ${id}::uuid
     `
   },
-  listUploads: async (options: ListOptions): Promise<ListResult> => {
+  listUploads: async (options: ListOptions): Promise<FileListResult> => {
     const { limit, cursor } = options
-
+  
     // Build the base query
     let baseQuery = sql`
       SELECT 
         id,
-        file_name,
-        file_size,
-        mime_type,
-        uploaded_at,
+        file_name AS name,
+        file_size AS size,
+        mime_type AS type,
+        uploaded_at AS time,
         file_path
       FROM files
     `
-
+  
     // Add cursor condition if it exists
     if (cursor) {
       baseQuery = sql`${baseQuery} 
-        WHERE (uploaded_at, id) < (${cursor.timestamp}, ${cursor.id})`
+        WHERE id < ${cursor}`
     }
-
+  
     // Add ordering and limit
     baseQuery = sql`${baseQuery} 
-      ORDER BY uploaded_at DESC, id DESC 
+      ORDER BY id DESC 
       LIMIT ${limit + 1}`
-
+  
     const files = await baseQuery
-
+  
     // Check if we have more items
     const hasMore = files.length > limit
     const items = hasMore ? files.slice(0, -1) : files
-
+  
     // Generate next cursor if we have more items
     let nextCursor = null
     if (hasMore && items.length > 0) {
-      const lastItem = items[items.length - 1]
-      const cursorData = {
-        timestamp: lastItem.uploaded_at.toISOString(),
-        id: lastItem.id,
-      }
-      nextCursor = Buffer.from(JSON.stringify(cursorData)).toString('base64')
+      nextCursor = items[items.length - 1].id
     }
-
+  
     return {
       files: items,
       nextCursor,
       hasMore,
     }
-  },
+  },  
 }
