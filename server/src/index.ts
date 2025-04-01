@@ -1,5 +1,6 @@
 import { Hono } from 'hono'
 import { cors } from 'hono/cors'
+import { serveStatic } from 'hono/bun'
 import { authMiddleware, requireRole } from './middleware/auth.js'
 import { createAdmin } from './scripts/createAdmin.js'
 import auth from './routes/auth.js'
@@ -31,19 +32,14 @@ if (process.env.NODE_ENV === 'development') {
   app.route('/dev', dev)
 }
 
-app.get('/', (c) => {
-  return c.text('Stratos API')
-})
+app.use('/*', serveStatic({ root: './dist' }))
+
+app.get('*', serveStatic({ path: './dist/index.html' }))
+
 
 createAdmin() // adds default admin user to db if doesn't exist
 log.info(`Server is running on http://localhost:3000`)
 
-// const server = Bun.serve({
-//   fetch: app.fetch,
-//   port: 3000,
-//   hostname: "0.0.0.0", //important for Docker
-//   maxRequestBodySize: 3 * 1024 * 1024 * 1024, // 3GB in bytes
-// })
 export default {
   port: 3000,
   hostname: '0.0.0.0',

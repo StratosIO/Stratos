@@ -5,7 +5,7 @@ WORKDIR /app
 RUN apk add --no-cache ffmpeg
 
 ARG target=linux-x64-musl
-ARG version=1.2.4
+ARG version=1.2.8
 
 RUN wget -q https://github.com/oven-sh/bun/releases/download/bun-v${version}/bun-${target}.zip \
     && unzip -j bun-${target}.zip -d /usr/local/bin && rm bun-${target}.zip \

@@ -15,7 +15,7 @@ services:
       - "5432:5432"
     volumes:
       - postgres:/var/lib/postgresql/data
-      - ./src/config/init.sql:/docker-entrypoint-initdb.d/init.sql
+      - ./server/src/config/init.sql:/docker-entrypoint-initdb.d/init.sql
 
   backend:
     container_name: stratos-server
@@ -33,7 +33,7 @@ services:
     environment:
       - AI_URL=http://ai:5001
     volumes:
-      - ./logs:/app/logs
+      - ./server/logs:/app/logs
       - uploads:/app/uploads
       - outputs:/app/outputs
   
@@ -41,7 +41,7 @@ services:
     container_name: stratos-ai
     image: localhost/stratos-ai:dev
     build:
-      context: ../ai
+      context: ./ai
       dockerfile: Dockerfile
     ports:
       - "5001:5001"
