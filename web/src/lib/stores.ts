@@ -1,27 +1,7 @@
 // lib/stores.ts
 import { writable } from 'svelte/store'
 import { persist } from '$lib/utils/storage'
-
-export type FileItem = {
-	id: string
-	name: string
-	size: number
-	type: string
-	time: string
-	icon: string
-	progress: number
-	thumb?: string
-	xhr?: XMLHttpRequest
-}
-
-export type TaskItem = {
-	id: string
-	status: string
-	created_at: string
-	updated_at?: string
-	result_path?: string
-	error?: string | null
-}
+import type { FileItem, TaskItem } from '$lib/types'
 
 export const files = writable<FileItem[]>([])
 export const tasks = writable<TaskItem[]>([])

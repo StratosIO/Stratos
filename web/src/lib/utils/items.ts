@@ -1,28 +1,45 @@
 // $lib/utils/items.ts
 import type { Writable } from 'svelte/store'
 
-export async function deleteRemoteItem({
-	id,
-	endpoint,
-	resource,
-	token = 'AUTH_TOKEN_PLACEHOLDER',
-}: {
+type DeleteOptions = {
 	id: string | number
 	endpoint: string
 	resource: string
 	token?: string
-}): Promise<boolean> {
+}
+
+type FetchOptions<T, R> = {
+	endpoint: string
+	resource: string
+	store: Writable<T[]>
+	transform: (raw: R) => T
+	token?: string
+	limit?: number
+	cursor?: string
+	append?: boolean
+}
+
+export async function deleteRemoteItem({
+	id,
+	endpoint,
+	resource,
+	token,
+}: DeleteOptions): Promise<boolean> {
 	const path = `${endpoint}/${resource}/${id}`
+
 	try {
 		const response = await fetch(path, {
 			method: 'DELETE',
-			headers: { Authorization: `Bearer ${token}` },
+			headers: token ? { Authorization: `Bearer ${token}` } : {},
 		})
+
 		const result = await response.json()
+
 		if (!response.ok) {
-			console.error(`Remote deletion failed:`, result)
+			console.error('Remote deletion failed:', result)
 			return false
 		}
+
 		console.log(`${resource} deleted successfully:`, result)
 		return true
 	} catch (error) {
@@ -31,34 +48,26 @@ export async function deleteRemoteItem({
 	}
 }
 
-export async function fetchRemoteItems<T>({
+export async function fetchRemoteItems<T, R>({
 	endpoint,
 	resource,
 	store,
 	transform,
-	token = 'AUTH_TOKEN_PLACEHOLDER',
+	token,
 	limit = 50,
 	cursor,
 	append = false,
-}: {
-	endpoint: string
-	resource: string
-	store: Writable<T[]>
-	transform: (raw: any) => T
-	token?: string
-	limit?: number
-	cursor?: string
-	append?: boolean
-}): Promise<{ nextCursor: string | null; hasMore: boolean }> {
+}: FetchOptions<T, R>): Promise<{ nextCursor: string | null; hasMore: boolean }> {
 	const params = new URLSearchParams({ limit: String(limit) })
 	if (cursor) params.set('cursor', cursor)
 
-	const url = `${endpoint}/${resource}?${params.toString()}`
+	const url = `${endpoint}/${resource}?${params}`
 
 	try {
 		const res = await fetch(url, {
-			headers: { Authorization: `Bearer ${token}` },
+			headers: token ? { Authorization: `Bearer ${token}` } : {},
 		})
+
 		const json = await res.json()
 
 		if (!res.ok || !json.success) {
@@ -66,9 +75,8 @@ export async function fetchRemoteItems<T>({
 			return { nextCursor: null, hasMore: false }
 		}
 
-		const items = json.data.map(transform) as T[]
-
-		store.update((current) => (append ? [...current, ...items] : items))
+		const items = (json.data as R[]).map(transform)
+		store.update(current => (append ? [...current, ...items] : items))
 
 		return {
 			nextCursor: json.pagination?.next_cursor ?? null,
@@ -80,28 +88,21 @@ export async function fetchRemoteItems<T>({
 	}
 }
 
-export async function fetchAllRemoteItems<T>({
+export async function fetchAllRemoteItems<T, R>({
 	endpoint,
 	resource,
 	store,
 	transform,
-	token = 'AUTH_TOKEN_PLACEHOLDER',
+	token,
 	limit = 10,
-}: {
-	endpoint: string
-	resource: string
-	store: Writable<T[]>
-	transform: (raw: any) => T
-	token?: string
-	limit?: number
-}): Promise<void> {
+}: Omit<FetchOptions<T, R>, 'cursor' | 'append'>): Promise<void> {
 	let cursor: string | undefined
 	let hasMore = true
 
 	store.set([])
 
 	while (hasMore) {
-		const result = await fetchRemoteItems({
+		const result = await fetchRemoteItems<T, R>({
 			endpoint,
 			resource,
 			store,
