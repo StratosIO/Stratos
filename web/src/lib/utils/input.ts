@@ -1,5 +1,5 @@
 // lib/utils/input.ts
-import type { FileItem } from '$lib/stores'
+import type { FileItem } from '$lib/types'
 
 export function getCommandText(inputElement: HTMLDivElement): string {
 	let text = ''

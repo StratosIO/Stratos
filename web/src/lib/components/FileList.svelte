@@ -59,7 +59,7 @@
 							? 'bg-base-200'
 							: ''} {file.progress === 0 ? 'animate-pulse' : ''}"
 					>
-						{#if file.progress > 0}
+						{#if file.progress}
 							<div
 								class="bg-primary/20 rounded-field absolute inset-0 h-full transition-all duration-200"
 								style="width: {file.progress}%;"
