@@ -43,10 +43,11 @@ jobs:
       uses: actions/upload-artifact@v4
       with:
         name: build-artifact-${{ matrix.directory }}
-        path: ${{ matrix.directory }}
+        path: ${{ matrix.directory }}/build
 
   format:
-    runs-on: ubuntu-latest
+    if: github.event_name == 'push'
+    runs-on: self-hosted
     needs: build
 
     steps:
@@ -68,7 +69,6 @@ jobs:
         (cd web && bun run format)
 
     - name: Push Prettier Changes
-      if: github.event_name == 'push'
       run: |
         git diff --quiet && echo "No formatting changes." && exit 0
         git config --global user.name "github-actions[bot]"
