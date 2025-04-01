@@ -5,18 +5,18 @@ export async function deleteRemoteItem({
 	id,
 	endpoint,
 	resource,
-	authToken = 'AUTH_TOKEN_PLACEHOLDER',
+	token = 'AUTH_TOKEN_PLACEHOLDER',
 }: {
 	id: string | number
 	endpoint: string
 	resource: string
-	authToken?: string
+	token?: string
 }): Promise<boolean> {
 	const path = `${endpoint}/${resource}/${id}`
 	try {
 		const response = await fetch(path, {
 			method: 'DELETE',
-			headers: { Authorization: `Bearer ${authToken}` },
+			headers: { Authorization: `Bearer ${token}` },
 		})
 		const result = await response.json()
 		if (!response.ok) {
@@ -36,7 +36,7 @@ export async function fetchRemoteItems<T>({
 	resource,
 	store,
 	transform,
-	authToken = 'AUTH_TOKEN_PLACEHOLDER',
+	token = 'AUTH_TOKEN_PLACEHOLDER',
 	limit = 50,
 	cursor,
 	append = false,
@@ -45,7 +45,7 @@ export async function fetchRemoteItems<T>({
 	resource: string
 	store: Writable<T[]>
 	transform: (raw: any) => T
-	authToken?: string
+	token?: string
 	limit?: number
 	cursor?: string
 	append?: boolean
@@ -57,7 +57,7 @@ export async function fetchRemoteItems<T>({
 
 	try {
 		const res = await fetch(url, {
-			headers: { Authorization: `Bearer ${authToken}` },
+			headers: { Authorization: `Bearer ${token}` },
 		})
 		const json = await res.json()
 
@@ -85,14 +85,14 @@ export async function fetchAllRemoteItems<T>({
 	resource,
 	store,
 	transform,
-	authToken = 'AUTH_TOKEN_PLACEHOLDER',
+	token = 'AUTH_TOKEN_PLACEHOLDER',
 	limit = 10,
 }: {
 	endpoint: string
 	resource: string
 	store: Writable<T[]>
 	transform: (raw: any) => T
-	authToken?: string
+	token?: string
 	limit?: number
 }): Promise<void> {
 	let cursor: string | undefined
@@ -106,7 +106,7 @@ export async function fetchAllRemoteItems<T>({
 			resource,
 			store,
 			transform,
-			authToken,
+			token,
 			limit,
 			cursor,
 			append: true,

@@ -1,6 +1,6 @@
 <!-- lib/components/FileUploader.svelte -->
 <script lang="ts">
-	import { endpoint, fileSelected, files, serverStatus, showConfigModal } from '$lib/stores'
+	import { token, endpoint, fileSelected, files, serverStatus, showConfigModal } from '$lib/stores'
 	import { get } from 'svelte/store'
 
 	let dragCounter = $state(0)
@@ -58,12 +58,11 @@
 		const formData = new FormData()
 		formData.append('file', file)
 		formData.append('id', id)
-		const token = 'AUTH_TOKEN_PLACEHOLDER'
 
 		return new Promise<void>((resolve, reject) => {
 			const xhr = new XMLHttpRequest()
 			xhr.open('POST', path)
-			xhr.setRequestHeader('Authorization', `Bearer ${token}`)
+			xhr.setRequestHeader('Authorization', `Bearer ${get(token)}`)
 			files.update((current) => current.map((f) => (f.id === id ? { ...f, xhr } : f)))
 			xhr.upload.onprogress = (event: ProgressEvent) => {
 				if (event.lengthComputable) {

@@ -1,7 +1,7 @@
 <!-- lib/components/FileList.svelte -->
 <script lang="ts">
-	import { endpoint, serverStatus, fileSelected, files } from '$lib/stores'
-	import { deleteRemoteItem, fetchAllRemoteItems } from '$lib/utils/items'
+	import { token, endpoint, fileSelected, files } from '$lib/stores'
+	import { deleteRemoteItem } from '$lib/utils/items'
 	import { get } from 'svelte/store'
 
 	async function deleteFile(index: number, e: Event): Promise<void> {
@@ -15,6 +15,7 @@
 			const ok = await deleteRemoteItem({
 				id: fileToDelete.id,
 				endpoint: get(endpoint),
+				token: get(token),
 				resource: 'uploads',
 			})
 			if (!ok) return

@@ -1,7 +1,7 @@
 <!-- lib/components/TaskList.svelte -->
 <script lang="ts">
-	import { endpoint, serverStatus, taskSelected, tasks } from '$lib/stores'
-	import { deleteRemoteItem, fetchAllRemoteItems } from '$lib/utils/items'
+	import { token, endpoint, taskSelected, tasks } from '$lib/stores'
+	import { deleteRemoteItem } from '$lib/utils/items'
 	import { get } from 'svelte/store'
 
 	async function deleteTask(index: number, e: Event): Promise<void> {
@@ -12,6 +12,7 @@
 		const ok = await deleteRemoteItem({
 			id: taskToDelete.id,
 			endpoint: get(endpoint),
+			token: get(token),
 			resource: 'tasks',
 		})
 		if (!ok) return
@@ -61,8 +62,6 @@
 		)
 		tasks.set(updatedTasks)
 	}
-
-	let intervalId: ReturnType<typeof setInterval>
 
 	$effect(() => {
 		const id = setInterval(pollTaskStatus, 5000)
