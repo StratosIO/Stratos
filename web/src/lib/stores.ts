@@ -1,6 +1,6 @@
 // lib/stores.ts
-import { browser } from '$app/environment'
 import { writable } from 'svelte/store'
+import { persist } from '$lib/utils/storage'
 
 export type FileItem = {
 	id: string
@@ -41,7 +41,7 @@ export const serverStatus = writable<{
 export const fileSelected = writable<number>(-1)
 export const taskSelected = writable<number>(-1)
 export const command = writable<string>('')
-export const endpoint = writable<string>(browser ? `${window.location.origin}/api` : '')
+export const endpoint = persist<string>('endpoint',	'/api');
 export const showConfigModal = writable<boolean>(false)
 export const currentTab = writable<string>('files')
 
