@@ -76,7 +76,7 @@ export async function fetchRemoteItems<T, R>({
 		}
 
 		const items = (json.data as R[]).map(transform)
-		store.update(current => (append ? [...current, ...items] : items))
+		store.update((current) => (append ? [...current, ...items] : items))
 
 		return {
 			nextCursor: json.pagination?.next_cursor ?? null,

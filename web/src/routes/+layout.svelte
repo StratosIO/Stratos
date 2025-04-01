@@ -1,17 +1,18 @@
+<!-- routes/+layout.svelte -->
 <script lang="ts">
 	import '../app.css'
 	import 'material-icons/iconfont/material-icons.css'
-	import { serverStatus, endpoint, files, tasks } from '$lib/stores'
+	import { online, endpoint, files, tasks } from '$lib/stores'
 	import { fetchAllRemoteItems } from '$lib/utils/items'
 	import type { FileItem } from '$lib/types'
 	import { get } from 'svelte/store'
 
 	const { children } = $props()
 
-	let wasOnline = get(serverStatus).online
+	let wasOnline = get(online)
 
 	$effect(() => {
-		if (!wasOnline && $serverStatus.online) {
+		if (!wasOnline && $online) {
 			const ep = get(endpoint)
 
 			fetchAllRemoteItems<FileItem, FileItem>({
@@ -33,7 +34,7 @@
 			})
 		}
 
-		wasOnline = $serverStatus.online
+		wasOnline = $online
 	})
 </script>
 
