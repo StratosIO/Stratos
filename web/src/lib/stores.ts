@@ -6,14 +6,13 @@ import type { FileItem, TaskItem } from '$lib/types'
 export const files = writable<FileItem[]>([])
 export const tasks = writable<TaskItem[]>([])
 
-export const serverStatus = writable<{
-	online: boolean
-	uptime: string
+export const uptime = writable('')
+export const online = writable(false)
+
+export const counter = writable<{
 	countdown: number
 	counting: boolean
 }>({
-	online: false,
-	uptime: '',
 	countdown: 10,
 	counting: false,
 })
@@ -25,7 +24,7 @@ export const showConfigModal = writable<boolean>(false)
 export const currentTab = writable<string>('files')
 
 export const token = persist<string>('token', '')
-export const endpoint = persist<string>('endpoint',	'/api')
+export const endpoint = persist<string>('endpoint', '/api')
 
 export const slashCommands: string[] = [
 	'extract-audio',

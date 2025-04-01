@@ -1,73 +1,75 @@
 <!-- lib/components/ServerStatus.svelte -->
 <script lang="ts">
-	import { endpoint, serverStatus, showConfigModal } from '$lib/stores'
+	import { endpoint, online, uptime, counter, showConfigModal } from '$lib/stores'
 	import { get } from 'svelte/store'
 
 	let eventSource: EventSource | null = null
-	let countdownInterval: number | undefined = undefined
-
-	const updateServerStatus = (
-		updates: Partial<{
-			online: boolean
-			counting: boolean
-			countdown: number
-			uptime: string
-		}>,
-	) => {
-		serverStatus.update((status) => ({ ...status, ...updates }))
-	}
+	let countdownInterval: number | undefined
 
 	const resetConnection = () => {
-		if (eventSource) {
-			eventSource.close()
-			eventSource = null
-		}
+		eventSource?.close()
+		eventSource = null
+
 		if (countdownInterval !== undefined) {
 			clearInterval(countdownInterval)
 			countdownInterval = undefined
 		}
-		updateServerStatus({ online: false, counting: false, countdown: 0 })
+
+		online.set(false)
+		counter.set({ counting: false, countdown: 0 })
 	}
 
 	const setupEventSource = () => {
 		resetConnection()
 		eventSource = new EventSource(`${get(endpoint)}/status`)
+
 		eventSource.onopen = () => {
-			updateServerStatus({ online: true, countdown: 10, counting: false })
+			online.set(true)
+			counter.set({ counting: false, countdown: 10 })
 		}
+
 		eventSource.onerror = () => {
-			updateServerStatus({ online: false })
+			online.set(false)
 			setTimeout(() => {
-				if (!get(serverStatus).counting && countdownInterval === undefined) {
+				if (!get(counter).counting && countdownInterval === undefined) {
 					startCountdown()
 				}
 			}, 800)
 		}
+
 		eventSource.onmessage = (event) => {
-			updateServerStatus({
-				uptime: Math.floor(Number.parseFloat(event.data)).toString(),
-			})
+			const seconds = Math.floor(Number.parseFloat(event.data)).toString()
+			uptime.set(seconds)
 		}
+
+		/*
+		eventSource.onmessage = (event) => {
+			const seconds = Math.floor(parseFloat(event.data))
+			const formatted = new Date(seconds * 1000).toISOString().substring(11, 19)
+			uptime.set(formatted)
+		}
+		*/
 	}
 
+	// 10 seconds countdown
 	const startCountdown = () => {
 		if (countdownInterval !== undefined) return
 
-		updateServerStatus({ counting: true, countdown: 10 })
-		let count = 10
+		let cnt = 10
+		counter.set({ counting: true, countdown: cnt })
 
-		countdownInterval = setInterval(() => {
-			if (get(serverStatus).online || count <= 0) {
-				if (countdownInterval !== undefined) {
-					clearInterval(countdownInterval)
-					countdownInterval = undefined
-				}
-				updateServerStatus({ counting: false })
-				if (!get(serverStatus).online) setupEventSource()
+		const interval = setInterval(() => {
+			if (get(online) || cnt <= 0) {
+				clearInterval(interval)
+				countdownInterval = undefined
+				counter.update((c) => ({ ...c, counting: false }))
+				if (!get(online)) setupEventSource()
 			} else {
-				updateServerStatus({ countdown: --count })
+				counter.update((c) => ({ ...c, countdown: --cnt }))
 			}
 		}, 1000)
+
+		countdownInterval = interval
 	}
 
 	$effect(() => {
@@ -87,9 +89,9 @@
 	class="bg-base-200 rounded-field flex w-full items-center p-6"
 >
 	<div class="flex items-center">
-		{#if $serverStatus.online}
+		{#if $online}
 			<div class="status status-success mr-3 animate-bounce"></div>
-		{:else if $serverStatus.counting}
+		{:else if $counter.counting}
 			<div class="mr-3 inline-grid *:[grid-area:1/1]">
 				<div class="status status-error animate-ping"></div>
 				<div class="status status-error"></div>
@@ -97,13 +99,16 @@
 		{:else}
 			<span class="status status-warning mr-3"></span>
 		{/if}
+
 		<span class="text-base-content mt-1 truncate">
-			{#if $serverStatus.online}
-				Server Online - Uptime: {$serverStatus.uptime}
-			{:else if $serverStatus.counting}
+			{#if $online}
+				Server Online - Uptime: {$uptime}
+			{:else if $counter.counting}
 				Action Required - Reconnect in
 				<span class="countdown">
-					<span style="--value:{$serverStatus.countdown};">{$serverStatus.countdown}</span>
+					<span style="--value:{$counter.countdown};">
+						{$counter.countdown}
+					</span>
 				</span>
 			{:else}
 				Action Required - Reconnecting...
