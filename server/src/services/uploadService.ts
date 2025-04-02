@@ -19,7 +19,7 @@ export const uploadService = {
       throw new Error('Failed to initialize upload directory')
     }
   },
-  upload: async (file: File, id: string, userId: number) => {
+  upload: async (file: File, id: string, userId: number, expiresInHours = 24): Promise<any> => {
     try {
       await uploadService.ensureUploadDirectory()
 
@@ -36,6 +36,10 @@ export const uploadService = {
 
       await fileWriter.end()
 
+      // Calculate expiration time
+      const expiresAt = new Date();
+      expiresAt.setHours(expiresAt.getHours() + expiresInHours);
+
       const result = await sql`
         INSERT INTO files (
           id,
@@ -43,14 +47,16 @@ export const uploadService = {
           file_path,
           file_size,
           mime_type,
-          user_id
+          user_id,
+          expires_at
         ) VALUES (
           ${id},
           ${fileName},
           ${filePath},
           ${fileSize},
           ${file.type},
-          ${userId}
+          ${userId},
+          ${expiresAt}
         ) RETURNING id, file_name, file_path
       `
 
@@ -146,4 +152,29 @@ export const uploadService = {
       hasMore,
     }
   },
+  updateExpiration: async (fileId: string, expiresInHours: number): Promise<boolean> => {
+    const expiresAt = new Date();
+    expiresAt.setHours(expiresAt.getHours() + expiresInHours);
+    
+    const result = await sql`
+      UPDATE files
+      SET expires_at = ${expiresAt}
+      WHERE id = ${fileId}
+      RETURNING id
+    `
+    
+    // Also update associated tasks
+    if (result.length > 0) {
+      await sql`
+        UPDATE tasks
+        SET expires_at = ${expiresAt}
+        WHERE id IN (
+          SELECT task_id FROM task_files WHERE file_id = ${fileId}
+        )
+      `
+      return true
+    }
+    
+    return false
+  }
 }
