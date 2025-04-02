@@ -32,13 +32,13 @@ export const MAX_PAGE_SIZE = 50
 export interface ListQueryParams {
   limit?: string
   cursor?: string
-  // userId?: string
+  userId?: number
 }
 
 export interface ListOptions {
   limit: number
   cursor?: { timestamp: string; id: string }
-  // userId?: string
+  userId?: number
 }
 
 export interface ListResult {
@@ -63,6 +63,7 @@ export interface Task {
   result_path?: string
   error?: string
   files?: TaskFileDownloadInfo[]
+  user_id: number
 }
 
 export interface CommandValidationResult {
@@ -107,6 +108,7 @@ export interface TaskFile {
   path: string
   size: number
   mime_type: string
+  user_id: number
 }
 
 export interface TaskFilesResult {

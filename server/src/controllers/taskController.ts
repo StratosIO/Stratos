@@ -15,6 +15,9 @@ export const taskController = {
   submitCommand: async (c: Context) => {
     try {
       const body = await c.req.json()
+      // Get user from context after authentication middleware
+      const userId = c.get('user').userId
+      
       let commandResult
 
       if (typeof body.command === 'string') {
@@ -52,8 +55,8 @@ export const taskController = {
         return c.json({ error: validation.error }, 400)
       }
 
-      // Create task
-      const task = await taskService.createTask(processedCommand, validation.fileIds)
+      // Create task with user ID
+      const task = await taskService.createTask(processedCommand, validation.fileIds, userId)
 
       // Start processing in background
       taskService.executeCommand(task.id).catch((err) => {
@@ -228,6 +231,8 @@ export const taskController = {
   listTasks: async (c: Context) => {
     try {
       const { limit, cursor } = c.req.query()
+      // Get user from context after authentication middleware
+      const userId = c.get('user').userId
 
       // Parse and validate limit
       const parseLimit = parseInt(limit || String(DEFAULT_PAGE_SIZE))
@@ -246,6 +251,7 @@ export const taskController = {
       const result = await taskService.listTasks({
         limit: validLimit,
         cursor: cursorData,
+        userId: userId
       })
 
       return c.json({
@@ -267,6 +273,9 @@ export const taskController = {
  */
 async function handleAICommand(c: Context, commandResult: any): Promise<Response> {
   try {
+    // Get user from context after authentication middleware
+    const userId = c.get('user').userId
+    
     // Validate that file exists
     const fileId = commandResult.input
     const validation = await taskService.validateCommand(fileId)
@@ -277,7 +286,7 @@ async function handleAICommand(c: Context, commandResult: any): Promise<Response
 
     // Create a task record with original command
     const originalCommand = `/ai-${commandResult.command} ${fileId}`
-    const task = await taskService.createTask(originalCommand, validation.fileIds)
+    const task = await taskService.createTask(originalCommand, validation.fileIds, userId)
 
     // Start AI processing in background
     aiService.processAITask(task.id, commandResult).catch((err) => {

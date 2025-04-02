@@ -4,8 +4,8 @@ import { authMiddleware } from '../middleware/auth.js'
 
 const tasks = new Hono()
 
-// Apply auth middleware to all routes if needed
-// tasks.use('/*', authMiddleware);
+// Apply auth middleware to all routes
+tasks.use('/*', authMiddleware)
 
 tasks.post('/', taskController.submitCommand)
 tasks.get('/:id', taskController.getTask)

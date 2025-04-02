@@ -66,13 +66,13 @@ export const taskService = {
     return { isValid: true, fileIds }
   },
 
-  createTask: async (command: string, fileIds: string[]): Promise<Task> => {
+  createTask: async (command: string, fileIds: string[], userId: number): Promise<Task> => {
     const taskId = uuidv4()
 
     // Create task record
     const [row] = await sql`
-      INSERT INTO tasks (id, command, status)
-      VALUES (${taskId}, ${command}, 'pending')
+      INSERT INTO tasks (id, command, status, user_id)
+      VALUES (${taskId}, ${command}, 'pending', ${userId})
       RETURNING *
     `
 
@@ -93,6 +93,7 @@ export const taskService = {
       updated_at: row.updated_at,
       result_path: row.result_path,
       error: row.error,
+      user_id: row.user_id
     }
 
     return task
@@ -176,6 +177,7 @@ export const taskService = {
       updated_at: row.updated_at,
       result_path: row.result_path,
       error: row.error,
+      user_id: row.user_id
     }
 
     return task
@@ -189,6 +191,10 @@ export const taskService = {
       if (files.length === 0) {
         return { files: [], single: null }
       }
+      
+      // Get task to retrieve user_id
+      const [task] = await sql`SELECT user_id FROM tasks WHERE id = ${taskId}`
+      const userId = task ? task.user_id : 0
 
       // Get details for each file
       const fileDetails: TaskFile[] = await Promise.all(
@@ -201,6 +207,7 @@ export const taskService = {
             path: filePath,
             size: stats.size,
             mime_type: getContentType(path.extname(file)),
+            user_id: userId
           }
         }),
       )
@@ -221,12 +228,17 @@ export const taskService = {
 
     try {
       const stats = await fs.stat(filePath)
+      
+      // Get task to retrieve user_id
+      const [task] = await sql`SELECT user_id FROM tasks WHERE id = ${taskId}`
+      const userId = task ? task.user_id : 0
 
       return {
         filename,
         path: filePath,
         size: stats.size,
         mime_type: getContentType(path.extname(filename)),
+        user_id: userId
       }
     } catch (error) {
       log.warn(`Error accessing file ${filename} for task ${taskId}:`, error)
@@ -280,38 +292,58 @@ export const taskService = {
     }
   },
   listTasks: async (options: ListOptions): Promise<TaskListResult> => {
-    const { limit, cursor } = options
-
+    const { limit, cursor, userId } = options
+    
     // Build the base query
     let baseQuery = sql`
       SELECT 
-        id,
-        command,
-        status,
-        created_at,
-        updated_at,
-        result_path,
-        error
-      FROM tasks
+        t.id, 
+        t.command, 
+        t.status, 
+        t.created_at, 
+        t.updated_at, 
+        t.result_path, 
+        t.error,
+        t.user_id,
+        array_agg(tf.file_id) as file_ids
+      FROM tasks t
+      LEFT JOIN task_files tf ON t.id = tf.task_id
     `
-
-    // Add cursor condition if it exists
-    if (cursor) {
+    
+    // Add user filtering if userId is provided
+    if (userId) {
+      if (cursor) {
+        baseQuery = sql`${baseQuery} 
+          WHERE t.user_id = ${userId} AND (t.created_at, t.id) < (${cursor.timestamp}, ${cursor.id})
+          GROUP BY t.id
+          ORDER BY t.created_at DESC, t.id DESC
+          LIMIT ${limit + 1}`
+      } else {
+        baseQuery = sql`${baseQuery} 
+          WHERE t.user_id = ${userId}
+          GROUP BY t.id
+          ORDER BY t.created_at DESC, t.id DESC
+          LIMIT ${limit + 1}`
+      }
+    } else if (cursor) {
       baseQuery = sql`${baseQuery} 
-        WHERE (created_at, id) < (${cursor.timestamp}, ${cursor.id})`
+        WHERE (t.created_at, t.id) < (${cursor.timestamp}, ${cursor.id})
+        GROUP BY t.id
+        ORDER BY t.created_at DESC, t.id DESC
+        LIMIT ${limit + 1}`
+    } else {
+      baseQuery = sql`${baseQuery} 
+        GROUP BY t.id
+        ORDER BY t.created_at DESC, t.id DESC
+        LIMIT ${limit + 1}`
     }
 
-    // Add ordering and limit
-    baseQuery = sql`${baseQuery} 
-      ORDER BY created_at DESC, id DESC 
-      LIMIT ${limit + 1}`
-
-    const tasks = await baseQuery
-
+    const rows = await baseQuery
+    
     // Check if we have more items
-    const hasMore = tasks.length > limit
-    const items = hasMore ? tasks.slice(0, -1) : tasks
-
+    const hasMore = rows.length > limit
+    const items = hasMore ? rows.slice(0, -1) : rows
+    
     // Generate next cursor if we have more items
     let nextCursor = null
     if (hasMore && items.length > 0) {
@@ -322,33 +354,22 @@ export const taskService = {
       }
       nextCursor = Buffer.from(JSON.stringify(cursorData)).toString('base64')
     }
-
-    // Enhance each task with its associated file IDs
-    const enhancedTasks = await Promise.all(
-      items.map(async (task) => {
-        const fileAssociations = await sql`
-          SELECT file_id
-          FROM task_files
-          WHERE task_id = ${task.id}
-        `
-        const fileIds = fileAssociations.map((association) => association.file_id)
-
-        // Ensure we keep all Task properties and add fileIds
-        return {
-          id: task.id,
-          command: task.command,
-          status: task.status,
-          created_at: task.created_at,
-          updated_at: task.updated_at,
-          result_path: task.result_path,
-          error: task.error,
-          fileIds,
-        } as Task & { fileIds: string[] }
-      }),
-    )
-
+    
+    // Map rows to Task objects
+    const tasks = items.map(row => ({
+      id: row.id,
+      command: row.command,
+      status: row.status,
+      created_at: row.created_at,
+      updated_at: row.updated_at,
+      result_path: row.result_path,
+      error: row.error,
+      user_id: row.user_id,
+      fileIds: row.file_ids.filter((id: string | null) => id) // Filter out null values
+    }))
+    
     return {
-      tasks: enhancedTasks,
+      tasks,
       nextCursor,
       hasMore,
     }

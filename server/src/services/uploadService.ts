@@ -19,7 +19,7 @@ export const uploadService = {
       throw new Error('Failed to initialize upload directory')
     }
   },
-  upload: async (file: File, id: string) => {
+  upload: async (file: File, id: string, userId: number, expiresInHours = 24): Promise<any> => {
     try {
       await uploadService.ensureUploadDirectory()
 
@@ -37,19 +37,27 @@ export const uploadService = {
 
       await fileWriter.end()
 
+      // Calculate expiration time
+      const expiresAt = new Date();
+      expiresAt.setHours(expiresAt.getHours() + expiresInHours);
+
       const result = await sql`
         INSERT INTO files (
           id,
+          user_id,
           file_name,
-          file_path,
+          mime_type,
           file_size,
-          mime_type
+          file_path,
+          expires_at
         ) VALUES (
           ${id},
+          ${userId},
           ${fileName},
-          ${filePath},
+          ${fileType},
           ${fileSize},
-          ${fileType}
+          ${filePath},
+          ${expiresAt}
         ) RETURNING id, file_name, file_path
       `
 
@@ -88,22 +96,31 @@ export const uploadService = {
     `
   },
   listUploads: async (options: ListOptions): Promise<ListResult> => {
-    const { limit, cursor } = options
+    const { limit, cursor, userId } = options
 
     // Build the base query
     let baseQuery = sql`
       SELECT 
         id,
+        user_id,
         file_name AS name,
-        file_size AS size,
         mime_type AS type,
+        file_size AS size,
         file_path AS path,
-        uploaded_at
+        uploaded_at AS time
       FROM files
     `
-
-    // Add cursor condition if it exists
-    if (cursor) {
+    
+    // Add user filtering if userId is provided
+    if (userId) {
+      if (cursor) {
+        baseQuery = sql`${baseQuery} 
+          WHERE user_id = ${userId} AND (uploaded_at, id) < (${cursor.timestamp}, ${cursor.id})`
+      } else {
+        baseQuery = sql`${baseQuery} 
+          WHERE user_id = ${userId}`
+      }
+    } else if (cursor) {
       baseQuery = sql`${baseQuery} 
         WHERE (uploaded_at, id) < (${cursor.timestamp}, ${cursor.id})`
     }
@@ -136,4 +153,29 @@ export const uploadService = {
       hasMore,
     }
   },
+  updateExpiration: async (fileId: string, expiresInHours: number): Promise<boolean> => {
+    const expiresAt = new Date();
+    expiresAt.setHours(expiresAt.getHours() + expiresInHours);
+    
+    const result = await sql`
+      UPDATE files
+      SET expires_at = ${expiresAt}
+      WHERE id = ${fileId}
+      RETURNING id
+    `
+    
+    // Also update associated tasks
+    if (result.length > 0) {
+      await sql`
+        UPDATE tasks
+        SET expires_at = ${expiresAt}
+        WHERE id IN (
+          SELECT task_id FROM task_files WHERE file_id = ${fileId}
+        )
+      `
+      return true
+    }
+    
+    return false
+  }
 }

@@ -12,6 +12,9 @@ export const uploadsController = {
       const body = await c.req.parseBody()
       const file = body.file
       const id = body.id as string
+      
+      // Get user from context after authentication middleware
+      const userId = c.get('user').userId
 
       if (!file || !(file instanceof File)) {
         log.warn('Upload attempted with no file')
@@ -33,9 +36,10 @@ export const uploadsController = {
         fileSize: file.size,
         mimeType: file.type,
         id: id,
+        userId: userId
       })
 
-      const result = await uploadService.upload(file, id)
+      const result = await uploadService.upload(file, id, userId)
       log.info(`Successfully uploaded: ${result.file_name}`)
 
       return c.json({
@@ -62,6 +66,9 @@ export const uploadsController = {
   delete: async (c: Context) => {
     try {
       const id = c.req.param('id')
+      
+      // Get user from context after authentication middleware
+      const userId = c.get('user').userId
 
       if (!ValidUUID(id)) {
         log.warn('Delete attempted with invalid UUID', { id })
@@ -79,6 +86,9 @@ export const uploadsController = {
   list: async (c: Context) => {
     try {
       const { limit, cursor } = c.req.query()
+      
+      // Get user from context after authentication middleware
+      const userId = c.get('user').userId
 
       // Parse and validate limit
       const parseLimit = parseInt(limit || String(DEFAULT_PAGE_SIZE))
@@ -97,6 +107,7 @@ export const uploadsController = {
       const result = await uploadService.listUploads({
         limit: validLimit,
         cursor: cursorData,
+        userId: userId
       })
 
       return c.json({
