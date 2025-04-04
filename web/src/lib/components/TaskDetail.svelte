@@ -1,6 +1,6 @@
-<!-- lib/components/TaskDetail.svelte -->
 <script lang="ts">
 	import { taskSelected, tasks, endpoint } from '$lib/stores'
+	import { downloadTaskResult } from '$lib/utils/requests'
 	import { derived } from 'svelte/store'
 
 	const task = derived(
@@ -27,10 +27,13 @@
 			{#if $task.result_path}
 				<p class="truncate text-sm">Result Path: {$task.result_path}</p>
 				<p class="truncate text-sm">
-					Download Link:
-					<a href="{$endpoint}/tasks/{$task.id}" target="_blank" class="text-primary">
+					Download:
+					<button
+						onclick={() => downloadTaskResult($task.id)}
+						class="text-primary cursor-pointer underline"
+					>
 						{$endpoint}/tasks/{$task.id}
-					</a>
+					</button>
 				</p>
 			{/if}
 		</div>

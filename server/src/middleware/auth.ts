@@ -17,7 +17,7 @@ export async function authMiddleware(c: Context, next: Next) {
 
 	try {
 		const decoded = jwt.verify(token, JWT_SECRET) as unknown as User;
-		log.info(`Authentication successful: ${decoded.username}`);
+		log.debug(`Authentication successful: ${decoded.username}`);
 		c.set("user", decoded);
 		await next();
 	} catch (err) {

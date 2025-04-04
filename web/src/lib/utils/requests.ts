@@ -235,3 +235,25 @@ export async function fetchAllRemoteItems<T, R>({
 		hasMore = result.hasMore
 	}
 }
+
+export async function downloadTaskResult(taskId: string) {
+	try {
+		const response = await fetch(`${get(endpoint)}/tasks/${taskId}`, {
+			headers: {
+				Authorization: `Bearer ${get(token)}`,
+			},
+		})
+
+		if (!response.ok) throw new Error('Download failed')
+
+		const blob = await response.blob()
+		const url = URL.createObjectURL(blob)
+		const a = document.createElement('a')
+		a.href = url
+		a.download = `${taskId}`
+		a.click()
+		URL.revokeObjectURL(url)
+	} catch (error) {
+		console.error('Failed to download task result:', error)
+	}
+}
