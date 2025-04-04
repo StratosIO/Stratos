@@ -19,8 +19,8 @@
 		"@sveltejs/kit": "^2.20.3",
 		"@sveltejs/adapter-static": "^3.0.8",
 		"@sveltejs/vite-plugin-svelte": "^5.0.3",
-		"@tailwindcss/vite": "^4.1.0",
-		"daisyui": "^5.0.11",
+		"@tailwindcss/vite": "^4.1.2",
+		"daisyui": "^5.0.12",
 		"globals": "^16.0.0",
 		"material-icons": "^1.13.14",
 		"prettier": "^3.5.3",
@@ -28,8 +28,8 @@
 		"prettier-plugin-tailwindcss": "^0.6.11",
 		"svelte": "^5.25.6",
 		"svelte-check": "^4.1.5",
-		"tailwindcss": "^4.1.0",
+		"tailwindcss": "^4.1.2",
 		"typescript": "^5.8.2",
-		"vite": "^6.2.4"
+		"vite": "^6.2.5"
 	}
 }

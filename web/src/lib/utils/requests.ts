@@ -29,7 +29,7 @@ export async function fetchUserInfo(endpoint: string, token: string): Promise<Us
 	}
 }
 
-export async function synchronizeUserData(): Promise<boolean> {
+export async function fetchUserData(): Promise<boolean> {
 	const currentEndpoint = get(endpoint)
 	const currentToken = get(token)
 
