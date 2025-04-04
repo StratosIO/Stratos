@@ -66,8 +66,7 @@ describe("authMiddleware", () => {
 	});
 
 	test("returns 401 if token is expired", async () => {
-		// Create an expired token
-		const mockUser = { userId: 1, email: "test@test.com", role: "user" };
+		const mockUser = { userId: 1, username: "test", role: "user" };
 		const expiredToken = jwt.sign(mockUser, JWT_SECRET, { expiresIn: "-10s" });
 		mockContext.req.header.mockImplementation(() => `Bearer ${expiredToken}`);
 
@@ -81,10 +80,9 @@ describe("authMiddleware", () => {
 	});
 
 	test("calls next and sets user if token is valid", async () => {
-		const mockUser = { userId: 1, email: "test@test.com", role: "user" };
+		const mockUser = { userId: 1, username: "test", role: "user" };
 		mockContext.req.header.mockImplementation(() => "Bearer valid-token");
 
-		// Mock jwt.verify to return our mock user
 		const originalVerify = jwt.verify;
 		jwt.verify = mock(() => mockUser);
 
@@ -93,13 +91,11 @@ describe("authMiddleware", () => {
 		expect(mockContext.set).toHaveBeenCalledWith("user", mockUser);
 		expect(mockNext).toHaveBeenCalled();
 
-		// Restore original jwt.verify
 		jwt.verify = originalVerify;
 	});
 
 	test("sets the correct user information from a real token", async () => {
-		// Create a real token with JWT
-		const mockUser = { userId: 1, email: "test@test.com", role: "user" };
+		const mockUser = { userId: 1, username: "test", role: "user" };
 		const token = jwt.sign(mockUser, JWT_SECRET, { expiresIn: "1h" });
 		mockContext.req.header.mockImplementation(() => `Bearer ${token}`);
 
@@ -109,7 +105,7 @@ describe("authMiddleware", () => {
 			"user",
 			expect.objectContaining({
 				userId: mockUser.userId,
-				email: mockUser.email,
+				username: mockUser.username,
 				role: mockUser.role,
 			}),
 		);
@@ -133,7 +129,6 @@ describe("requireRole middleware", () => {
 		const user = {
 			userId: 1,
 			username: "admin",
-			email: "admin@test.com",
 			role: "admin",
 		};
 		mockContext.get.mockImplementation(() => user);
@@ -148,7 +143,6 @@ describe("requireRole middleware", () => {
 		const user = {
 			userId: 1,
 			username: "admin",
-			email: "admin@test.com",
 			role: "admin",
 		};
 		mockContext.get.mockImplementation(() => user);
@@ -163,7 +157,6 @@ describe("requireRole middleware", () => {
 		const user = {
 			userId: 2,
 			username: "user",
-			email: "user@test.com",
 			role: "user",
 		};
 		mockContext.get.mockImplementation(() => user);

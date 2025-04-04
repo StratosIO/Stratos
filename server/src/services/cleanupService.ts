@@ -14,10 +14,10 @@ export const cleanupService = {
 
 			// Get all expired files
 			const expiredFiles = await sql<{ id: string; file_path: string }[]>`
-        SELECT id, file_path
-        FROM files
-        WHERE expires_at < CURRENT_TIMESTAMP
-      `;
+				SELECT id, file_path
+				FROM files
+				WHERE expires_at < CURRENT_TIMESTAMP
+			`;
 
 			log.info(`Found ${expiredFiles.length} expired files to clean up`);
 
@@ -39,13 +39,13 @@ export const cleanupService = {
 
 			// Get expired tasks (those without associated files or explicitly expired)
 			const expiredTasks = await sql<{ id: string; result_path: string }[]>`
-        SELECT id, result_path
-        FROM tasks
-        WHERE expires_at < CURRENT_TIMESTAMP
-        AND NOT EXISTS (
-          SELECT 1 FROM task_files WHERE task_id = tasks.id
-        )
-      `;
+				SELECT id, result_path
+				FROM tasks
+				WHERE expires_at < CURRENT_TIMESTAMP
+				AND NOT EXISTS (
+					SELECT 1 FROM task_files WHERE task_id = tasks.id
+				)
+			`;
 
 			log.info(`Found ${expiredTasks.length} expired tasks to clean up`);
 

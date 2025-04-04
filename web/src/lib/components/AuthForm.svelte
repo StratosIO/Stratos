@@ -9,9 +9,8 @@
 	}>()
 
 	// Form fields
-	let email = $state('')
-	let password = $state('')
 	let username = $state('')
+	let password = $state('')
 
 	let isLoading = $state(false)
 	let errorMessage = $state('')
@@ -29,26 +28,26 @@
 	// Configuration for different modes
 	const configs = {
 		login: {
-			title: 'Sign in to access your media workspace',
-			buttonText: 'Sign In',
+			title: 'Sign In',
+			subtitle: 'Log in to access your media workspace',
 			altMode: 'register',
 			altText: 'Register',
 			endpoint: '/auth/login',
-			prepareData: () => ({ email, password }),
+			prepareData: () => ({ username, password }),
 		},
 		register: {
-			title: 'Create a new account',
-			buttonText: 'Create Account',
+			title: 'Register',
+			subtitle: 'Sign up to access your media workspace',
 			altMode: 'login',
 			altText: 'Sign In',
 			endpoint: '/auth/register',
-			prepareData: () => ({ email, password, username }),
+			prepareData: () => ({ username, password }),
 		},
 	} satisfies Record<
 		string,
 		{
 			title: string
-			buttonText: string
+			subtitle: string
 			altMode: string
 			altText: string
 			endpoint: string
@@ -111,8 +110,8 @@
 		</legend>
 
 		<div class="mb-6 flex flex-col items-center">
-			<h1 class="mb-2 text-3xl font-bold">Stratos</h1>
-			<p class="text-base-content/80 text-sm">{currentConfig.title}</p>
+			<h1 class="mb-2 text-3xl font-bold">{currentConfig.title}</h1>
+			<p class="text-base-content/80 text-sm">{currentConfig.subtitle}</p>
 		</div>
 
 		<form onsubmit={handleSubmit} class="space-y-4">
@@ -128,27 +127,13 @@
 				/>
 			</div>
 
-			{#if mode === 'register'}
-				<div class="form-control">
-					<span class="fieldset-label text-sm">Username</span>
-					<input
-						type="text"
-						id="username"
-						bind:value={username}
-						placeholder="Choose a username"
-						class="input input-bordered w-full"
-						required
-					/>
-				</div>
-			{/if}
-
 			<div class="form-control">
-				<span class="fieldset-label text-sm">E-mail</span>
+				<span class="fieldset-label text-sm">Username</span>
 				<input
-					type="email"
-					id="email"
-					bind:value={email}
-					placeholder="Enter your e-mail"
+					type="text"
+					id="username"
+					bind:value={username}
+					placeholder="Enter your username"
 					class="input input-bordered w-full"
 					required
 				/>
@@ -172,7 +157,7 @@
 						<span class="loading loading-spinner loading-sm"></span>
 						Connecting...
 					{:else}
-						{currentConfig.buttonText}
+						{currentConfig.title}
 					{/if}
 				</button>
 			</div>

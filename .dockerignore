@@ -1,0 +1,14 @@
+.vscode/
+.github/
+.git/
+
+ai/
+
+server/node_modules/
+server/build/
+server/test/
+server/logs/
+
+web/node_modules/
+web/build/
+web/test/

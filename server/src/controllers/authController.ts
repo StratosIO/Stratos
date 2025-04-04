@@ -5,9 +5,9 @@ import log from "../config/logger.js";
 export const authController = {
 	register: async (c: Context) => {
 		try {
-			const { username, email, password } = await c.req.json();
-			const result = await authService.registerUser(username, email, password);
-			log.info(`User registered successfully: ${email}`);
+			const { username, password } = await c.req.json();
+			const result = await authService.registerUser(username, password);
+			log.info(`User registered successfully: ${username}`);
 			return c.json(result);
 		} catch (error) {
 			log.error("Registration failed:", error);
@@ -19,9 +19,9 @@ export const authController = {
 
 	login: async (c: Context) => {
 		try {
-			const { email, password } = await c.req.json();
-			const result = await authService.loginUser(email, password);
-			log.info(`User logged in successfully: ${email}`);
+			const { username, password } = await c.req.json();
+			const result = await authService.loginUser(username, password);
+			log.info(`User logged in successfully: ${username}`);
 			return c.json(result);
 		} catch (error) {
 			log.error("Login failed:", error);
@@ -30,9 +30,9 @@ export const authController = {
 			return c.json({ error: `Login failed: ${errorMessage}` }, 500);
 		}
 	},
+
 	getMe: async (c: Context) => {
 		try {
-			// The user data is attached to the request by the auth middleware
 			const user = c.get("user");
 
 			if (!user || !user.userId) {

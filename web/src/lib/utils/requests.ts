@@ -29,7 +29,7 @@ export async function fetchUserInfo(endpoint: string, token: string): Promise<Us
 	}
 }
 
-export async function synchronizeUserData(): Promise<boolean> {
+export async function fetchUserData(): Promise<boolean> {
 	const currentEndpoint = get(endpoint)
 	const currentToken = get(token)
 
@@ -233,5 +233,27 @@ export async function fetchAllRemoteItems<T, R>({
 
 		cursor = result.nextCursor ?? undefined
 		hasMore = result.hasMore
+	}
+}
+
+export async function downloadTaskResult(taskId: string) {
+	try {
+		const response = await fetch(`${get(endpoint)}/tasks/${taskId}`, {
+			headers: {
+				Authorization: `Bearer ${get(token)}`,
+			},
+		})
+
+		if (!response.ok) throw new Error('Download failed')
+
+		const blob = await response.blob()
+		const url = URL.createObjectURL(blob)
+		const a = document.createElement('a')
+		a.href = url
+		a.download = `${taskId}`
+		a.click()
+		URL.revokeObjectURL(url)
+	} catch (error) {
+		console.error('Failed to download task result:', error)
 	}
 }

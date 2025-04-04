@@ -6,22 +6,20 @@ import type { User } from "../types/index.js";
 const JWT_SECRET = process.env.JWT_SECRET || "secret-key";
 
 export const authService = {
-	registerUser: async (username: string, email: string, password: string) => {
-		// Check if user exists
+	registerUser: async (username: string, password: string) => {
 		const existingUser = await sql`
-      SELECT id FROM users WHERE email = ${email} OR username = ${username}
-    `;
+			SELECT id FROM users WHERE username = ${username}
+		`;
 		if (existingUser.length > 0) {
 			throw new Error("User already exists");
 		}
 
-		// Hash password and create user
 		const passwordHash = await bcrypt.hash(password, 10);
 		const result = await sql`
-      INSERT INTO users (username, email, password_hash, role)
-      VALUES (${username}, ${email}, ${passwordHash}, 'user')
-      RETURNING id, username, email, role
-    `;
+			INSERT INTO users (username, password_hash, role)
+			VALUES (${username}, ${passwordHash}, 'user')
+			RETURNING id, username, role
+		`;
 
 		const user = result[0];
 		const token = jwt.sign(
@@ -33,11 +31,11 @@ export const authService = {
 		return { user, token };
 	},
 
-	loginUser: async (email: string, password: string) => {
+	loginUser: async (username: string, password: string) => {
 		const users = await sql`
-      SELECT id, username, email, password_hash, role
-      FROM users WHERE email = ${email}
-    `;
+			SELECT id, username, password_hash, role
+			FROM users WHERE username = ${username}
+		`;
 
 		if (users.length === 0) {
 			throw new Error("Invalid credentials");
@@ -60,17 +58,17 @@ export const authService = {
 			user: {
 				id: user.id,
 				username: user.username,
-				email: user.email,
 				role: user.role,
 			},
 			token,
 		};
 	},
+
 	getUserById: async (userId: number) => {
 		const users = await sql`
-      SELECT id, username, email, role
-      FROM users WHERE id = ${userId}
-    `;
+			SELECT id, username, role
+			FROM users WHERE id = ${userId}
+		`;
 
 		if (users.length === 0) {
 			throw new Error("User not found");
@@ -79,7 +77,6 @@ export const authService = {
 		return {
 			id: users[0].id,
 			username: users[0].username,
-			email: users[0].email,
 			role: users[0].role,
 		};
 	},

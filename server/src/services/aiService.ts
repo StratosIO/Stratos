@@ -25,11 +25,11 @@ export const aiService = {
 
 			// Get file paths for all files associated with the task
 			const taskFiles = await sql`
-        SELECT f.id, f.file_path, f.file_name, f.mime_type
-        FROM files f
-        JOIN task_files tf ON f.id = tf.file_id
-        WHERE tf.task_id = ${taskId}
-      `;
+				SELECT f.id, f.file_path, f.file_name, f.mime_type
+				FROM files f
+				JOIN task_files tf ON f.id = tf.file_id
+				WHERE tf.task_id = ${taskId}
+			`;
 
 			if (taskFiles.length === 0) {
 				throw new Error("No files found for task");
@@ -62,12 +62,12 @@ export const aiService = {
 
 			// Update task as completed
 			await sql`
-        UPDATE tasks 
-        SET status = 'completed', 
-            result_path = ${resultFilePath}, 
-            updated_at = NOW() 
-        WHERE id = ${taskId}
-      `;
+				UPDATE tasks 
+				SET status = 'completed', 
+					result_path = ${resultFilePath}, 
+					updated_at = NOW() 
+				WHERE id = ${taskId}
+			`;
 
 			log.info(`AI Task ${taskId} completed successfully`);
 		} catch (error) {
@@ -75,12 +75,12 @@ export const aiService = {
 
 			// Update task as failed
 			await sql`
-        UPDATE tasks 
-        SET status = 'failed', 
-            error = ${String(error)}, 
-            updated_at = NOW() 
-        WHERE id = ${taskId}
-      `;
+				UPDATE tasks 
+				SET status = 'failed', 
+					error = ${String(error)}, 
+					updated_at = NOW() 
+				WHERE id = ${taskId}
+			`;
 		}
 	},
 };
@@ -115,7 +115,7 @@ async function processTranscription(
 	const resultFilePath = path.join(outputDir, transcriptionFile);
 
 	// optionsString : "language-auto-format-txt"
-	// safeFilePath  : Replace '/' with '+' in the filePath for URL safety
+	// safeFilePath	: Replace '/' with '+' in the filePath for URL safety
 	const optionsString = Object.entries({ language, format }).map(
 		([key, value]) => `${key}-${value}`,
 	);

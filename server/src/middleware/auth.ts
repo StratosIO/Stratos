@@ -17,7 +17,7 @@ export async function authMiddleware(c: Context, next: Next) {
 
 	try {
 		const decoded = jwt.verify(token, JWT_SECRET) as unknown as User;
-		log.info("Authentication succesful: ${decoded.email}");
+		log.debug(`Authentication successful: ${decoded.username}`);
 		c.set("user", decoded);
 		await next();
 	} catch (err) {
@@ -26,8 +26,6 @@ export async function authMiddleware(c: Context, next: Next) {
 	}
 }
 
-//use to include role based authentication for routes
-//use as -> app.get('/api/test-auth', authMiddleware, requireRole('admin'), (c) =>
 export function requireRole(requiredRole: string) {
 	return async function roleMiddleware(c: Context, next: Next) {
 		const user = c.get("user");
