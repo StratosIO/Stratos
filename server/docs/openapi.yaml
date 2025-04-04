@@ -33,9 +33,6 @@ components:
           format: uuid
         username:
           type: string
-        email:
-          type: string
-          format: email
         role:
           type: string
           enum: [user, admin]
@@ -43,12 +40,12 @@ components:
     LoginCredentials:
       type: object
       required:
-        - email
+        - usename
         - password
       properties:
-        email:
+        usename:
           type: string
-          format: email
+          format: usename
         password:
           type: string
           format: password
@@ -57,14 +54,11 @@ components:
       type: object
       required:
         - username
-        - email
         - password
       properties:
         username:
           type: string
-        email:
-          type: string
-          format: email
+          format: username
         password:
           type: string
           format: password

@@ -56,8 +56,8 @@ export const taskService = {
 
 		// Check if all files exist
 		const existingFiles = await sql`
-      SELECT id FROM files WHERE id IN ${sql(fileIds.map((id) => id))}
-    `;
+			SELECT id FROM files WHERE id IN ${sql(fileIds.map((id) => id))}
+		`;
 
 		const foundIds = existingFiles.map((file) => file.id);
 		const missingIds = fileIds.filter((id) => !foundIds.includes(id));
@@ -82,10 +82,10 @@ export const taskService = {
 
 		// Create task record
 		const [row] = await sql`
-      INSERT INTO tasks (id, command, status, user_id)
-      VALUES (${taskId}, ${command}, 'pending', ${userId})
-      RETURNING *
-    `;
+			INSERT INTO tasks (id, command, status, user_id)
+			VALUES (${taskId}, ${command}, 'pending', ${userId})
+			RETURNING *
+		`;
 
 		// Link files to task
 		if (fileIds.length > 0) {
@@ -93,9 +93,7 @@ export const taskService = {
 				task_id: taskId,
 				file_id: fileId,
 			}));
-			await sql`
-        INSERT INTO task_files ${sql(values)}
-      `;
+			await sql`INSERT INTO task_files ${sql(values)}`;
 		}
 
 		// Map the database row to Task type
@@ -129,11 +127,11 @@ export const taskService = {
 
 			// Get file paths for all files associated with the task
 			const taskFiles = await sql`
-        SELECT f.id, f.file_path 
-        FROM files f
-        JOIN task_files tf ON f.id = tf.file_id
-        WHERE tf.task_id = ${taskId}
-      `;
+				SELECT f.id, f.file_path 
+				FROM files f
+				JOIN task_files tf ON f.id = tf.file_id
+				WHERE tf.task_id = ${taskId}
+			`;
 
 			// Create task-specific output directory if it doesn't exist
 			const outputDir = path.join(OUTPUT_CONFIG.DIR, taskId);
@@ -162,12 +160,12 @@ export const taskService = {
 
 			// Update task as completed
 			await sql`
-        UPDATE tasks 
-        SET status = 'completed', 
-            result_path = ${resultPath}, 
-            updated_at = NOW() 
-        WHERE id = ${taskId}
-      `;
+				UPDATE tasks 
+				SET status = 'completed', 
+					result_path = ${resultPath}, 
+					updated_at = NOW() 
+				WHERE id = ${taskId}
+			`;
 
 			log.info(`Task ${taskId} completed successfully`);
 		} catch (error) {
@@ -175,12 +173,12 @@ export const taskService = {
 
 			// Update task as failed
 			await sql`
-        UPDATE tasks 
-        SET status = 'failed', 
-            error = ${String(error)}, 
-            updated_at = NOW() 
-        WHERE id = ${taskId}
-      `;
+				UPDATE tasks 
+				SET status = 'failed', 
+					error = ${String(error)}, 
+					updated_at = NOW() 
+				WHERE id = ${taskId}
+			`;
 		}
 	},
 
@@ -275,10 +273,10 @@ export const taskService = {
 		try {
 			// check if task exists and get its details
 			const [task] = await sql`
-        SELECT id, result_path 
-        FROM tasks 
-        WHERE id = ${taskId}
-      `;
+				SELECT id, result_path 
+				FROM tasks 
+				WHERE id = ${taskId}
+			`;
 
 			if (!task) {
 				return false;
@@ -296,14 +294,14 @@ export const taskService = {
 			await sql.begin(async (sql) => {
 				// delete task_files entries
 				await sql`
-          DELETE FROM task_files 
-          WHERE task_id = ${taskId}
-        `;
+					DELETE FROM task_files 
+					WHERE task_id = ${taskId}
+				`;
 				// delete the task itself
 				await sql`
-          DELETE FROM tasks 
-          WHERE id = ${taskId}
-        `;
+					DELETE FROM tasks 
+					WHERE id = ${taskId}
+				`;
 			});
 
 			return true;
@@ -317,46 +315,46 @@ export const taskService = {
 
 		// Build the base query
 		let baseQuery = sql`
-      SELECT 
-        t.id, 
-        t.command, 
-        t.status, 
-        t.created_at, 
-        t.updated_at, 
-        t.result_path, 
-        t.error,
-        t.user_id,
-        array_agg(tf.file_id) as file_ids
-      FROM tasks t
-      LEFT JOIN task_files tf ON t.id = tf.task_id
-    `;
+			SELECT 
+				t.id, 
+				t.command, 
+				t.status, 
+				t.created_at, 
+				t.updated_at, 
+				t.result_path, 
+				t.error,
+				t.user_id,
+				array_agg(tf.file_id) as file_ids
+			FROM tasks t
+			LEFT JOIN task_files tf ON t.id = tf.task_id
+		`;
 
 		// Add user filtering if userId is provided
 		if (userId) {
 			if (cursor) {
 				baseQuery = sql`${baseQuery} 
-          WHERE t.user_id = ${userId} AND (t.created_at, t.id) < (${cursor.timestamp}, ${cursor.id})
-          GROUP BY t.id
-          ORDER BY t.created_at DESC, t.id DESC
-          LIMIT ${limit + 1}`;
+					WHERE t.user_id = ${userId} AND (t.created_at, t.id) < (${cursor.timestamp}, ${cursor.id})
+					GROUP BY t.id
+					ORDER BY t.created_at DESC, t.id DESC
+					LIMIT ${limit + 1}`;
 			} else {
 				baseQuery = sql`${baseQuery} 
-          WHERE t.user_id = ${userId}
-          GROUP BY t.id
-          ORDER BY t.created_at DESC, t.id DESC
-          LIMIT ${limit + 1}`;
+					WHERE t.user_id = ${userId}
+					GROUP BY t.id
+					ORDER BY t.created_at DESC, t.id DESC
+					LIMIT ${limit + 1}`;
 			}
 		} else if (cursor) {
 			baseQuery = sql`${baseQuery} 
-        WHERE (t.created_at, t.id) < (${cursor.timestamp}, ${cursor.id})
-        GROUP BY t.id
-        ORDER BY t.created_at DESC, t.id DESC
-        LIMIT ${limit + 1}`;
+				WHERE (t.created_at, t.id) < (${cursor.timestamp}, ${cursor.id})
+				GROUP BY t.id
+				ORDER BY t.created_at DESC, t.id DESC
+				LIMIT ${limit + 1}`;
 		} else {
 			baseQuery = sql`${baseQuery} 
-        GROUP BY t.id
-        ORDER BY t.created_at DESC, t.id DESC
-        LIMIT ${limit + 1}`;
+				GROUP BY t.id
+				ORDER BY t.created_at DESC, t.id DESC
+				LIMIT ${limit + 1}`;
 		}
 
 		const rows = await baseQuery;

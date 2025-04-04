@@ -46,24 +46,24 @@ export const fileService = {
 		expiresAt.setHours(expiresAt.getHours() + expiresInHours);
 
 		const result = await sql`
-        INSERT INTO files (
-          id,
-          user_id,
-          file_name,
-          mime_type,
-          file_size,
-          file_path,
-          expires_at
-        ) VALUES (
-          ${id},
-          ${userId},
-          ${fileName},
-          ${fileType},
-          ${fileSize},
-          ${filePath},
-          ${expiresAt}
-        ) RETURNING id, file_name, file_path
-      `;
+			INSERT INTO files (
+				id,
+				user_id,
+				file_name,
+				mime_type,
+				file_size,
+				file_path,
+				expires_at
+			) VALUES (
+				${id},
+				${userId},
+				${fileName},
+				${fileType},
+				${fileSize},
+				${filePath},
+				${expiresAt}
+			) RETURNING id, file_name, file_path
+		`;
 
 		return result[0];
 	},
@@ -74,10 +74,10 @@ export const fileService = {
 
 		// First get the file path from database
 		const [{ file_path: filePath } = {}] = await sql`
-      SELECT file_path 
-      FROM files 
-      WHERE id = ${id}::uuid
-    `;
+			SELECT file_path 
+			FROM files 
+			WHERE id = ${id}::uuid
+		`;
 
 		if (!filePath) {
 			throw new Error("File not found");
@@ -86,44 +86,44 @@ export const fileService = {
 
 		// Then remove from database
 		await sql`
-      DELETE FROM files 
-      WHERE id = ${id}::uuid
-    `;
+			DELETE FROM files 
+			WHERE id = ${id}::uuid
+		`;
 	},
 	list: async (options: ListOptions): Promise<FileListResult> => {
 		const { limit, cursor, userId } = options;
 
 		// Build the base query
 		let baseQuery = sql`
-      SELECT 
-        id,
-        user_id,
-        file_name AS name,
-        mime_type AS type,
-        file_size AS size,
-        file_path AS path,
-        uploaded_at AS time
-      FROM files
-    `;
+			SELECT 
+				id,
+				user_id,
+				file_name AS name,
+				mime_type AS type,
+				file_size AS size,
+				file_path AS path,
+				uploaded_at AS time
+			FROM files
+		`;
 
 		// Add user filtering if userId is provided
 		if (userId) {
 			if (cursor) {
 				baseQuery = sql`${baseQuery} 
-          WHERE user_id = ${userId} AND (uploaded_at, id) < (${cursor.timestamp}, ${cursor.id})`;
+					WHERE user_id = ${userId} AND (uploaded_at, id) < (${cursor.timestamp}, ${cursor.id})`;
 			} else {
 				baseQuery = sql`${baseQuery} 
-          WHERE user_id = ${userId}`;
+					WHERE user_id = ${userId}`;
 			}
 		} else if (cursor) {
 			baseQuery = sql`${baseQuery} 
-        WHERE (uploaded_at, id) < (${cursor.timestamp}, ${cursor.id})`;
+				WHERE (uploaded_at, id) < (${cursor.timestamp}, ${cursor.id})`;
 		}
 
 		// Add ordering and limit
 		baseQuery = sql`${baseQuery} 
-      ORDER BY uploaded_at DESC, id DESC 
-      LIMIT ${limit + 1}`;
+			ORDER BY uploaded_at DESC, id DESC 
+			LIMIT ${limit + 1}`;
 
 		const files = await baseQuery;
 
@@ -156,21 +156,21 @@ export const fileService = {
 		expiresAt.setHours(expiresAt.getHours() + expiresInHours);
 
 		const result = await sql`
-      UPDATE files
-      SET expires_at = ${expiresAt}
-      WHERE id = ${fileId}
-      RETURNING id
-    `;
+			UPDATE files
+			SET expires_at = ${expiresAt}
+			WHERE id = ${fileId}
+			RETURNING id
+		`;
 
 		// Also update associated tasks
 		if (result.length > 0) {
 			await sql`
-        UPDATE tasks
-        SET expires_at = ${expiresAt}
-        WHERE id IN (
-          SELECT task_id FROM task_files WHERE file_id = ${fileId}
-        )
-      `;
+				UPDATE tasks
+				SET expires_at = ${expiresAt}
+				WHERE id IN (
+					SELECT task_id FROM task_files WHERE file_id = ${fileId}
+				)
+			`;
 			return true;
 		}
 
