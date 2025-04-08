@@ -3,6 +3,7 @@ import { validate as validateUUID } from "uuid";
 import sql from "../config/database.js";
 import log from "../config/logger.js";
 import { exec } from "node:child_process";
+import { spawn } from "node:child_process";
 import { promisify } from "node:util";
 import path from "node:path";
 import fs from "node:fs/promises";
@@ -15,6 +16,7 @@ import type {
 	ListOptions,
 	TaskListResult,
 } from "../types/index.js";
+import { eventService } from "./eventService.js";
 import { getContentType } from "../utils/fileUtils.js";
 
 const execAsync = promisify(exec);
@@ -110,14 +112,13 @@ export const taskService = {
 
 		return task;
 	},
-
 	executeCommand: async (taskId: string): Promise<void> => {
 		try {
 			// Ensure the output directory exists
 			await taskService.ensureOutputDirectory();
 
-			// Update task status to processing
-			await sql`UPDATE tasks SET status = 'processing' WHERE id = ${taskId}`;
+			// Update task status to processing and set initial progress to 0
+			await sql`UPDATE tasks SET status = 'processing', progress = 0 WHERE id = ${taskId}`;
 
 			// Get task details
 			const [task] = await sql`SELECT * FROM tasks WHERE id = ${taskId}`;
@@ -127,11 +128,11 @@ export const taskService = {
 
 			// Get file paths for all files associated with the task
 			const taskFiles = await sql`
-				SELECT f.id, f.file_path 
-				FROM files f
-				JOIN task_files tf ON f.id = tf.file_id
-				WHERE tf.task_id = ${taskId}
-			`;
+      SELECT f.id, f.file_path 
+      FROM files f
+      JOIN task_files tf ON f.id = tf.file_id
+      WHERE tf.task_id = ${taskId}
+    `;
 
 			// Create task-specific output directory if it doesn't exist
 			const outputDir = path.join(OUTPUT_CONFIG.DIR, taskId);
@@ -148,37 +149,183 @@ export const taskService = {
 				);
 			}
 
-			// Execute FFmpeg command
-			const { stdout, stderr } = await execAsync(
-				`cd ${outputDir} && ${processedCommand}`,
+			// Get the duration of the input file for progress calculation
+			let duration = null;
+
+			if (taskFiles.length > 0) {
+				try {
+					const { stdout } = await execAsync(
+						`ffprobe -v error -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 "${taskFiles[0].file_path}"`,
+					);
+					duration = parseFloat(stdout.trim());
+					log.info(`Got duration for task ${taskId}: ${duration} seconds`);
+				} catch (error) {
+					log.warn(`Could not determine duration for task ${taskId}: ${error}`);
+					// Continue execution even if we can't get the duration
+				}
+			}
+
+			// Execute FFmpeg command using spawn to get real-time output
+			log.info(`Executing command for task ${taskId}: ${processedCommand}`);
+
+			// Create child process
+			const process = spawn(
+				"sh",
+				["-c", `cd "${outputDir}" && ${processedCommand}`],
+				{
+					stdio: ["ignore", "pipe", "pipe"],
+				},
 			);
 
-			// Find output file(s)
-			const outputFiles = await fs.readdir(outputDir);
-			const resultPath =
-				outputFiles.length > 0 ? path.join(outputDir, outputFiles[0]) : null;
+			// Progress parsing regex
+			const progressRegex = /time=(\d+:\d+:\d+.\d+)/;
 
-			// Update task as completed
-			await sql`
-				UPDATE tasks 
-				SET status = 'completed', 
-					result_path = ${resultPath}, 
-					updated_at = NOW() 
-				WHERE id = ${taskId}
-			`;
+			// Listen for stdout data
+			process.stdout.on("data", (data) => {
+				const output = data.toString();
+				log.debug(`FFmpeg stdout for task ${taskId}: ${output}`);
+			});
 
-			log.info(`Task ${taskId} completed successfully`);
+			// Listen for stderr data (FFmpeg outputs progress to stderr)
+			process.stderr.on("data", (data) => {
+				const output = data.toString();
+				log.debug(`FFmpeg stderr for task ${taskId}: ${output}`);
+
+				// Parse progress if we have duration information
+				if (duration) {
+					const match = progressRegex.exec(output);
+					if (match) {
+						const timeStr = match[1];
+						// Convert HH:MM:SS.MS to seconds
+						const timeParts = timeStr.split(":");
+						const seconds =
+							parseFloat(timeParts[0]) * 3600 +
+							parseFloat(timeParts[1]) * 60 +
+							parseFloat(timeParts[2]);
+
+						// Calculate progress percentage (0-1)
+						const progress = Math.min(
+							1,
+							Math.round((seconds / duration) * 100) / 100,
+						);
+
+						// Update database
+						sql`UPDATE tasks SET progress = ${progress} WHERE id = ${taskId}`.catch(
+							(err) => {
+								log.error(
+									`Failed to update progress for task ${taskId}: ${err}`,
+								);
+							},
+						);
+
+						// Emit progress event
+						eventService.emitTaskProgress(taskId, {
+							taskId,
+							progress,
+							currentTime: seconds,
+							totalDuration: duration,
+						});
+					}
+				}
+			});
+
+			// Wait for process to complete
+			return new Promise((resolve, reject) => {
+				process.on("close", async (code) => {
+					try {
+						if (code === 0) {
+							// Find output file(s)
+							const outputFiles = await fs.readdir(outputDir);
+							const resultPath =
+								outputFiles.length > 0
+									? path.join(outputDir, outputFiles[0])
+									: null;
+
+							// Update task as completed
+							await sql`
+              UPDATE tasks 
+              SET status = 'completed', 
+                  progress = 1,
+                  result_path = ${resultPath}, 
+                  updated_at = NOW() 
+              WHERE id = ${taskId}
+            `;
+
+							// Emit completion event
+							eventService.emitTaskComplete(taskId, {
+								taskId,
+								status: "completed",
+								resultPath,
+								files: outputFiles.map((file) => ({
+									filename: file,
+									path: path.join(outputDir, file),
+								})),
+							});
+
+							log.info(`Task ${taskId} completed successfully`);
+							resolve();
+						} else {
+							const error = `Process exited with code ${code}`;
+							log.error(`Error executing task ${taskId}: ${error}`);
+
+							// Update task as failed
+							await sql`
+              UPDATE tasks 
+              SET status = 'failed', 
+                  error = ${error}, 
+                  updated_at = NOW() 
+              WHERE id = ${taskId}
+            `;
+
+							// Emit failure event
+							eventService.emitTaskFailed(taskId, error);
+
+							reject(new Error(error));
+						}
+					} catch (processError) {
+						log.error(
+							`Error handling task ${taskId} completion: ${processError}`,
+						);
+						reject(processError);
+					}
+				});
+
+				// Handle process errors
+				process.on("error", async (err) => {
+					const errorMessage = `Process error: ${err.message}`;
+					log.error(`Error executing task ${taskId}: ${errorMessage}`);
+
+					// Update task as failed
+					await sql`
+          UPDATE tasks 
+          SET status = 'failed', 
+              error = ${errorMessage}, 
+              updated_at = NOW() 
+          WHERE id = ${taskId}
+        `;
+
+					// Emit failure event
+					eventService.emitTaskFailed(taskId, errorMessage);
+
+					reject(err);
+				});
+			});
 		} catch (error) {
 			log.error(`Error executing task ${taskId}:`, error);
 
 			// Update task as failed
 			await sql`
-				UPDATE tasks 
-				SET status = 'failed', 
-					error = ${String(error)}, 
-					updated_at = NOW() 
-				WHERE id = ${taskId}
-			`;
+      UPDATE tasks 
+      SET status = 'failed', 
+          error = ${String(error)}, 
+          updated_at = NOW() 
+      WHERE id = ${taskId}
+    `;
+
+			// Emit failure event
+			eventService.emitTaskFailed(taskId, String(error));
+
+			throw error;
 		}
 	},
 

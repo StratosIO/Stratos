@@ -10,6 +10,8 @@ import log from "../config/logger.js";
 import type { TaskFileDownloadInfo } from "../types/index.js";
 import { DEFAULT_PAGE_SIZE, MAX_PAGE_SIZE } from "../types/index.js";
 import { validate as validateUUID } from "uuid";
+import { eventService } from "../services/eventService.js";
+import { streamSSE } from "hono/streaming";
 
 export const taskController = {
 	submitCommand: async (c: Context) => {
@@ -282,6 +284,124 @@ export const taskController = {
 			log.error("Failed to list tasks", { error: String(error) });
 			return c.json({ error: "Failed to fetch tasks" }, 500);
 		}
+	},
+	streamTaskProgress: async (c: Context) => {
+		const taskId = c.req.param("id");
+
+		if (!validateUUID(taskId)) {
+			return c.json({ error: "Invalid task ID" }, 400);
+		}
+
+		// Check if task exists
+		const task = await taskService.getTask(taskId);
+		if (!task) {
+			return c.json({ error: "Task not found" }, 404);
+		}
+
+		// Stream task progress using SSE
+		return streamSSE(c, async (stream) => {
+			let closed = false;
+
+			// Create a cleanup function
+			const cleanup = () => {
+				if (!closed) {
+					closed = true;
+					progressCleanup();
+					completeCleanup();
+					failedCleanup();
+				}
+			};
+
+			// Send initial status
+			await stream.writeSSE({
+				event: "status",
+				data: JSON.stringify({
+					id: task.id,
+					status: task.status,
+					progress: task.progress || 0,
+				}),
+			});
+
+			// Set up listeners for task events
+			const progressCleanup = eventService.onTaskEvent(
+				taskId,
+				"progress",
+				async (data) => {
+					try {
+						if (!closed) {
+							await stream.writeSSE({
+								event: "progress",
+								data: JSON.stringify(data),
+							});
+						}
+					} catch (error) {
+						// If writing fails, assume the connection is closed
+						cleanup();
+					}
+				},
+			);
+
+			const completeCleanup = eventService.onTaskEvent(
+				taskId,
+				"complete",
+				async (data) => {
+					try {
+						if (!closed) {
+							await stream.writeSSE({
+								event: "complete",
+								data: JSON.stringify(data),
+							});
+							// Close stream when task completes
+							cleanup();
+							stream.close();
+						}
+					} catch (error) {
+						cleanup();
+					}
+				},
+			);
+
+			const failedCleanup = eventService.onTaskEvent(
+				taskId,
+				"failed",
+				async (error) => {
+					try {
+						if (!closed) {
+							await stream.writeSSE({
+								event: "error",
+								data: JSON.stringify({ error }),
+							});
+							// Close stream when task fails
+							cleanup();
+							stream.close();
+						}
+					} catch (error) {
+						cleanup();
+					}
+				},
+			);
+			const checkConnectionInterval = setInterval(async () => {
+				try {
+					// Try to send a ping event
+					if (!closed) {
+						await stream.writeSSE({
+							event: "ping",
+							data: String(Date.now()),
+						});
+					}
+				} catch (error) {
+					// If sending fails, connection is probably closed
+					clearInterval(checkConnectionInterval);
+					cleanup();
+				}
+			}, 30000); // Check every 30 seconds
+
+			// Clean up the interval when the stream closes
+			stream.onAbort = () => {
+				clearInterval(checkConnectionInterval);
+				cleanup();
+			};
+		});
 	},
 };
 /**
