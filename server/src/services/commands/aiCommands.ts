@@ -22,6 +22,18 @@ export const AI_COMMANDS: Record<string, AICommandDefinition> = {
 			},
 		],
 	},
+	slowmo: {
+		name: "slowmo",
+		description: "Create a slow motion version of a video",
+		options: [
+			{
+				name: "speed",
+				description: "Speed factor (0.1 to 1.0, where 0.5 is half speed)",
+				type: "number",
+				default: 0.5,
+			},
+		],
+	},
 };
 
 /**
