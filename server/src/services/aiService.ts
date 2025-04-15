@@ -56,6 +56,12 @@ export const aiService = {
 					inputFileInfo,
 					outputDir,
 				);
+			} else if (commandResult.command === "slowmo") {
+				resultFilePath = await processSlowmo(
+					commandResult,
+					inputFileInfo,
+					outputDir,
+				);
 			} else {
 				throw new Error(`Unsupported AI command: ${commandResult.command}`);
 			}
@@ -149,6 +155,43 @@ async function processTranscription(
 		throw new Error(`Transcription service error: ${error}`);
 	}
 	return resultFilePath;
+}
+
+/**
+ * Process Slowmo task
+ */
+async function processSlowmo(
+	commandResult: ParsedCommand,
+	inputFile: { file_path: string; file_name: string; mime_type: string },
+	outputDir: string,
+): Promise<string> {
+	const options = commandResult.options || {};
+	const speed = (options.speed as number) || 0.5;
+
+	log.info(
+		`Preparing for slow motion: ${inputFile.file_name} with speed factor ${speed}`,
+	);
+
+	// Generate output filename
+	const baseName = path.parse(inputFile.file_name).name;
+	const outputFile = `${baseName}-slowmo.mp4`;
+	const resultFilePath = path.join(outputDir, outputFile);
+
+	// Prepare options string for the AI service
+	const optionsString = `speed=${speed}`;
+	const safeFilePath = inputFile.file_path.replace(/\//g, "+");
+
+	log.info(`Sending file to AI service: slowmo with ${inputFile.file_path}`);
+	try {
+		// Call the external AI service for slow motion
+		await axios.post(`${AI_URL}/slowmo/${safeFilePath}/${optionsString}`);
+
+		log.info(`Slow motion video saved at ${resultFilePath}`);
+		return resultFilePath;
+	} catch (error) {
+		log.error(`Failed to get slow motion video from AI service: ${error}`);
+		throw new Error(`Slow motion service error: ${error}`);
+	}
 }
 
 /**
