@@ -32,6 +32,20 @@ Transcribe speech from a video or audio file.
 /ai-transcribe 5c12ecc5-f2f8-438b-892d-e23348cb1d81 --output=meeting-notes
 ```
 
+### /ai-slowmo
+
+Create a slow motion version of a video.
+
+**Options:**
+- `--speed`: Speed factor (0.1 to 1.0, where 0.5 is half speed, default: 0.5)
+
+**Examples:**
+```
+/ai-slowmo 5c12ecc5-f2f8-438b-892d-e23348cb1d81
+/ai-slowmo 5c12ecc5-f2f8-438b-892d-e23348cb1d81 --speed=0.25
+/ai-slowmo 5c12ecc5-f2f8-438b-892d-e23348cb1d81 --output=slow-motion-clip
+```
+
 ## How it works
 
 When you use an AI command, the system:
