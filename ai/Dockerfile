@@ -14,7 +14,6 @@ RUN apt-get update && apt-get install -y \
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-RUN pip install Pillow==9.5.0
 # Install FFmpeg and its dependencies
 RUN apt-get update && apt-get install -y \
     ffmpeg \
@@ -29,10 +28,14 @@ RUN git clone https://github.com/ggerganov/whisper.cpp.git
 WORKDIR /app/whisper.cpp
 RUN make
 
-# Download Whisper model
 WORKDIR /app
-COPY models/ models/
+RUN mkdir -p models
+
+# Download Whisper model
 RUN wget -O models/ggml-base.en.bin https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-base.en.bin
+
+# Download SuperSloMo checkpoint from Google Drive
+RUN gdown --id 1IvobLDbRiBgZr3ryCRrWL8xDbMZ-KnpF -O models/SuperSloMo.ckpt
 
 # Copy application files
 COPY app.py .
