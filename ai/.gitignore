@@ -25,7 +25,7 @@ uploads/
 *.ogg
 
 # Ignore Whisper models (can be huge)
-models/
+models/ggml-base.en.bin
 
 # Ignore compiled Whisper binaries
 whisper.cpp/build/
