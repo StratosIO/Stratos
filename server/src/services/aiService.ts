@@ -9,7 +9,7 @@ import type { ParsedCommand } from "../types/index.js";
 import axios from "axios";
 
 const execAsync = promisify(exec);
-const AI_URL = process.env.AI_URL || "http://ai:5001";
+const AI_URL = process.env.AI_URL || "http://stratos-ai:5001";
 
 export const aiService = {
 	/**
@@ -172,21 +172,47 @@ async function processSlowmo(
 		`Preparing for slow motion: ${inputFile.file_name} with speed factor ${speed}`,
 	);
 
-	// Generate output filename
+	// Generate temporary MP4 file
 	const baseName = path.parse(inputFile.file_name).name;
+	const tempFile = `${baseName}.mp4`;
+	const tempPath = path.join(outputDir, tempFile);
+
+	// Convert input to MP4 if needed
+	try {
+		log.info(`Converting input to MP4 format: ${tempPath}`);
+		await execAsync(
+			`ffmpeg -i "${inputFile.file_path}" -c:v libx264 -preset medium -crf 23 -c:a aac -b:a 128k "${tempPath}"`,
+		);
+		log.info("Temporary MP4 file created successfully");
+	} catch (error) {
+		log.error(`Failed to create temporary MP4 file: ${error}`);
+		throw new Error("Failed to prepare video for slow motion processing");
+	}
+
+	// Generate output filename
 	const outputFile = `${baseName}-slowmo.mp4`;
 	const resultFilePath = path.join(outputDir, outputFile);
 
 	// Prepare options string for the AI service
 	const optionsString = `speed=${speed}`;
-	const safeFilePath = inputFile.file_path.replace(/\//g, "+");
+	const safeFilePath = tempPath.replace(/\//g, "+");
 
-	log.info(`Sending file to AI service: slowmo with ${inputFile.file_path}`);
+	log.info(`Sending file to AI service: Slow Motion with ${tempPath}`);
 	try {
 		// Call the external AI service for slow motion
 		await axios.post(`${AI_URL}/slowmo/${safeFilePath}/${optionsString}`);
 
 		log.info(`Slow motion video saved at ${resultFilePath}`);
+
+		// Clean up temporary file
+		try {
+			await fs.unlink(tempPath);
+			log.info(`Cleaned up temporary file: ${tempPath}`);
+		} catch (cleanupError) {
+			// Don't fail the whole operation if cleanup fails
+			log.warn(`Failed to clean up temporary file ${tempPath}: ${cleanupError}`);
+		}
+
 		return resultFilePath;
 	} catch (error) {
 		log.error(`Failed to get slow motion video from AI service: ${error}`);
