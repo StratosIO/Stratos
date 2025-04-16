@@ -28,7 +28,7 @@ export const AI_COMMANDS: Record<string, AICommandDefinition> = {
 		options: [
 			{
 				name: "speed",
-				description: "Speed factor (0.1 to 1.0, where 0.5 is half speed)",
+				description: "Speed factor (0.1 to 0.5, where 0.5 is half speed)",
 				type: "number",
 				default: 0.5,
 			},
