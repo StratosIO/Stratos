@@ -297,7 +297,7 @@ export const taskController = {
 		if (!task) {
 			return c.json({ error: "Task not found" }, 404);
 		}
-		// Set the SSE headers
+
 		c.header("Content-Type", "text/event-stream");
 		c.header("Cache-Control", "no-cache");
 		c.header("Connection", "keep-alive");
@@ -313,7 +313,7 @@ export const taskController = {
 				event: "status",
 				data: JSON.stringify({
 					id: taskId,
-					status: "pending" /* or task.status */,
+					status: "pending",
 				}),
 			});
 

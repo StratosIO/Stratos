@@ -59,7 +59,6 @@ export interface Task {
 	id: string;
 	command: string;
 	status: "pending" | "processing" | "completed" | "failed";
-	// progress?: number;
 	created_at: Date;
 	updated_at: Date;
 	result_path?: string;

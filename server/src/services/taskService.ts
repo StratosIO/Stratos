@@ -117,8 +117,6 @@ export const taskService = {
 			// Ensure the output directory exists
 			await taskService.ensureOutputDirectory();
 
-			// Update task status to processing and set initial progress to 0
-			// await sql`UPDATE tasks SET status = 'processing', progress = 0 WHERE id = ${taskId}`;
 			await sql`UPDATE tasks SET status = 'processing' WHERE id = ${taskId}`;
 
 			// Get task details
