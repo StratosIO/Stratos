@@ -297,133 +297,91 @@ export const taskController = {
 		if (!task) {
 			return c.json({ error: "Task not found" }, 404);
 		}
+		// Set the SSE headers
+		c.header("Content-Type", "text/event-stream");
+		c.header("Cache-Control", "no-cache");
+		c.header("Connection", "keep-alive");
 
-		// Stream task progress using SSE
-		c.header('Content-Type', 'text/event-stream');
-		c.header('Cache-Control', 'no-cache');
-		c.header('Connection', 'keep-alive');
 		return streamSSE(c, async (stream) => {
 			let closed = false;
+			let resolveKeeper!: () => void;
+			const keepAlive = new Promise<void>((resolve) => {
+				resolveKeeper = resolve;
+			});
 
-			// Create a cleanup function
-			const cleanup = () => {
-				if (!closed) {
-					closed = true;
-					progressCleanup();
-					completeCleanup();
-					failedCleanup();
-				}
-			};
-
-			// Send initial status
 			await stream.writeSSE({
 				event: "status",
 				data: JSON.stringify({
-					id: task.id,
-					status: task.status,
-					// progress: task.progress || 0,
+					id: taskId,
+					status: "pending" /* or task.status */,
 				}),
 			});
 
-			const heartbeatInterval = setInterval(() => {
+			const heartbeat = setInterval(() => {
 				if (!closed) {
-				  stream.writeSSE({
-					event: "heartbeat",
-					data: String(Date.now())
-				  });
-				  console.log("Sent heartbeat");
+					stream.writeSSE({ event: "heartbeat", data: String(Date.now()) });
 				}
-			  }, 5000); // Every 5 seconds
+			}, 5000);
 
-			// Set up listeners for task events
+			const cleanup = () => {
+				if (!closed) {
+					closed = true;
+					clearInterval(heartbeat);
+					progressCleanup();
+					completeCleanup();
+					failedCleanup();
+					resolveKeeper();
+				}
+			};
+
+			stream.onAbort = cleanup;
+
 			const progressCleanup = eventService.onTaskEvent(
 				taskId,
 				"progress",
 				async (data) => {
-					try {
-						if (!closed) {
-							await stream.writeSSE({
-								event: "progress",
-								data: JSON.stringify(data),
-							});
-						}
-					} catch (error) {
-						// If writing fails, assume the connection is closed
-						cleanup();
+					if (!closed) {
+						await stream.writeSSE({
+							event: "progress",
+							data: JSON.stringify(data),
+						});
 					}
 				},
 			);
-
 			const completeCleanup = eventService.onTaskEvent(
 				taskId,
 				"complete",
 				async (data) => {
-					log.info(
-						`[DEBUG]complteCleanup: Received progress event for task ${taskId}:`,
-						data,
-					);
-					try {
-						if (!closed) {
-							await stream.writeSSE({
-								event: "complete",
-								data: JSON.stringify(data),
-							});
-
-							// Close stream when task completes
-							cleanup();
-							stream.close();
-						}
-					} catch (error) {
+					if (!closed) {
+						await stream.writeSSE({
+							event: "complete",
+							data: JSON.stringify(data),
+						});
 						cleanup();
+						stream.close();
 					}
 				},
 			);
-
 			const failedCleanup = eventService.onTaskEvent(
 				taskId,
 				"failed",
-				async (error) => {
-					try {
-						if (!closed) {
-							await stream.writeSSE({
-								event: "error",
-								data: JSON.stringify({ error }),
-							});
-							// Close stream when task fails
-							cleanup();
-							stream.close();
-						}
-					} catch (error) {
+				async (err) => {
+					if (!closed) {
+						await stream.writeSSE({
+							event: "error",
+							data: JSON.stringify({ error: err }),
+						});
 						cleanup();
+						stream.close();
 					}
 				},
 			);
-			const checkConnectionInterval = setInterval(async () => {
-				try {
-					// Try to send a ping event
-					if (!closed) {
-						await stream.writeSSE({
-							event: "ping",
-							data: String(Date.now()),
-						});
-					}
-				} catch (error) {
-					// If sending fails, connection is probably closed
-					clearInterval(checkConnectionInterval);
-					clearInterval(heartbeatInterval);
-					cleanup();
-				}
-			}, 30000); // Check every 30 seconds
 
-			// Clean up the interval when the stream closes
-			stream.onAbort = () => {
-				clearInterval(checkConnectionInterval);
-				clearInterval(heartbeatInterval);
-				cleanup();
-			};
+			await keepAlive;
 		});
 	},
 };
+
 /**
  * Helper function to handle AI command submission
  */

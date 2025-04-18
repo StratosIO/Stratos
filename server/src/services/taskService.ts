@@ -205,25 +205,14 @@ export const taskService = {
 							parseFloat(timeParts[1]) * 60 +
 							parseFloat(timeParts[2]);
 
-						// Calculate progress percentage (0-1)
 						const progress = Math.min(
 							1,
 							Math.round((seconds / duration) * 100) / 100,
 						);
 
-						// // Update database
-						// sql`UPDATE tasks SET progress = ${progress} WHERE id = ${taskId}`.catch(
-						// 	(err) => {
-						// 		log.error(
-						// 			`Failed to update progress for task ${taskId}: ${err}`,
-						// 		);
-						// 	},
-						// );
-
-						// Emit progress event
 						eventService.emitTaskProgress(taskId, {
 							taskId,
-							// progress,
+							progress,
 							currentTime: seconds,
 							totalDuration: duration,
 						});
