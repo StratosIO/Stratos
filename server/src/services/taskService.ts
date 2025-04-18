@@ -118,7 +118,8 @@ export const taskService = {
 			await taskService.ensureOutputDirectory();
 
 			// Update task status to processing and set initial progress to 0
-			await sql`UPDATE tasks SET status = 'processing', progress = 0 WHERE id = ${taskId}`;
+			// await sql`UPDATE tasks SET status = 'processing', progress = 0 WHERE id = ${taskId}`;
+			await sql`UPDATE tasks SET status = 'processing' WHERE id = ${taskId}`;
 
 			// Get task details
 			const [task] = await sql`SELECT * FROM tasks WHERE id = ${taskId}`;
@@ -189,13 +190,14 @@ export const taskService = {
 			// Listen for stderr data (FFmpeg outputs progress to stderr)
 			process.stderr.on("data", (data) => {
 				const output = data.toString();
-				log.debug(`FFmpeg stderr for task ${taskId}: ${output}`);
+				// log.debug(`FFmpeg stderr for task ${taskId}: ${output}`);
 
 				// Parse progress if we have duration information
 				if (duration) {
 					const match = progressRegex.exec(output);
 					if (match) {
 						const timeStr = match[1];
+						log.info(`Progress match found for task ${taskId}: ${timeStr}`);
 						// Convert HH:MM:SS.MS to seconds
 						const timeParts = timeStr.split(":");
 						const seconds =
@@ -209,22 +211,25 @@ export const taskService = {
 							Math.round((seconds / duration) * 100) / 100,
 						);
 
-						// Update database
-						sql`UPDATE tasks SET progress = ${progress} WHERE id = ${taskId}`.catch(
-							(err) => {
-								log.error(
-									`Failed to update progress for task ${taskId}: ${err}`,
-								);
-							},
-						);
+						// // Update database
+						// sql`UPDATE tasks SET progress = ${progress} WHERE id = ${taskId}`.catch(
+						// 	(err) => {
+						// 		log.error(
+						// 			`Failed to update progress for task ${taskId}: ${err}`,
+						// 		);
+						// 	},
+						// );
 
 						// Emit progress event
 						eventService.emitTaskProgress(taskId, {
 							taskId,
-							progress,
+							// progress,
 							currentTime: seconds,
 							totalDuration: duration,
 						});
+						log.info(
+							`Progress event emitted for task ${taskId}: ${progress * 100}%`,
+						);
 					}
 				}
 			});
@@ -245,7 +250,6 @@ export const taskService = {
 							await sql`
               UPDATE tasks 
               SET status = 'completed', 
-                  progress = 1,
                   result_path = ${resultPath}, 
                   updated_at = NOW() 
               WHERE id = ${taskId}

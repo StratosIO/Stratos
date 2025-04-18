@@ -299,6 +299,9 @@ export const taskController = {
 		}
 
 		// Stream task progress using SSE
+		c.header('Content-Type', 'text/event-stream');
+		c.header('Cache-Control', 'no-cache');
+		c.header('Connection', 'keep-alive');
 		return streamSSE(c, async (stream) => {
 			let closed = false;
 
@@ -318,9 +321,19 @@ export const taskController = {
 				data: JSON.stringify({
 					id: task.id,
 					status: task.status,
-					progress: task.progress || 0,
+					// progress: task.progress || 0,
 				}),
 			});
+
+			const heartbeatInterval = setInterval(() => {
+				if (!closed) {
+				  stream.writeSSE({
+					event: "heartbeat",
+					data: String(Date.now())
+				  });
+				  console.log("Sent heartbeat");
+				}
+			  }, 5000); // Every 5 seconds
 
 			// Set up listeners for task events
 			const progressCleanup = eventService.onTaskEvent(
@@ -345,12 +358,17 @@ export const taskController = {
 				taskId,
 				"complete",
 				async (data) => {
+					log.info(
+						`[DEBUG]complteCleanup: Received progress event for task ${taskId}:`,
+						data,
+					);
 					try {
 						if (!closed) {
 							await stream.writeSSE({
 								event: "complete",
 								data: JSON.stringify(data),
 							});
+
 							// Close stream when task completes
 							cleanup();
 							stream.close();
@@ -392,6 +410,7 @@ export const taskController = {
 				} catch (error) {
 					// If sending fails, connection is probably closed
 					clearInterval(checkConnectionInterval);
+					clearInterval(heartbeatInterval);
 					cleanup();
 				}
 			}, 30000); // Check every 30 seconds
@@ -399,6 +418,7 @@ export const taskController = {
 			// Clean up the interval when the stream closes
 			stream.onAbort = () => {
 				clearInterval(checkConnectionInterval);
+				clearInterval(heartbeatInterval);
 				cleanup();
 			};
 		});
