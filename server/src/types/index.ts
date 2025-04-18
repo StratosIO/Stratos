@@ -124,3 +124,29 @@ export interface TaskFileDownloadInfo {
 	size: number;
 	mime_type: string;
 }
+
+export interface TaskProgressEvent {
+	taskId: string;
+	progress: number;
+	currentTime?: number;
+	totalDuration?: number;
+	message?: string;
+}
+
+export interface TaskCompleteEvent {
+	taskId: string;
+	status: string;
+	resultPath?: string | null;
+	files?: Array<{
+		filename: string;
+		path: string;
+	}>;
+}
+
+export interface TaskErrorEvent {
+	message: string;
+	code?: string;
+	stack?: string;
+}
+
+export type TaskEventType = "progress" | "complete" | "failed";

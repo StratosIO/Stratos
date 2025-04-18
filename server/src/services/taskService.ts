@@ -117,6 +117,7 @@ export const taskService = {
 			// Ensure the output directory exists
 			await taskService.ensureOutputDirectory();
 
+			// await sql`UPDATE tasks SET status = 'processing', progress = 0 WHERE id = ${taskId}`;
 			await sql`UPDATE tasks SET status = 'processing' WHERE id = ${taskId}`;
 
 			// Get task details
@@ -156,7 +157,7 @@ export const taskService = {
 					const { stdout } = await execAsync(
 						`ffprobe -v error -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 "${taskFiles[0].file_path}"`,
 					);
-					duration = parseFloat(stdout.trim());
+					duration = Number.parseFloat(stdout.trim());
 					log.info(`Got duration for task ${taskId}: ${duration} seconds`);
 				} catch (error) {
 					log.warn(`Could not determine duration for task ${taskId}: ${error}`);
@@ -199,9 +200,9 @@ export const taskService = {
 						// Convert HH:MM:SS.MS to seconds
 						const timeParts = timeStr.split(":");
 						const seconds =
-							parseFloat(timeParts[0]) * 3600 +
-							parseFloat(timeParts[1]) * 60 +
-							parseFloat(timeParts[2]);
+							Number.parseFloat(timeParts[0]) * 3600 +
+							Number.parseFloat(timeParts[1]) * 60 +
+							Number.parseFloat(timeParts[2]);
 
 						const progress = Math.min(
 							1,
