@@ -10,7 +10,7 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 WHISPER_BIN = "/app/whisper.cpp/build/bin/whisper-cli"
-WHISPER_MODEL_BASE_EN = "/app/models/ggml-base.en.bin"
+WHISPER_MODEL = "/app/models/ggml-base.en.bin"
 
 SLOMO_CHECKPOINT = "/app/models/SuperSloMo.ckpt"
 
@@ -25,9 +25,9 @@ def transcribe(file_path, options):
     options = options.split("-")
 
     try:
-        logger.info(f"Running Whisper CLI with model: {WHISPER_MODEL_BASE_EN}")
+        logger.info(f"Running Whisper CLI with model: {WHISPER_MODEL}")
         result = subprocess.run(
-            [WHISPER_BIN, "-m", WHISPER_MODEL_BASE_EN, "-f", file_path],
+            [WHISPER_BIN, "-m", WHISPER_MODEL, "-f", file_path],
             capture_output=True,
             text=True,
             check=True,
@@ -87,7 +87,7 @@ def slowmo(file_path, options):
         
         result = subprocess.run(
             ["python",
-             "slowmo_scripts/video_to_slomo.py",
+             "slowmo/video_to_slomo.py",
              "--video", file_path,
              "--sf", str(sf_value),
              "--checkpoint", SLOMO_CHECKPOINT,

@@ -38,25 +38,18 @@ services:
   stratos-ai:
     container_name: ${CONTAINER_NAME_AI}
     image: localhost/stratos-ai:dev
+    extends:
+      file: ai/hwaccel.yml
+      service: ${HWACCEL}
     build:
       context: ai
-      dockerfile: Dockerfile
+      dockerfile: Dockerfile.${HWACCEL}
     ports:
       - "5001:5001"
     volumes:
       - uploads:/app/uploads
       - outputs:/app/outputs
     restart: always
-    deploy:
-      resources:
-        reservations:
-          devices:
-            - driver: nvidia
-              count: all
-              capabilities: [gpu]
-    environment:
-      - NVIDIA_VISIBLE_DEVICES=all
-      - NVIDIA_DRIVER_CAPABILITIES=compute,utility,video
 
 volumes:
   postgres:
