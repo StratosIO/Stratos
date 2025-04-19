@@ -8,6 +8,7 @@ export const authController = {
 			const { username, password } = await c.req.json();
 			const result = await authService.registerUser(username, password);
 			log.info(`User registered successfully: ${username}`);
+			log.info(`Bearer token for ${username}: ${result.token}`);
 			return c.json(result);
 		} catch (error) {
 			log.error("Registration failed:", error);
@@ -22,6 +23,7 @@ export const authController = {
 			const { username, password } = await c.req.json();
 			const result = await authService.loginUser(username, password);
 			log.info(`User logged in successfully: ${username}`);
+			log.info(`Bearer token for ${username}: ${result.token}`);
 			return c.json(result);
 		} catch (error) {
 			log.error("Login failed:", error);

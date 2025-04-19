@@ -18,6 +18,7 @@ import type {
 } from "../types/index.js";
 import { eventService } from "./eventService.js";
 import { getContentType } from "../utils/fileUtils.js";
+import { previewService } from "./previewService.js";
 
 const execAsync = promisify(exec);
 
@@ -254,6 +255,15 @@ export const taskService = {
 								})),
 							});
 
+							// Trigger preview generation if there's a result file
+							if (resultPath) {
+								// Don't await - let it run in background
+								previewService
+									.generatePreview(taskId)
+									.catch((err) =>
+										log.error(`Preview generation failed for ${taskId}:`, err),
+									);
+							}
 							log.info(`Task ${taskId} completed successfully`);
 							resolve();
 						} else {
@@ -412,10 +422,10 @@ export const taskService = {
 		try {
 			// check if task exists and get its details
 			const [task] = await sql`
-				SELECT id, result_path 
-				FROM tasks 
-				WHERE id = ${taskId}
-			`;
+			SELECT id, result_path, preview_path
+			FROM tasks 
+			WHERE id = ${taskId}
+		  `;
 
 			if (!task) {
 				return false;
@@ -433,14 +443,14 @@ export const taskService = {
 			await sql.begin(async (sql) => {
 				// delete task_files entries
 				await sql`
-					DELETE FROM task_files 
-					WHERE task_id = ${taskId}
-				`;
+			  DELETE FROM task_files 
+			  WHERE task_id = ${taskId}
+			`;
 				// delete the task itself
 				await sql`
-					DELETE FROM tasks 
-					WHERE id = ${taskId}
-				`;
+			  DELETE FROM tasks 
+			  WHERE id = ${taskId}
+			`;
 			});
 
 			return true;

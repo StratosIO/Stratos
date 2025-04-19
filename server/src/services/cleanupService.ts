@@ -38,27 +38,43 @@ export const cleanupService = {
 			}
 
 			// Get expired tasks (those without associated files or explicitly expired)
-			const expiredTasks = await sql<{ id: string; result_path: string }[]>`
-				SELECT id, result_path
-				FROM tasks
-				WHERE expires_at < CURRENT_TIMESTAMP
-				AND NOT EXISTS (
-					SELECT 1 FROM task_files WHERE task_id = tasks.id
-				)
-			`;
-
+			const expiredTasks = await sql<
+				{ id: string; result_path: string; preview_path: string }[]
+			>`
+  SELECT id, result_path, preview_path
+  FROM tasks
+  WHERE expires_at < CURRENT_TIMESTAMP
+  AND NOT EXISTS (
+    SELECT 1 FROM task_files WHERE task_id = tasks.id
+  )
+`;
 			log.info(`Found ${expiredTasks.length} expired tasks to clean up`);
 
 			// Delete task output directories
 			for (const task of expiredTasks) {
 				try {
-					if (task.result_path) {
-						// Get the task directory (parent of result file)
-						const taskDir = path.dirname(task.result_path);
+					// if (task.result_path) {
+					// 	// Get the task directory (parent of result file)
+					// 	const taskDir = path.dirname(task.result_path);
 
-						// Only delete if it's under our outputs directory (safety check)
+					// 	// Only delete if it's under our outputs directory (safety check)
+					// 	if (taskDir.startsWith(OUTPUT_CONFIG.DIR)) {
+					// 		// Delete the entire task directory and its contents
+					// 		await fs.rm(taskDir, { recursive: true, force: true });
+					// 		log.info(`Deleted task output directory: ${taskDir}`);
+					// 	}
+					// }
+					// DELETE IF THE FOLLOWING WORKS
+					const taskDir = path.join(OUTPUT_CONFIG.DIR, task.id);
+
+					// Check if directory exists and is under our outputs directory
+					if (
+						await fs
+							.access(taskDir)
+							.then(() => true)
+							.catch(() => false)
+					) {
 						if (taskDir.startsWith(OUTPUT_CONFIG.DIR)) {
-							// Delete the entire task directory and its contents
 							await fs.rm(taskDir, { recursive: true, force: true });
 							log.info(`Deleted task output directory: ${taskDir}`);
 						}

@@ -12,4 +12,5 @@ tasks.get("/", taskController.listTasks);
 tasks.get("/:id/status", taskController.getTaskStatus);
 tasks.delete("/:id", taskController.delete);
 tasks.get("/:id/progress", taskController.streamTaskProgress);
+tasks.get("/:id/preview", taskController.streamTaskPreview);
 export default tasks;

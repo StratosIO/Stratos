@@ -21,11 +21,12 @@ CREATE TABLE tasks (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   command TEXT NOT NULL,
   status VARCHAR(20) DEFAULT 'pending',
-  -- progress FLOAT DEFAULT 0,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
   expires_at TIMESTAMP WITH TIME ZONE DEFAULT (CURRENT_TIMESTAMP + INTERVAL '24 hours'),
   result_path TEXT,
+  preview_path TEXT,
+  preview_generated BOOLEAN DEFAULT FALSE,
   error TEXT,
   user_id INTEGER REFERENCES users(id) ON DELETE CASCADE
 );
