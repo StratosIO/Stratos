@@ -34,6 +34,7 @@ services:
       - ./server/logs:/app/logs
       - uploads:/app/uploads
       - outputs:/app/outputs
+      - previews:/app/previews
   
   stratos-ai:
     container_name: ${CONTAINER_NAME_AI}
@@ -49,6 +50,7 @@ services:
     volumes:
       - uploads:/app/uploads
       - outputs:/app/outputs
+      - previews:/app/previews
     restart: always
 
 volumes:
@@ -58,6 +60,8 @@ volumes:
     name: stratos-uploads
   outputs:
     name: stratos-outputs
+  previews:
+    name: stratos-previews
 
 networks:
   default:
