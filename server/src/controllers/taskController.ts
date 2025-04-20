@@ -386,132 +386,135 @@ export const taskController = {
 	},
 	streamTaskPreview: async (c: Context) => {
 		const taskId = c.req.param("id");
-	  
+
 		if (!validateUUID(taskId)) {
-		  return c.json({ error: "Invalid task ID" }, 400);
+			return c.json({ error: "Invalid task ID" }, 400);
 		}
-	  
+
 		try {
-		  // Get task details
-		  const task = await taskService.getTask(taskId);
-	  
-		  if (!task) {
-			return c.json({ error: "Task not found" }, 404);
-		  }
-	  
-		  // If task isn't completed, just return task info
-		  if (task.status !== "completed") {
-			return c.json({ task });
-		  }
-	  
-		  // Get preview info
-		  const previewInfo = await previewService.getPreviewInfo(taskId);
-	  
-		  // If preview is being generated, inform the client
-		  if (previewInfo && previewInfo.generating) {
-			return c.json({ 
-			  status: "generating",
-			  message: "Preview is being generated" 
-			}, 202);
-		  }
-	  
-		  // If preview is available, stream it
-		  if (previewInfo && previewInfo.available && previewInfo.path) {
-			const previewPath = previewInfo.path;
-			const fileName = path.basename(previewPath);
-			const stats = await fs.stat(previewPath);
-			const mimeType = getContentType(path.extname(fileName));
-	  
-			// Handle range requests for video streaming
-			const rangeHeader = c.req.header("range");
-			
-			if (rangeHeader && (mimeType.startsWith("video/") || mimeType.startsWith("audio/"))) {
-			  // Parse range header
-			  const range = rangeHeader.replace(/bytes=/, "").split("-");
-			  const start = parseInt(range[0], 10);
-			  const end = range[1] ? parseInt(range[1], 10) : stats.size - 1;
-			  const chunkSize = (end - start) + 1;
-	  
-			  // Set streaming headers
-			  c.header("Content-Range", `bytes ${start}-${end}/${stats.size}`);
-			  c.header("Accept-Ranges", "bytes");
-			  c.header("Content-Length", chunkSize.toString());
-			  c.header("Content-Type", mimeType);
-			  
-			  // For video/audio streaming, we don't use attachment disposition
-			  // to allow in-browser playback
-			  
-			  // Read and return the requested chunk
-			  const fileBuffer = await fs.open(previewPath);
-			  const buffer = Buffer.alloc(chunkSize);
-			  await fileBuffer.read(buffer, 0, chunkSize, start);
-			  await fileBuffer.close();
-			  
-			  return c.body(buffer, 206); // 206 Partial Content
-			} else {
-			  // For non-range requests or non-video files
-			  c.header("Content-Length", stats.size.toString());
-			  c.header("Content-Type", mimeType);
-			  
-			  // For downloads, use attachment disposition
-			  if (c.req.query("download") === "true") {
-				c.header(
-				  "Content-Disposition",
-				  `attachment; filename="${fileName}"`,
-				);
-			  } else {
-				c.header(
-				  "Content-Disposition",
-				  `inline; filename="${fileName}"`,
-				);
-			  }
-	  
-			  // Stream the file
-			  const fileBuffer = await Bun.file(previewPath).arrayBuffer();
-			  return c.body(fileBuffer);
+			// Get task details
+			const task = await taskService.getTask(taskId);
+
+			if (!task) {
+				return c.json({ error: "Task not found" }, 404);
 			}
-		  }
-	  
-		  // If preview isn't available but the task is completed,
-		  // we can serve the original if it's small enough
-		  if (task.result_path) {
-			const filePath = task.result_path;
-			const stats = await fs.stat(filePath);
-			
-			// Only serve originals directly if they're small enough
-			if (stats.size <= 5 * 1024 * 1024) { // 5MB threshold
-			  const fileName = path.basename(filePath);
-			  const mimeType = getContentType(path.extname(fileName));
-			  
-			  c.header("Content-Length", stats.size.toString());
-			  c.header("Content-Type", mimeType);
-			  c.header(
-				"Content-Disposition",
-				`inline; filename="${fileName}"`,
-			  );
-			  
-			  const fileBuffer = await Bun.file(filePath).arrayBuffer();
-			  return c.body(fileBuffer);
-			} else {
-			  // For larger files without previews, generate on demand
-			  // and return a status message
-			  previewService.generatePreview(taskId)
-				.catch(err => log.error(`On-demand preview generation failed for ${taskId}:`, err));
-				
-			  return c.json({ 
-				status: "generating", 
-				message: "Preview is being generated now" 
-			  }, 202);
+
+			// If task isn't completed, just return task info
+			if (task.status !== "completed") {
+				return c.json({ task });
 			}
-		  }
-	  
-		  // No preview or original available
-		  return c.json({ error: "Preview not available" }, 404);
+
+			// Get preview info
+			const previewInfo = await previewService.getPreviewInfo(taskId);
+
+			// If preview is being generated, inform the client
+			if (previewInfo && previewInfo.generating) {
+				return c.json(
+					{
+						status: "generating",
+						message: "Preview is being generated",
+					},
+					202,
+				);
+			}
+
+			// If preview is available, stream it
+			if (previewInfo && previewInfo.available && previewInfo.path) {
+				const previewPath = previewInfo.path;
+				const fileName = path.basename(previewPath);
+				const stats = await fs.stat(previewPath);
+				const mimeType = getContentType(path.extname(fileName));
+
+				// Handle range requests for video streaming
+				const rangeHeader = c.req.header("range");
+
+				if (
+					rangeHeader &&
+					(mimeType.startsWith("video/") || mimeType.startsWith("audio/"))
+				) {
+					// Parse range header
+					const range = rangeHeader.replace(/bytes=/, "").split("-");
+					const start = parseInt(range[0], 10);
+					const end = range[1] ? parseInt(range[1], 10) : stats.size - 1;
+					const chunkSize = end - start + 1;
+
+					// Set streaming headers
+					c.header("Content-Range", `bytes ${start}-${end}/${stats.size}`);
+					c.header("Accept-Ranges", "bytes");
+					c.header("Content-Length", chunkSize.toString());
+					c.header("Content-Type", mimeType);
+
+					const fileStream = Bun.file(previewPath).stream();
+					return c.body(fileStream);
+				} else {
+					// For non-range requests or non-video files
+					c.header("Content-Length", stats.size.toString());
+					c.header("Content-Type", mimeType);
+
+					// For downloads, use attachment disposition
+					if (c.req.query("download") === "true") {
+						c.header(
+							"Content-Disposition",
+							`attachment; filename="${fileName}"`,
+						);
+					} else {
+						c.header("Content-Disposition", `inline; filename="${fileName}"`);
+					}
+
+					// Stream the file
+					const fileBuffer = await Bun.file(previewPath).arrayBuffer();
+					return c.body(fileBuffer);
+				}
+			}
+
+			// preview isn't available but the task is completed,
+			// can serve the original if it's small enough
+			if (task.result_path) {
+				const filePath = task.result_path;
+				const stats = await fs.stat(filePath);
+
+				// Only serve originals directly if they're smll enough
+				if (stats.size <= 5 * 1024 * 1024) {
+					// 5MB threshold
+					const fileName = path.basename(filePath);
+					const mimeType = getContentType(path.extname(fileName));
+
+					c.header("Content-Length", stats.size.toString());
+					c.header("Content-Type", mimeType);
+					c.header("Content-Disposition", `inline; filename="${fileName}"`);
+
+					// const fileBuffer = await Bun.file(filePath).arrayBuffer();
+					// return c.body(fileBuffer);
+					const fileStream = Bun.file(filePath).stream();
+					return c.body(fileStream);
+				} else {
+					// and return a status message
+					previewService
+						.generatePreview(taskId)
+						.catch((err) =>
+							log.error(
+								`On-demand preview generation failed for ${taskId}:`,
+								err,
+							),
+						);
+
+					return c.json(
+						{
+							status: "generating",
+							message: "Preview is being generated now",
+						},
+						202,
+					);
+				}
+			}
+
+			// No preview or original available
+			return c.json({ error: "Preview not available" }, 404);
 		} catch (error) {
-		  log.error(`Error streaming preview for task ${taskId}:`, error);
-		  return c.json({ error: "Failed to stream preview" }, 500);
+			log.error(`Error streaming preview for task ${taskId}:`, error);
+			return c.json({ error: "Failed to stream preview" }, 500);
 		}
-	  },
+	},
 };
 
 /**

@@ -38,30 +38,37 @@ export const previewService = {
 	/**
 	 * Check if a file needs a preview based on size and type
 	 */
-	shouldGeneratePreview: (mimeType: string, fileSize: number): boolean => {
+	shouldGeneratePreview: (fileExt: string, fileSize: number): boolean => {
+		// Log what we're checking
+		log.info(
+			`Checking preview generation: fileExt=${fileExt}, fileSize=${fileSize}`,
+		);
+
 		// Small files don't need previews
 		if (fileSize <= SMALL_FILE_THRESHOLD) {
+			log.info(`File too small (${fileSize} bytes), skipping preview`);
 			return false;
 		}
 
-		// Check file type
-		if (mimeType.startsWith("video/")) {
-			return true;
-		} else if (mimeType.startsWith("audio/")) {
-			return true;
-		} else if (
-			mimeType.startsWith("image/") &&
-			fileSize > SMALL_FILE_THRESHOLD
+		// Check file type by extension
+		const videoExts = [".mp4", ".webm", ".mkv", ".avi", ".mov", ".flv", ".wmv"];
+		const audioExts = [".mp3", ".wav", ".ogg", ".aac", ".flac", ".m4a"];
+		const imageExts = [".jpg", ".jpeg", ".png", ".gif", ".svg", ".webp"];
+		const textExts = [".txt", ".json", ".srt", ".vtt"];
+
+		// Check if file extension is in any of our supported types
+		if (
+			videoExts.includes(fileExt) ||
+			audioExts.includes(fileExt) ||
+			imageExts.includes(fileExt) ||
+			textExts.includes(fileExt)
 		) {
-			return true;
-		} else if (
-			mimeType.startsWith("text/") &&
-			fileSize > SMALL_FILE_THRESHOLD
-		) {
+			log.info(`File type supported for preview: ${fileExt}`);
 			return true;
 		}
 
-		// Default to no preview for other types
+		// No match found, skip preview
+		log.info(`File type not supported for preview: ${fileExt}`);
 		return false;
 	},
 
@@ -74,8 +81,8 @@ export const previewService = {
 
 			// Get task information
 			const [task] = await sql`
-        SELECT result_path, id FROM tasks WHERE id = ${taskId}
-      `;
+            SELECT result_path, id FROM tasks WHERE id = ${taskId}
+          `;
 
 			if (!task || !task.result_path) {
 				log.warn(`Cannot generate preview for task ${taskId}: No result path`);
@@ -86,26 +93,20 @@ export const previewService = {
 			const fileName = path.basename(filePath);
 			const fileExt = path.extname(fileName).toLowerCase();
 
-			// Get file info including size and type
+			// Get file info including size
 			const stats = await fs.stat(filePath);
 			const fileSize = stats.size;
 
-			// Get MIME type
-			const { stdout: mimeType } = await execAsync(
-				`file --mime-type -b "${filePath}"`,
-			).catch(() => ({ stdout: "application/octet-stream" }));
-			const cleanMimeType = mimeType.trim();
-
-			// Check if we should generate a preview
-			if (!previewService.shouldGeneratePreview(cleanMimeType, fileSize)) {
+			// Check if we should generate a preview based on extension and size
+			if (!previewService.shouldGeneratePreview(fileExt, fileSize)) {
 				log.info(
 					`Skipping preview generation for task ${taskId}: file size or type doesn't warrant preview`,
 				);
 				await sql`
-          UPDATE tasks 
-          SET preview_generated = true 
-          WHERE id = ${taskId}
-        `;
+              UPDATE tasks 
+              SET preview_generated = true 
+              WHERE id = ${taskId}
+            `;
 				return null;
 			}
 
@@ -114,31 +115,49 @@ export const previewService = {
 			const previewFileName = `preview_${fileName}`;
 			const previewPath = path.join(previewDir, previewFileName);
 
-			// Generate preview based on file type
-			if (cleanMimeType.startsWith("video/")) {
+			// Generate preview based on file extension
+			const videoExts = [
+				".mp4",
+				".webm",
+				".mkv",
+				".avi",
+				".mov",
+				".flv",
+				".wmv",
+			];
+			const audioExts = [".mp3", ".wav", ".ogg", ".aac", ".flac", ".m4a"];
+			const imageExts = [".jpg", ".jpeg", ".png", ".gif", ".svg", ".webp"];
+			const textExts = [".txt", ".json", ".srt", ".vtt"];
+
+			if (videoExts.includes(fileExt)) {
+				log.info(`Generating video preview for ${fileName}`);
 				await previewService.generateVideoPreview(
 					filePath,
 					previewPath,
 					fileSize,
 				);
-			} else if (cleanMimeType.startsWith("audio/")) {
+			} else if (audioExts.includes(fileExt)) {
+				log.info(`Generating audio preview for ${fileName}`);
 				await previewService.generateAudioPreview(filePath, previewPath);
-			} else if (cleanMimeType.startsWith("image/")) {
+			} else if (imageExts.includes(fileExt)) {
+				log.info(`Generating image preview for ${fileName}`);
 				await previewService.generateImagePreview(filePath, previewPath);
-			} else if (cleanMimeType.startsWith("text/")) {
+			} else if (textExts.includes(fileExt)) {
+				log.info(`Generating text preview for ${fileName}`);
 				await previewService.generateTextPreview(filePath, previewPath);
 			} else {
-				log.info(`No preview generator for MIME type: ${cleanMimeType}`);
+				// This case shouldn't happen if shouldGeneratePreview is working correctly
+				log.warn(`No preview generator for file extension: ${fileExt}`);
 				return null;
 			}
 
 			// Update task with preview path
 			await sql`
-        UPDATE tasks 
-        SET preview_path = ${previewPath}, 
-            preview_generated = true 
-        WHERE id = ${taskId}
-      `;
+            UPDATE tasks 
+            SET preview_path = ${previewPath}, 
+                preview_generated = true 
+            WHERE id = ${taskId}
+          `;
 
 			log.info(`Preview generated for task ${taskId} at ${previewPath}`);
 			return previewPath;
@@ -146,83 +165,118 @@ export const previewService = {
 			log.error(`Error generating preview for task ${taskId}:`, error);
 			// Mark as generated but failed
 			await sql`
-        UPDATE tasks 
-        SET preview_generated = true 
-        WHERE id = ${taskId}
-      `;
+            UPDATE tasks 
+            SET preview_generated = true 
+            WHERE id = ${taskId}
+          `;
 			return null;
 		}
 	},
 
 	/**
- * Generate video preview
- */
-generateVideoPreview: async (
-    inputPath: string, 
-    outputPath: string, 
-    fileSize: number
-  ): Promise<void> => {
-    // Determine appropriate settings based on file size
-    let crf = 23; // Reasonable quality
-    let scale = "scale=1280:-2"; // 720p-ish, preserves aspect ratio
-    let trimDuration = "";
-    
-    // Get video duration
-    try {
-      const { stdout } = await execAsync(
-        `ffprobe -v error -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 "${inputPath}"`
-      );
-      const duration = parseFloat(stdout.trim());
-      log.info(`Video duration: ${duration} seconds`);
-      
-      // Set trim duration based on file size and original duration
-      if (duration > 600 && fileSize > 1 * 1024 * 1024 * 1024) { // > 10min and > 1GB
-        trimDuration = "-t 300"; // Limit to 5 minutes for very large files
-      } else if (duration > 1200 && fileSize > 500 * 1024 * 1024) { // > 20min and > 500MB
-        trimDuration = "-t 600"; // Limit to 10 minutes for large files
-      } else if (duration > 1800) { // > 30min
-        trimDuration = "-t 900"; // Limit to 15 minutes for medium files
-      }
-      
-      log.info(`Using trim setting: ${trimDuration || "No trim"}`);
-    } catch (error) {
-      log.warn(`Could not determine video duration: ${error}`);
-      // Default trim for large files if we can't get duration
-      if (fileSize > 500 * 1024 * 1024) {
-        trimDuration = "-t 600"; // 10 minutes
-      }
-    }
-    
-    // Execute ffmpeg command with appropriate trimming and quality
-    const command = `ffmpeg -i "${inputPath}" ${trimDuration} -vf "${scale}" -c:v libx264 -crf ${crf} -preset medium -c:a aac -b:a 128k "${outputPath}"`;
-    
-    log.info(`Executing preview command: ${command}`);
-    await execAsync(command);
-    
-    // Check the output size
-    const stats = await fs.stat(outputPath);
-    log.info(`Generated preview size: ${stats.size} bytes`);
-    
-    // If the preview is still too large, reduce quality rather than re-encoding
-    if (stats.size > PREVIEW_SIZE_LIMIT) {
-      log.warn(`Preview size exceeds limit (${stats.size} bytes). Regenerating with lower quality.`);
-      
-      // Use a more aggressive approach with both trimming and quality reduction
-      let shorterTrim = "";
-      if (trimDuration) {
-        // Cut the duration in half if we already have a trim setting
-        const currentDuration = parseInt(trimDuration.replace("-t ", ""), 10);
-        shorterTrim = `-t ${Math.floor(currentDuration / 2)}`;
-      } else {
-        // Default to 5 minutes if no trim was applied before
-        shorterTrim = "-t 300";
-      }
-      
-      const reencodeCommand = `ffmpeg -y -i "${inputPath}" ${shorterTrim} -vf "scale=854:-2" -c:v libx264 -crf 28 -preset medium -c:a aac -b:a 96k "${outputPath}"`;
-      log.info(`Re-executing with more aggressive settings: ${reencodeCommand}`);
-      await execAsync(reencodeCommand);
-    }
-  },
+	 * Generate video preview
+	 */
+	generateVideoPreview: async (
+		inputPath: string,
+		outputPath: string,
+		fileSize: number,
+	): Promise<void> => {
+		// Size-based settings
+		let crf, scale, trimDuration;
+
+		// Get video duration (still useful for trimming)
+		let duration = null;
+		try {
+			const { stdout } = await execAsync(
+				`ffprobe -v error -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 "${inputPath}"`,
+			);
+			duration = parseFloat(stdout.trim());
+			log.info(`Video duration: ${duration} seconds`);
+		} catch (error) {
+			log.warn(`Could not determine video duration: ${error}`);
+		}
+
+		// Determine settings purely based on file size
+		if (fileSize <= 5 * 1024 * 1024) {
+			// Files under 5MB - don't generate preview, serve original
+			log.info(
+				`File size ${fileSize} bytes is under threshold, no need for preview`,
+			);
+			await fs.copyFile(inputPath, outputPath);
+			return;
+		} else if (fileSize <= 50 * 1024 * 1024) {
+			// 5MB - 50MB: Light compression
+			crf = 23;
+			scale = "scale=1280:-2";
+			trimDuration = "";
+		} else if (fileSize <= 200 * 1024 * 1024) {
+			// 50MB - 200MB: Medium compression
+			crf = 24;
+			scale = "scale=1280:-2";
+			// If we have duration, limit longer videos
+			trimDuration = duration && duration > 1800 ? "-t 1800" : ""; // Max 30 min
+		} else if (fileSize <= 500 * 1024 * 1024) {
+			// 200MB - 500MB: Heavier compression
+			crf = 26;
+			scale = "scale=1024:-2";
+			// More aggressive trimming
+			trimDuration = duration && duration > 900 ? "-t 900" : ""; // Max 15 min
+		} else {
+			// Over 500MB: Maximum compression
+			crf = 28;
+			scale = "scale=854:-2";
+			// Very aggressive trimming
+			trimDuration = duration && duration > 600 ? "-t 600" : ""; // Max 10 min
+		}
+
+		log.info(
+			`Using settings based on size ${fileSize} bytes: crf=${crf}, scale=${scale}, trim=${trimDuration}`,
+		);
+
+		// Check file extension to determine codec
+		const fileExt = path.extname(outputPath).toLowerCase();
+		const isWebM = fileExt === ".webm";
+
+		// Execute ffmpeg command with size-based settings and appropriate codec
+		let command;
+		if (isWebM) {
+			// For WebM output, use VP9 codec and Opus audio
+			command = `ffmpeg -i "${inputPath}" ${trimDuration} -vf "${scale}" -c:v libvpx-vp9 -crf ${crf} -b:v 0 -deadline good -c:a libopus -b:a 128k "${outputPath}"`;
+		} else {
+			// For other outputs (MP4, etc.), use H.264 codec and AAC audio
+			command = `ffmpeg -i "${inputPath}" ${trimDuration} -vf "${scale}" -c:v libx264 -crf ${crf} -preset medium -c:a aac -b:a 128k "${outputPath}"`;
+		}
+
+		log.info(`Executing preview command: ${command}`);
+		await execAsync(command);
+
+		// Check the output size
+		const stats = await fs.stat(outputPath);
+		log.info(`Generated preview size: ${stats.size} bytes`);
+
+		// If the preview is still too large, reduce quality further
+		if (stats.size > PREVIEW_SIZE_LIMIT) {
+			log.warn(
+				`Preview size exceeds limit (${stats.size} bytes). Regenerating with lower quality.`,
+			);
+
+			// More aggressive settings for second pass
+			const shorterTrim = duration ? `-t ${Math.min(duration, 300)}` : "-t 300"; // Max 5 minutes
+
+			// Reencode with more aggressive settings based on file type
+			let reencodeCommand;
+			if (isWebM) {
+				reencodeCommand = `ffmpeg -y -i "${inputPath}" ${shorterTrim} -vf "scale=640:-2" -c:v libvpx-vp9 -crf 30 -b:v 0 -deadline good -c:a libopus -b:a 64k "${outputPath}"`;
+			} else {
+				reencodeCommand = `ffmpeg -y -i "${inputPath}" ${shorterTrim} -vf "scale=640:-2" -c:v libx264 -crf 30 -preset medium -c:a aac -b:a 64k "${outputPath}"`;
+			}
+
+			log.info(
+				`Re-executing with more aggressive settings: ${reencodeCommand}`,
+			);
+			await execAsync(reencodeCommand);
+		}
+	},
 
 	/**
 	 * Generate audio preview
@@ -248,7 +302,6 @@ generateVideoPreview: async (
 		try {
 			await execAsync(command);
 		} catch (error) {
-			// Fallback to ffmpeg if ImageMagick is not available
 			const ffmpegCommand = `ffmpeg -i "${inputPath}" -vf "scale='min(1920,iw):-2'" "${outputPath}"`;
 			await execAsync(ffmpegCommand);
 		}
@@ -261,7 +314,6 @@ generateVideoPreview: async (
 		inputPath: string,
 		outputPath: string,
 	): Promise<void> => {
-		// For text files, extract the first N lines
 		const fileContent = await fs.readFile(inputPath, "utf-8");
 		const previewContent = fileContent.slice(0, 10240); // First 10KB
 		await fs.writeFile(outputPath, previewContent);
