@@ -15,7 +15,7 @@
 
 @theme {
 	--font-sans: Overpass, sans-serif;
-	--font-mono: Overpass Mono, monospace;
+	--font-mono: JetBrains Mono, monospace;
 }
 
 @utility input {
@@ -39,8 +39,8 @@
 }
 
 @font-face {
-	font-family: 'Overpass Mono';
-	src: url('$lib/assets/fonts/overpass-mono.ttf') format('truetype-variations');
+	font-family: 'JetBrains Mono';
+	src: url('$lib/assets/fonts/jetbrains-mono.ttf') format('truetype-variations');
 	font-weight: 100 900;
 	font-style: normal;
 }

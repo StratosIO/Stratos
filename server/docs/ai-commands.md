@@ -32,7 +32,7 @@ Transcribe speech from a video or audio file.
 /ai-transcribe 5c12ecc5-f2f8-438b-892d-e23348cb1d81 --output=meeting-notes
 ```
 
-### /ai-slowmo
+### /ai-slowmotion
 
 Create a slow motion version of a video.
 
@@ -41,9 +41,9 @@ Create a slow motion version of a video.
 
 **Examples:**
 ```
-/ai-slowmo 5c12ecc5-f2f8-438b-892d-e23348cb1d81
-/ai-slowmo 5c12ecc5-f2f8-438b-892d-e23348cb1d81 --speed=0.25
-/ai-slowmo 5c12ecc5-f2f8-438b-892d-e23348cb1d81 --output=slow-motion-clip
+/ai-slowmotion 5c12ecc5-f2f8-438b-892d-e23348cb1d81
+/ai-slowmotion 5c12ecc5-f2f8-438b-892d-e23348cb1d81 --speed=0.25
+/ai-slowmotion 5c12ecc5-f2f8-438b-892d-e23348cb1d81 --output=slow-motion-clip
 ```
 
 ## How it works
