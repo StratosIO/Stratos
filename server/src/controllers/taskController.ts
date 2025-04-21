@@ -408,7 +408,7 @@ export const taskController = {
 			const previewInfo = await previewService.getPreviewInfo(taskId);
 
 			// If preview is being generated, inform the client
-			if (previewInfo && previewInfo.generating) {
+			if (previewInfo?.generating) {
 				return c.json(
 					{
 						status: "generating",
@@ -419,7 +419,7 @@ export const taskController = {
 			}
 
 			// If preview is available, stream it
-			if (previewInfo && previewInfo.available && previewInfo.path) {
+			if (previewInfo?.available && previewInfo.path) {
 				const previewPath = previewInfo.path;
 				const fileName = path.basename(previewPath);
 				const stats = await fs.stat(previewPath);
@@ -428,14 +428,12 @@ export const taskController = {
 				// Handle range requests for video streaming
 				const rangeHeader = c.req.header("range");
 
-				if (
-					rangeHeader &&
-					(mimeType.startsWith("video/") || mimeType.startsWith("audio/"))
-				) {
+				if (rangeHeader && (mimeType.startsWith("video/") || mimeType.startsWith("audio/")))
+				{
 					// Parse range header
 					const range = rangeHeader.replace(/bytes=/, "").split("-");
-					const start = parseInt(range[0], 10);
-					const end = range[1] ? parseInt(range[1], 10) : stats.size - 1;
+					const start = Number.parseInt(range[0], 10);
+					const end = range[1] ? Number.parseInt(range[1], 10) : stats.size - 1;
 					const chunkSize = end - start + 1;
 
 					// Set streaming headers
@@ -446,25 +444,25 @@ export const taskController = {
 
 					const fileStream = Bun.file(previewPath).stream();
 					return c.body(fileStream);
+				} 
+				// For non-range requests or non-video files
+				c.header("Content-Length", stats.size.toString());
+				c.header("Content-Type", mimeType);
+
+				// For downloads, use attachment disposition
+				if (c.req.query("download") === "true") {
+					c.header(
+						"Content-Disposition",
+						`attachment; filename="${fileName}"`,
+					);
 				} else {
-					// For non-range requests or non-video files
-					c.header("Content-Length", stats.size.toString());
-					c.header("Content-Type", mimeType);
-
-					// For downloads, use attachment disposition
-					if (c.req.query("download") === "true") {
-						c.header(
-							"Content-Disposition",
-							`attachment; filename="${fileName}"`,
-						);
-					} else {
-						c.header("Content-Disposition", `inline; filename="${fileName}"`);
-					}
-
-					// Stream the file
-					const fileBuffer = await Bun.file(previewPath).arrayBuffer();
-					return c.body(fileBuffer);
+					c.header("Content-Disposition", `inline; filename="${fileName}"`);
 				}
+
+				// Stream the file
+				const fileBuffer = await Bun.file(previewPath).arrayBuffer();
+				return c.body(fileBuffer);
+				
 			}
 
 			// preview isn't available but the task is completed,
@@ -487,25 +485,25 @@ export const taskController = {
 					// return c.body(fileBuffer);
 					const fileStream = Bun.file(filePath).stream();
 					return c.body(fileStream);
-				} else {
-					// and return a status message
-					previewService
-						.generatePreview(taskId)
-						.catch((err) =>
-							log.error(
-								`On-demand preview generation failed for ${taskId}:`,
-								err,
-							),
-						);
-
-					return c.json(
-						{
-							status: "generating",
-							message: "Preview is being generated now",
-						},
-						202,
+				} 
+				// and return a status message
+				previewService
+					.generatePreview(taskId)
+					.catch((err) =>
+						log.error(
+							`On-demand preview generation failed for ${taskId}:`,
+							err,
+						),
 					);
-				}
+
+				return c.json(
+					{
+						status: "generating",
+						message: "Preview is being generated now",
+					},
+					202,
+				);
+				
 			}
 
 			// No preview or original available

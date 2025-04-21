@@ -182,7 +182,9 @@ export const previewService = {
 		fileSize: number,
 	): Promise<void> => {
 		// Size-based settings
-		let crf, scale, trimDuration;
+		let crf;
+    let scale; 
+    let trimDuration;
 
 		// Get video duration (still useful for trimming)
 		let duration = null;
@@ -190,7 +192,7 @@ export const previewService = {
 			const { stdout } = await execAsync(
 				`ffprobe -v error -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 "${inputPath}"`,
 			);
-			duration = parseFloat(stdout.trim());
+			duration = Number.parseFloat(stdout.trim());
 			log.info(`Video duration: ${duration} seconds`);
 		} catch (error) {
 			log.warn(`Could not determine video duration: ${error}`);
@@ -204,7 +206,8 @@ export const previewService = {
 			);
 			await fs.copyFile(inputPath, outputPath);
 			return;
-		} else if (fileSize <= 50 * 1024 * 1024) {
+		}
+    if (fileSize <= 50 * 1024 * 1024) {
 			// 5MB - 50MB: Light compression
 			crf = 23;
 			scale = "scale=1280:-2";
