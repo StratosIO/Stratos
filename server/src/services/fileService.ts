@@ -4,6 +4,7 @@ import { validate as ValidUUID } from "uuid";
 import { UPLOAD_CONFIG } from "../types/index.js";
 import type { ListOptions, FileListResult } from "../types/index.js";
 import path from "node:path";
+import { thumbnailUtils } from "../utils/thumbnailUtils.js";
 
 export const fileService = {
 	ensureUploadDirectory: async () => {
@@ -24,72 +25,82 @@ export const fileService = {
 		id: string,
 		userId: number,
 		expiresInHours = 24,
-	): Promise<any> => {
+	  ): Promise<any> => {
 		await fileService.ensureUploadDirectory();
-
+	  
 		const fileName = file.name;
 		const fileType = file.type;
 		const filePath = path.join(UPLOAD_CONFIG.DIR, id);
 		const fileWriter = Bun.file(filePath).writer();
 		const stream = file.stream();
 		let fileSize = 0;
-
+	  
 		for await (const chunk of stream) {
-			fileWriter.write(chunk);
-			fileSize += chunk.byteLength;
+		  fileWriter.write(chunk);
+		  fileSize += chunk.byteLength;
 		}
-
+	  
 		await fileWriter.end();
-
+	  
+		// Generate thumbnail if applicable
+		if (thumbnailUtils.shouldGenerateThumbnail(fileType, fileSize)) {
+		  await thumbnailUtils.generateThumbnail(filePath, id, fileType);
+		}
+	  
 		// Calculate expiration time
 		const expiresAt = new Date();
 		expiresAt.setHours(expiresAt.getHours() + expiresInHours);
-
+	  
 		const result = await sql`
-			INSERT INTO files (
-				id,
-				user_id,
-				file_name,
-				mime_type,
-				file_size,
-				file_path,
-				expires_at
-			) VALUES (
-				${id},
-				${userId},
-				${fileName},
-				${fileType},
-				${fileSize},
-				${filePath},
-				${expiresAt}
-			) RETURNING id, file_name, file_path
+		  INSERT INTO files (
+			id,
+			user_id,
+			file_name,
+			mime_type,
+			file_size,
+			file_path,
+			expires_at
+		  ) VALUES (
+			${id},
+			${userId},
+			${fileName},
+			${fileType},
+			${fileSize},
+			${filePath},
+			${expiresAt}
+		  ) RETURNING id, file_name, file_path
 		`;
-
+	  
 		return result[0];
-	},
-	delete: async (id: string) => {
+	  },
+	  delete: async (id: string) => {
 		if (!ValidUUID(id)) {
-			throw new Error("Invalid UUID");
+		  throw new Error("Invalid UUID");
 		}
-
+	  
 		// First get the file path from database
 		const [{ file_path: filePath } = {}] = await sql`
-			SELECT file_path 
-			FROM files 
-			WHERE id = ${id}::uuid
+		  SELECT file_path 
+		  FROM files 
+		  WHERE id = ${id}::uuid
 		`;
-
+	  
 		if (!filePath) {
-			throw new Error("File not found");
+		  throw new Error("File not found");
 		}
+		
+		// Delete the file
 		await unlink(filePath);
-
+		
+		// Delete the thumbnail
+		await thumbnailUtils.deleteThumbnail(id);
+	  
 		// Then remove from database
 		await sql`
-			DELETE FROM files 
-			WHERE id = ${id}::uuid
+		  DELETE FROM files 
+		  WHERE id = ${id}::uuid
 		`;
-	},
+	  },
 	list: async (options: ListOptions): Promise<FileListResult> => {
 		const { limit, cursor, userId } = options;
 

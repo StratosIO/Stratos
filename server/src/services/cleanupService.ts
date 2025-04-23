@@ -3,6 +3,7 @@ import path from "node:path";
 import sql from "../config/database.js";
 import log from "../config/logger.js";
 import { OUTPUT_CONFIG } from "../types/index.js";
+import { thumbnailUtils } from "../utils/thumbnailUtils.js";
 
 export const cleanupService = {
 	/**
@@ -27,13 +28,15 @@ export const cleanupService = {
 					// Delete file from filesystem
 					await fs.unlink(file.file_path);
 					log.info(`Deleted file from filesystem: ${file.file_path}`);
+					
+					//Delete thumbnail from database
+					await thumbnailUtils.deleteThumbnail(file.id);
 
 					// Delete from database (this will cascade to task_files)
 					await sql`DELETE FROM files WHERE id = ${file.id}`;
 					log.info(`Deleted file record from database: ${file.id}`);
 				} catch (fileError) {
 					log.error(`Error deleting file ${file.id}:`, fileError);
-					// Continue with other files even if this one fails
 				}
 			}
 

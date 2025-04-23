@@ -150,3 +150,9 @@ export interface TaskErrorEvent {
 }
 
 export type TaskEventType = "progress" | "complete" | "failed";
+
+// Constants for thumbnail generation
+export const THUMBNAIL_DIR_NAME = "thumbnails";
+export const THUMBNAIL_SIZE = "200x200";
+export const THUMBNAIL_FORMAT = "jpg";
+export const MIN_FILE_SIZE = 1024; // 1KB minimum file size for thumbnail generation
