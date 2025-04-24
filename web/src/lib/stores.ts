@@ -35,6 +35,6 @@ export const slashCommands: string[] = [
 	'compress-video',
 	'trim-video',
 	'ai-transcribe',
-	'ai-slowmo',
+	'ai-slowmotion',
 	'ai-fpsboost',
 ]

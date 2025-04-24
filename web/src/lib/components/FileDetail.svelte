@@ -23,10 +23,7 @@
 {#if $file}
 	<div class="border-base-300 bg-base-100 rounded-field flex items-center border-2 p-4">
 		<div
-			class="rounded-selector mr-6 hidden h-28 w-36 shrink-0 items-center justify-center md:flex"
-			class:bg-base-200={!$file.thumb}
-			style={$file.thumb &&
-				`background-image: url(${$file.thumb}); background-size: cover; background-position: center;`}
+			class="rounded-selector bg-base-200 mr-6 hidden h-28 w-36 shrink-0 items-center justify-center md:flex"
 		>
 			<span class="material-icons-round text-base-content/50" style="font-size: 3rem;">
 				{$file.icon}

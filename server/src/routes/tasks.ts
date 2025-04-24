@@ -4,13 +4,14 @@ import { authMiddleware } from "../middleware/auth.js";
 
 const tasks = new Hono();
 
-// Apply auth middleware to all routes
+tasks.get("/:id/progress", taskController.streamTaskProgress);
+
+// Apply auth middleware
 tasks.use("/*", authMiddleware);
 tasks.post("/", taskController.submitCommand);
 tasks.get("/:id", taskController.getTask);
 tasks.get("/", taskController.listTasks);
 tasks.get("/:id/status", taskController.getTaskStatus);
 tasks.delete("/:id", taskController.delete);
-tasks.get("/:id/progress", taskController.streamTaskProgress);
 tasks.get("/:id/preview", taskController.streamTaskPreview);
 export default tasks;

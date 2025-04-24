@@ -24,6 +24,7 @@
 - [🚀 Features](#-features)
 - [🛠️ Tech Stack](#️-tech-stack)
 - [🏗️ Project Structure](#️-project-structure)
+- [📘 Documentation](#-Documentation)
 - [🏁 Getting Started](#-getting-started)
   - [Prerequisites](#prerequisites)
   - [Installation](#installation)
@@ -83,6 +84,29 @@ Stratos/
 ├── docker/          # Docker configuration
 └── docs/            # Project documentation
 ```
+
+## 📘 Documentation
+
+### User Manual
+
+Detailed instructions for using Stratos can be found in our [User Manual](./docs/userManual.md). The manual covers:
+
+- Command syntax and usage
+- Built-in slash commands for video processing
+- AI-powered commands for advanced media processing
+- Advanced usage with raw FFmpeg commands
+- Technical specifications and troubleshooting
+
+For specialized commands, please see the following resources:
+- [Slash Commands Documentation](./docs/slash-commands.md)
+- [AI Commands Documentation](./docs/ai-commands.md)
+
+### API Documentation
+
+Stratos provides a RESTful API that allows developers to integrate with the platform programmatically:
+
+- The full API specification is available in [OpenAPI format](./docs/openapi.yaml)
+- You can use this specification with tools like [Swagger UI](https://swagger.io/tools/swagger-ui/) to explore the API interactively
 
 ## 🏁 Getting Started
 

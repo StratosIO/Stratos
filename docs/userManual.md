@@ -66,7 +66,6 @@ When you use a command in Stratos, the system:
 
 1. For built-in commands: Automatically transforms your command into a full FFmpeg command with the appropriate parameters and executes it
 2. For AI commands: 
-   - Extracts audio from the video file 
    - Processes the content using specialized AI models
    - Returns the result in the requested format
 
@@ -75,9 +74,9 @@ The processing time depends on the file size and complexity of the task.
 ## Technical Specifications
 
 - **File Size**: Supports uploads up to 5GB
-- **Concurrent Jobs**: Capability to handle up to 10 simultaneous tasks
+- **Concurrent Jobs**: Capability to handle up to 5 simultaneous tasks
 - **Transcription Accuracy**: Aims for at least 90% accuracy in auto-generated transcriptions
-- **Video Storage**: Videos are temporarily stored for 7 days by default after processing
+- **Video Storage**: Videos are temporarily stored for 1 day by default after processing
 
 ## Troubleshooting
 

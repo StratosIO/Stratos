@@ -189,7 +189,7 @@
 	}
 </script>
 
-<div class="form-control relative">
+<div class="form-control relative font-mono">
 	<div
 		contenteditable="plaintext-only"
 		bind:this={inputElement}
@@ -200,7 +200,7 @@
 		oninput={onInput}
 		onkeydown={onKeyDown}
 		onblur={onBlur}
-		data-placeholder="e.g., ffmpeg -i @input.mp4 -ss 00:00:01 -vframes 1 output.png"
+		data-placeholder="ffmpeg -i @input.mp4 -ss 00:00:01 -vframes 1 output.png"
 	></div>
 	{#if showSlashSuggestions}
 		<ul

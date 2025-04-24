@@ -28,7 +28,7 @@ export function insertMentionAtCursor(file: FileItem): void {
 	const mention = document.createElement('span')
 	mention.contentEditable = 'false'
 	mention.className =
-		'select-text text-primary-content bg-primary/20 rounded-sm px-1 hover:bg-accent hover:text-accent-content transition-colors'
+		'select-text text-secondary-content bg-secondary rounded-sm px-1 hover:bg-accent hover:text-accent-content transition-colors'
 	mention.dataset.mentionId = file.id
 	let name = file.name
 	if (name.length > 30) name = `${name.slice(0, 27)}...`

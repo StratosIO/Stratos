@@ -2,6 +2,99 @@
 <script lang="ts">
 	import { token, endpoint, taskSelected, tasks } from '$lib/stores'
 	import { deleteRemoteItem } from '$lib/utils/requests'
+	import ListItem from '$lib/components/ListItem.svelte'
+	import { get } from 'svelte/store'
+	import { onDestroy } from 'svelte'
+
+	const sources: Map<string, EventSource> = new Map()
+
+	function startProgressStream(id: string): void {
+		const es = new EventSource(`${get(endpoint)}/tasks/${id}/progress`)
+
+		es.addEventListener('progress', (ev: MessageEvent) => {
+			const v = Number.parseFloat(ev.data)
+			if (Number.isNaN(v)) return
+			const pct = Math.round(v * 100)
+
+			tasks.update((all) => {
+				const i = all.findIndex((t) => t.id === id)
+				if (i !== -1) all[i] = { ...all[i], progress: pct }
+				return all
+			})
+
+			if (pct >= 100) {
+				es.close()
+				sources.delete(id)
+				refreshTaskStatus(id)
+			}
+		})
+
+		es.addEventListener('complete', () => {
+			tasks.update((all) => {
+				const i = all.findIndex((t) => t.id === id)
+				if (i !== -1) all[i] = { ...all[i], progress: 100 }
+				return all
+			})
+			es.close()
+			sources.delete(id)
+			refreshTaskStatus(id)
+		})
+
+		es.onerror = () => {
+			es.close()
+			sources.delete(id)
+			setTimeout(() => startProgressStream(id), 2000)
+		}
+
+		sources.set(id, es)
+	}
+
+	async function refreshTaskStatus(id: string) {
+		try {
+			const res = await fetch(`${get(endpoint)}/tasks/${id}/status`, {
+				headers: { Authorization: `Bearer ${get(token)}` },
+			})
+			if (!res.ok) return
+			const j = await res.json()
+			if (!j.success || !j.task) return
+
+			tasks.update((all) => {
+				const i = all.findIndex((t) => t.id === id)
+				if (i !== -1) all[i] = { ...all[i], ...j.task, progress: 100 }
+				return all
+			})
+		} catch (err) {
+			console.error('refresh status failed:', err)
+		}
+	}
+
+	$effect(() => {
+		for (const t of $tasks) {
+			if ((t.status === 'processing' || t.status === 'pending') && !sources.has(t.id)) {
+				startProgressStream(t.id)
+			} else if (t.status === 'completed' && t.progress !== 100) {
+				tasks.update((all) => {
+					const i = all.findIndex((x) => x.id === t.id)
+					if (i !== -1) all[i] = { ...all[i], progress: 100 }
+					return all
+				})
+			}
+		}
+
+		for (const [id, src] of sources.entries()) {
+			if (!$tasks.some((t) => t.id === id)) {
+				src.close()
+				sources.delete(id)
+			}
+		}
+	})
+
+	onDestroy(() => {
+		for (const [, s] of sources) {
+			s.close()
+		}
+		sources.clear()
+	})
 
 	async function deleteTask(index: number, e: Event): Promise<void> {
 		e.stopPropagation()
@@ -35,70 +128,15 @@
 	function selectTask(index: number): void {
 		taskSelected.set(index)
 	}
-
-	// TODO: This should be replaced by SSE
-	async function pollTaskStatus() {
-		const updatedTasks = await Promise.all(
-			$tasks.map(async (task) => {
-				try {
-					const res = await fetch(`${$endpoint}/tasks/${task.id}/status`, {
-						headers: { Authorization: `Bearer ${$token}` },
-					})
-					if (!res.ok) {
-						console.error('Failed to fetch status for task', task.id)
-						return task
-					}
-					const data = await res.json()
-					if (data.success && data.task) {
-						return data.task
-					}
-					return task
-				} catch (error) {
-					console.error('Error fetching status for task', task.id, error)
-					return task
-				}
-			}),
-		)
-		tasks.set(updatedTasks)
-	}
-
-	$effect(() => {
-		const id = setInterval(pollTaskStatus, 5000)
-		return () => clearInterval(id)
-	})
 </script>
 
-<div>
-	<h2 class="mb-2 text-xl font-bold md:text-2xl">Task List</h2>
-	{#if $tasks.length === 0}
-		<p class="text-base-content/70">No tasks available yet.</p>
-	{:else}
-		<ul>
-			{#each $tasks as task, index (task.id)}
-				<li class="group relative mb-2 flex items-center">
-					<button
-						type="button"
-						class="group-hover:bg-base-200 rounded-field relative min-w-0 flex-1 cursor-pointer p-2 transition-colors duration-200"
-						class:bg-base-200={$taskSelected === index}
-						onclick={() => selectTask(index)}
-					>
-						<div class="relative flex items-center">
-							<div
-								class="rounded-selector bg-base-200 mr-3 flex h-9 w-12 shrink-0 items-center justify-center"
-							>
-								<span class="material-icons-round text-base-content/50 text-3xl">task</span>
-							</div>
-							<span class="text-base-content relative truncate">{task.id}</span>
-						</div>
-					</button>
-					<button
-						onclick={(e) => deleteTask(index, e)}
-						class="material-icons-round text-base-content/0 hover:text-error group-hover:text-base-content/50 absolute top-1/2 right-2 -translate-y-1/2 transition-colors"
-					>
-						delete
-					</button>
-				</li>
-			{/each}
-		</ul>
-	{/if}
-</div>
+{#each $tasks as task, index (task.id)}
+	<ListItem
+		progress={task.progress}
+		selected={$taskSelected === index}
+		label={task.id}
+		icon="task"
+		onSelect={() => selectTask(index)}
+		onDelete={(e: Event) => deleteTask(index, e)}
+	/>
+{/each}
