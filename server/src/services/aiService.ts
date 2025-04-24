@@ -56,7 +56,7 @@ export const aiService = {
 					inputFileInfo,
 					outputDir,
 				);
-			} else if (commandResult.command === "slowmo") {
+			} else if (commandResult.command === "slowmotion") {
 				resultFilePath = await processSlowmo(
 					commandResult,
 					inputFileInfo,
