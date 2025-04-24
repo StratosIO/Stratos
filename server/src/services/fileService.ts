@@ -4,6 +4,7 @@ import { validate as ValidUUID } from "uuid";
 import { UPLOAD_CONFIG } from "../types/index.js";
 import type { ListOptions, FileListResult } from "../types/index.js";
 import path from "node:path";
+import { thumbnailUtils } from "../utils/thumbnailUtils.js";
 
 export const fileService = {
 	ensureUploadDirectory: async () => {
@@ -41,28 +42,33 @@ export const fileService = {
 
 		await fileWriter.end();
 
+		// Generate thumbnail if applicable
+		if (thumbnailUtils.shouldGenerateThumbnail(fileType, fileSize)) {
+			await thumbnailUtils.generateThumbnail(filePath, id, fileType);
+		}
+
 		// Calculate expiration time
 		const expiresAt = new Date();
 		expiresAt.setHours(expiresAt.getHours() + expiresInHours);
 
 		const result = await sql`
-			INSERT INTO files (
-				id,
-				user_id,
-				file_name,
-				mime_type,
-				file_size,
-				file_path,
-				expires_at
-			) VALUES (
-				${id},
-				${userId},
-				${fileName},
-				${fileType},
-				${fileSize},
-				${filePath},
-				${expiresAt}
-			) RETURNING id, file_name, file_path
+		  INSERT INTO files (
+			id,
+			user_id,
+			file_name,
+			mime_type,
+			file_size,
+			file_path,
+			expires_at
+		  ) VALUES (
+			${id},
+			${userId},
+			${fileName},
+			${fileType},
+			${fileSize},
+			${filePath},
+			${expiresAt}
+		  ) RETURNING id, file_name, file_path
 		`;
 
 		return result[0];
@@ -74,20 +80,25 @@ export const fileService = {
 
 		// First get the file path from database
 		const [{ file_path: filePath } = {}] = await sql`
-			SELECT file_path 
-			FROM files 
-			WHERE id = ${id}::uuid
+		  SELECT file_path 
+		  FROM files 
+		  WHERE id = ${id}::uuid
 		`;
 
 		if (!filePath) {
 			throw new Error("File not found");
 		}
+
+		// Delete the file
 		await unlink(filePath);
+
+		// Delete the thumbnail
+		await thumbnailUtils.deleteThumbnail(id);
 
 		// Then remove from database
 		await sql`
-			DELETE FROM files 
-			WHERE id = ${id}::uuid
+		  DELETE FROM files 
+		  WHERE id = ${id}::uuid
 		`;
 	},
 	list: async (options: ListOptions): Promise<FileListResult> => {
