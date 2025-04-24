@@ -46,6 +46,20 @@ Create a slow motion version of a video.
 /ai-slowmo 5c12ecc5-f2f8-438b-892d-e23348cb1d81 --output=slow-motion-clip
 ```
 
+### /ai-fpsboost
+
+Create a increased fps version of a video.
+
+**Options**
+- `--factor`: Factor by which to boost the frame rate (result is factor * current frame rate, default: 2)
+
+**Examples:**
+```
+/ai-fpsboost 5c12ecc5-f2f8-438b-892d-e23348cb1d81
+/ai-fpsboost 5c12ecc5-f2f8-438b-892d-e23348cb1d81 --factor=3
+/ai-fpsboost 5c12ecc5-f2f8-438b-892d-e23348cb1d81 --output=fps-boost-clip
+```
+
 ## How it works
 
 When you use an AI command, the system:
