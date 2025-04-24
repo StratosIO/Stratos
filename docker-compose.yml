@@ -58,8 +58,6 @@ volumes:
     name: stratos-uploads
   outputs:
     name: stratos-outputs
-  previews:
-    name: stratos-previews
 
 networks:
   default:

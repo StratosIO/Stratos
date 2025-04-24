@@ -296,7 +296,6 @@ export const taskController = {
 			return c.json({ error: "Invalid task ID" }, 400);
 		}
 
-		// Check if task exists
 		const task = await taskService.getTask(taskId);
 		if (!task) {
 			return c.json({ error: "Task not found" }, 404);
@@ -305,6 +304,17 @@ export const taskController = {
 		c.header("Content-Type", "text/event-stream");
 		c.header("Cache-Control", "no-cache");
 		c.header("Connection", "keep-alive");
+		c.header("Access-Control-Allow-Origin", "*");
+
+		if (task.status === "completed" || task.status === "failed") {
+			return streamSSE(c, async (stream) => {
+				await stream.writeSSE({
+					event: "progress",
+					data: "1",
+				});
+				stream.close();
+			});
+		}
 
 		return streamSSE(c, async (stream) => {
 			let closed = false;
@@ -314,12 +324,9 @@ export const taskController = {
 			});
 
 			await stream.writeSSE({
-				event: "status",
-				data: JSON.stringify({
-					id: taskId,
-					status: "pending",
-				}),
-			});
+				event: "heartbeat",
+				data: String(Date.now()),
+			});			
 
 			const heartbeat = setInterval(() => {
 				if (!closed) {
@@ -343,42 +350,33 @@ export const taskController = {
 			const progressCleanup = eventService.onTaskEvent(
 				taskId,
 				"progress",
-				async (data) => {
-					if (!closed) {
+				async (data: any) => {
+					if (!closed && typeof data?.progress === "number") {
 						await stream.writeSSE({
 							event: "progress",
-							data: JSON.stringify(data),
+							data: String(data.progress),
 						});
 					}
 				},
 			);
-			const completeCleanup = eventService.onTaskEvent(
-				taskId,
-				"complete",
-				async (data) => {
-					if (!closed) {
-						await stream.writeSSE({
-							event: "complete",
-							data: JSON.stringify(data),
-						});
-						cleanup();
-						stream.close();
-					}
-				},
+
+			const handleTerminalEvent = async () => {
+				if (!closed) {
+					await stream.writeSSE({
+						event: "progress", // frontend will check task status again
+						data: "1", // when task progress reach 1
+					});
+					cleanup();
+					stream.close();
+				}
+			};
+
+			const completeCleanup = eventService.onTaskEvent(taskId, "complete", () =>
+				handleTerminalEvent(),
 			);
-			const failedCleanup = eventService.onTaskEvent(
-				taskId,
-				"failed",
-				async (err) => {
-					if (!closed) {
-						await stream.writeSSE({
-							event: "error",
-							data: JSON.stringify({ error: err }),
-						});
-						cleanup();
-						stream.close();
-					}
-				},
+
+			const failedCleanup = eventService.onTaskEvent(taskId, "failed", () =>
+				handleTerminalEvent(),
 			);
 
 			await keepAlive;
