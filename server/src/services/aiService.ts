@@ -271,7 +271,7 @@ async function processFpsBoost(
 	log.info(`Sending file to AI service: Frame Rate Boost with ${tempPath}`);
 	try {
 		// Call the external AI service for frame rate boost
-		await axios.post(`${AI_URL}/slowmo/${safeFilePath}/${optionsString}`);
+		await axios.post(`${AI_URL}/fpsboost/${safeFilePath}/${optionsString}`);
 
 		log.info(`Frame rate boosted video saved at ${resultFilePath}`);
 
