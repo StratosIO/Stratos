@@ -26,6 +26,7 @@ export type TaskItem = {
 	updated_at?: string
 	result_path?: string
 	error?: string | null
+	progress?: number
 }
 
 export type DeleteOptions = {

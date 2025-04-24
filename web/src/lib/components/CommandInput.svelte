@@ -189,7 +189,7 @@
 	}
 </script>
 
-<div class="form-control font-mono relative">
+<div class="form-control relative font-mono">
 	<div
 		contenteditable="plaintext-only"
 		bind:this={inputElement}
