@@ -34,6 +34,19 @@ export const AI_COMMANDS: Record<string, AICommandDefinition> = {
 			},
 		],
 	},
+	fpsboost: {
+		name: "fpsboost",
+		description: "Increase the frame rate of a video",
+		options: [
+			{
+				name: "factor",
+				description: "Frame rate increase factor (2 for double the fps)",
+
+				type: "number",
+				default: 2,
+			},
+		],
+	},
 };
 
 /**
