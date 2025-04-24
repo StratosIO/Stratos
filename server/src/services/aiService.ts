@@ -62,6 +62,12 @@ export const aiService = {
 					inputFileInfo,
 					outputDir,
 				);
+			} else if (commandResult.command === "fpsboost") {
+				resultFilePath = await processFpsBoost(
+					commandResult,
+					inputFileInfo,
+					outputDir,
+				);
 			} else {
 				throw new Error(`Unsupported AI command: ${commandResult.command}`);
 			}
@@ -219,6 +225,71 @@ async function processSlowmo(
 	} catch (error) {
 		log.error(`Failed to get slow motion video from AI service: ${error}`);
 		throw new Error(`Slow motion service error: ${error}`);
+	}
+}
+
+/**
+ * Process Frame Rate Boost task
+ */
+async function processFpsBoost(
+	commandResult: ParsedCommand,
+	inputFile: { file_path: string; file_name: string; mime_type: string },
+	outputDir: string,
+): Promise<string> {
+	const options = commandResult.options || {};
+	const factor = (options.speed as number) || 2;
+
+	log.info(
+		`Preparing for frame rate boost: ${inputFile.file_name} with frame rate factor ${factor}`,
+	);
+
+	// Generate temporary MP4 file
+	const baseName = path.parse(inputFile.file_name).name;
+	const tempFile = `${baseName}.mp4`;
+	const tempPath = path.join(outputDir, tempFile);
+
+	// Convert input to MP4 if needed
+	try {
+		log.info(`Converting input to MP4 format: ${tempPath}`);
+		await execAsync(
+			`ffmpeg -i "${inputFile.file_path}" -c:v libx264 -preset medium -crf 23 -c:a aac -b:a 128k "${tempPath}"`,
+		);
+		log.info("Temporary MP4 file created successfully");
+	} catch (error) {
+		log.error(`Failed to create temporary MP4 file: ${error}`);
+		throw new Error("Failed to prepare video for frame rate boost processing");
+	}
+
+	// Generate output filename
+	const outputFile = `${baseName}-fpsboost.mp4`;
+	const resultFilePath = path.join(outputDir, outputFile);
+
+	// Prepare options string for the AI service
+	const optionsString = `factor=${factor}`;
+	const safeFilePath = tempPath.replace(/\//g, "+");
+
+	log.info(`Sending file to AI service: Frame Rate Boost with ${tempPath}`);
+	try {
+		// Call the external AI service for frame rate boost
+		await axios.post(`${AI_URL}/slowmo/${safeFilePath}/${optionsString}`);
+
+		log.info(`Frame rate boosted video saved at ${resultFilePath}`);
+
+		// Clean up temporary file
+		try {
+			await fs.unlink(tempPath);
+			log.info(`Cleaned up temporary file: ${tempPath}`);
+		} catch (cleanupError) {
+			// Don't fail the whole operation if cleanup fails
+			log.warn(
+				`Failed to clean up temporary file ${tempPath}: ${cleanupError}`,
+			);
+		}
+
+		return resultFilePath;
+	} catch (error) {
+		log.error(`Failed to get frame rate booster video from AI service: ${error}`);
+		throw new Error(`Frame Rate Boost service error: ${error}`);
 	}
 }
 
