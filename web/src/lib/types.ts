@@ -14,7 +14,6 @@ export type FileItem = {
 	type: string
 	time: string
 	icon?: string
-	thumb?: string
 	progress?: number
 	xhr?: XMLHttpRequest
 }

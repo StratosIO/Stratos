@@ -49,8 +49,6 @@
 		selected={$fileSelected === index}
 		label={file.name}
 		icon={file.icon}
-		thumb={file.thumb}
-		isUploading={file.progress === 0}
 		onSelect={() => selectFile(index)}
 		onDelete={(e: Event) => deleteFile(index, e)}
 	/>

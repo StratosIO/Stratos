@@ -1,10 +1,8 @@
 <!-- lib/components/ListItem.svelte -->
 <script lang="ts">
-	let { progress, selected, icon, label, thumb, isUploading, onSelect, onDelete } = $props()
+	let { progress, selected, icon, label, onSelect, onDelete } = $props()
 
-	let mappedProgress = $derived(
-		progress === undefined ? undefined : 10 + (progress * 0.9)
-	)
+	let mappedProgress = $derived(progress === undefined ? undefined : 10 + progress * 0.9)
 </script>
 
 <li class="group relative mb-2 flex items-center">
@@ -13,7 +11,7 @@
 		onclick={onSelect}
 		class={`group-hover:bg-base-200 rounded-field relative min-w-0 flex-1 cursor-pointer p-2 transition-colors duration-200 ${
 			selected ? 'bg-base-200' : ''
-		} ${isUploading ? 'animate-pulse' : ''}`}
+		} ${progress === 0 ? 'animate-pulse' : ''}`}
 	>
 		{#if progress !== undefined}
 			<div
@@ -25,12 +23,9 @@
 		{/if}
 		<div class="relative flex items-center">
 			<div
-				class="rounded-selector mr-3 flex h-9 w-12 shrink-0 items-center justify-center"
-				class:bg-base-200={!thumb}
-				style={thumb
-					? `background-image: url(${thumb}); background-size: cover; background-position: center;`
-					: ''}
+				class="rounded-selector bg-base-200 mr-3 flex h-9 w-12 shrink-0 items-center justify-center"
 			>
+				<!-- Load thumbnails here -->
 				{#if icon}
 					<span class="material-icons-round text-base-content/50 text-3xl">{icon}</span>
 				{/if}

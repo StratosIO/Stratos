@@ -9,30 +9,6 @@
 		return 'description'
 	}
 
-	async function createThumb(file: File): Promise<string | null> {
-		if (!file.type.startsWith('video/')) return null
-		return new Promise((resolve, reject) => {
-			const url = URL.createObjectURL(file)
-			const video = document.createElement('video')
-			video.src = url
-			video.onloadedmetadata = () => {
-				video.currentTime = video.duration / 2
-			}
-			video.onseeked = () => {
-				const canvas = document.createElement('canvas')
-				canvas.width = video.videoWidth
-				canvas.height = video.videoHeight
-				canvas.getContext('2d')?.drawImage(video, 0, 0, canvas.width, canvas.height)
-				URL.revokeObjectURL(url)
-				resolve(canvas.toDataURL('image/png'))
-			}
-			video.onerror = () => {
-				URL.revokeObjectURL(url)
-				reject('Thumbnail generation failed')
-			}
-		})
-	}
-
 	async function uploadFile(file: File, id: string) {
 		const xhr = new XMLHttpRequest()
 		xhr.open('POST', `${$endpoint}/uploads`)
@@ -68,9 +44,6 @@
 	async function readFile(fileList: FileList | File[]) {
 		for (const file of Array.from(fileList)) {
 			const id = crypto.randomUUID()
-			const thumb = file.type.startsWith('image/')
-				? URL.createObjectURL(file)
-				: await createThumb(file)
 
 			files.update((current) => [
 				...current,
@@ -80,8 +53,7 @@
 					size: file.size,
 					type: file.type,
 					time: new Date().toISOString(),
-					icon: thumb ? '' : selectIcon(file),
-					...(thumb && { thumb }),
+					icon: selectIcon(file),
 					progress: 0,
 				},
 			])
