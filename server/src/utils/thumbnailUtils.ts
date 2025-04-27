@@ -76,7 +76,7 @@ export const thumbnailUtils = {
 
 			const thumbnailPath = path.join(
 				thumbnailUtils.getThumbnailDirectory(),
-				`${fileId}_thumb.${THUMBNAIL_FORMAT}`,
+				`${fileId}.${THUMBNAIL_FORMAT}`,
 			);
 
 			if (fileType.startsWith("image/")) {
@@ -124,7 +124,7 @@ export const thumbnailUtils = {
 		try {
 			const thumbnailPath = path.join(
 				thumbnailUtils.getThumbnailDirectory(),
-				`${fileId}_thumb.${THUMBNAIL_FORMAT}`,
+				`${fileId}.${THUMBNAIL_FORMAT}`,
 			);
 
 			await fs.unlink(thumbnailPath);

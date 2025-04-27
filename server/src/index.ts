@@ -1,7 +1,6 @@
 import { Hono } from "hono";
 import { cors } from "hono/cors";
 import { serveStatic } from "hono/bun";
-import { authMiddleware, requireRole } from "./middleware/auth.js";
 import { createAdmin } from "./scripts/createAdmin.js";
 import { cleanupService } from "./services/cleanupService.js";
 import auth from "./routes/auth.js";
@@ -10,26 +9,11 @@ import log from "./config/logger.js";
 import uploads from "./routes/uploads.js";
 import status from "./routes/status.js";
 import tasks from "./routes/tasks.js";
-import path from "node:path";
-import { UPLOAD_CONFIG } from "./types/index.js";
 
 const app = new Hono();
 
 //Middleware
 app.use("*", cors());
-
-const thumbsDir = path.resolve(UPLOAD_CONFIG.DIR, "thumbnails");
-
-app.use(
-	"/thumbnails/*",
-	serveStatic({
-		root: thumbsDir,
-		rewriteRequestPath: (reqPath) => {
-			// strip leading `/thumbnails`
-			return reqPath.replace(/^\/thumbnails/, "");
-		},
-	}),
-);
 
 const api = new Hono();
 //Routes
