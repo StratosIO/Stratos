@@ -2,9 +2,8 @@ import fs from "node:fs/promises";
 import path from "node:path";
 import sql from "../config/database.js";
 import log from "../config/logger.js";
-import { OUTPUT_CONFIG } from "../types/index.js";
+import { OUTPUT_CONFIG, UPLOAD_CONFIG } from "../types/index.js";
 import { thumbnailUtils } from "../utils/thumbnailUtils.js";
-import { previewUtils } from "../utils/previewUtils.js";
 
 export const cleanupService = {
 	/**
@@ -30,8 +29,8 @@ export const cleanupService = {
 					await fs.unlink(file.file_path);
 					log.info(`Deleted file from filesystem: ${file.file_path}`);
 
-					//Delete thumbnail from database
-					await thumbnailUtils.deleteThumbnail(file.id);
+					// Delete thumbnail
+					await thumbnailUtils.delete(file.id, UPLOAD_CONFIG);
 
 					// Delete from database (this will cascade to task_files)
 					await sql`DELETE FROM files WHERE id = ${file.id}`;
@@ -52,7 +51,7 @@ export const cleanupService = {
       `;
 			log.info(`Found ${expiredTasks.length} expired tasks to clean up`);
 
-			// Delete task output directories and previews
+			// Delete task output directories and thumbnails
 			for (const task of expiredTasks) {
 				try {
 					const taskDir = path.join(OUTPUT_CONFIG.DIR, task.id);
@@ -68,8 +67,8 @@ export const cleanupService = {
 						log.info(`Deleted task output directory: ${taskDir}`);
 					}
 
-					// Delete associated preview if exists
-					await previewUtils.deletePreview(task.id);
+					// Delete associated thumbnail
+					await thumbnailUtils.delete(task.id, OUTPUT_CONFIG);
 
 					// Delete from database
 					await sql`DELETE FROM tasks WHERE id = ${task.id}`;

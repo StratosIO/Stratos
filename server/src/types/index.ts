@@ -56,6 +56,7 @@ export interface Task {
 	created_at: Date;
 	updated_at: Date;
 	result_path?: string;
+	result_size?: number;
 	error?: string;
 	files?: TaskFileDownloadInfo[];
 	user_id: number;

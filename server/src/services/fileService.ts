@@ -43,8 +43,8 @@ export const fileService = {
 		await fileWriter.end();
 
 		// Generate thumbnail if applicable
-		if (thumbnailUtils.shouldGenerateThumbnail(fileType, fileSize)) {
-			await thumbnailUtils.generateThumbnail(filePath, id, fileType);
+		if (thumbnailUtils.shouldGenerate(fileType)) {
+			await thumbnailUtils.generate(filePath, id, fileType, UPLOAD_CONFIG);
 		}
 
 		// Calculate expiration time
@@ -93,7 +93,7 @@ export const fileService = {
 		await unlink(filePath);
 
 		// Delete the thumbnail
-		await thumbnailUtils.deleteThumbnail(id);
+		await thumbnailUtils.delete(id, UPLOAD_CONFIG);
 
 		// Then remove from database
 		await sql`

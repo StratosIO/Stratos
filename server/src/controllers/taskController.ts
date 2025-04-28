@@ -114,6 +114,7 @@ export const taskController = {
 					created_at: task.created_at,
 					updated_at: task.updated_at,
 					result_path: task.result_path,
+					result_size: task.result_size,
 					error: task.error,
 				},
 			});

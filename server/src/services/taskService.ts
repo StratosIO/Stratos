@@ -18,7 +18,7 @@ import type {
 } from "../types/index.js";
 import { eventService } from "./eventService.js";
 import { getContentType } from "../utils/fileUtils.js";
-import { previewUtils } from "../utils/previewUtils.js";
+import { thumbnailUtils } from "../utils/thumbnailUtils.js";
 
 const execAsync = promisify(exec);
 
@@ -106,8 +106,6 @@ export const taskService = {
 			status: row.status,
 			created_at: row.created_at,
 			updated_at: row.updated_at,
-			result_path: row.result_path,
-			error: row.error,
 			user_id: row.user_id,
 		};
 
@@ -228,23 +226,32 @@ export const taskService = {
 				process.on("close", async (code) => {
 					try {
 						if (code === 0) {
-							// Find output file(s)
 							const outputFiles = await fs.readdir(outputDir);
+
 							const resultPath =
 								outputFiles.length > 0
 									? path.join(outputDir, outputFiles[0])
 									: null;
 
-							// Update task as completed
-							await sql`
-              UPDATE tasks 
-              SET status = 'completed', 
-                  result_path = ${resultPath}, 
-                  updated_at = NOW() 
-              WHERE id = ${taskId}
-            `;
+							let resultSize: number | null = null;
 
-							// Emit completion event
+							if (resultPath) {
+								try {
+									const stats = await fs.stat(resultPath);
+									resultSize = stats.size;
+								} catch (error) {
+									log.warn(`Failed to get file size for ${resultPath}`, error);
+								}
+							}
+							await sql`
+								UPDATE tasks 
+								SET status = 'completed',
+									result_path = ${resultPath},
+									result_size = ${resultSize},
+									updated_at = NOW()
+								WHERE id = ${taskId}
+							`;
+
 							eventService.emitTaskComplete(taskId, {
 								taskId,
 								status: "completed",
@@ -257,13 +264,21 @@ export const taskService = {
 
 							await taskService.getTaskFiles(taskId).then(async (info) => {
 								if (info.single) {
-								  await previewUtils
-									.generatePreview(info.single.path, taskId, info.single.mime_type)
-									.catch((err) => {
-									  log.error(`Preview generation failed for task ${taskId}:`, err);
-									});
+									await thumbnailUtils
+										.generate(
+											info.single.path,
+											taskId,
+											info.single.mime_type,
+											OUTPUT_CONFIG,
+										)
+										.catch((err) => {
+											log.error(
+												`Preview generation failed for task ${taskId}:`,
+												err,
+											);
+										});
 								}
-							  });							  
+							});
 
 							log.info(`Task ${taskId} completed successfully`);
 							resolve();
@@ -271,18 +286,15 @@ export const taskService = {
 							const error = `Process exited with code ${code}`;
 							log.error(`Error executing task ${taskId}: ${error}`);
 
-							// Update task as failed
 							await sql`
-              UPDATE tasks 
-              SET status = 'failed', 
-                  error = ${error}, 
-                  updated_at = NOW() 
-              WHERE id = ${taskId}
-            `;
+								UPDATE tasks 
+								SET status = 'failed', 
+									error = ${error}, 
+									updated_at = NOW()
+								WHERE id = ${taskId}
+							`;
 
-							// Emit failure event
 							eventService.emitTaskFailed(taskId, error);
-
 							reject(new Error(error));
 						}
 					} catch (processError) {
@@ -293,23 +305,19 @@ export const taskService = {
 					}
 				});
 
-				// Handle process errors
 				process.on("error", async (err) => {
 					const errorMessage = `Process error: ${err.message}`;
 					log.error(`Error executing task ${taskId}: ${errorMessage}`);
 
-					// Update task as failed
 					await sql`
-          UPDATE tasks 
-          SET status = 'failed', 
-              error = ${errorMessage}, 
-              updated_at = NOW() 
-          WHERE id = ${taskId}
-        `;
+						UPDATE tasks 
+						SET status = 'failed', 
+							error = ${errorMessage}, 
+							updated_at = NOW()
+						WHERE id = ${taskId}
+					`;
 
-					// Emit failure event
 					eventService.emitTaskFailed(taskId, errorMessage);
-
 					reject(err);
 				});
 			});
@@ -344,6 +352,7 @@ export const taskService = {
 			created_at: row.created_at,
 			updated_at: row.updated_at,
 			result_path: row.result_path,
+			result_size: row.result_size,
 			error: row.error,
 			user_id: row.user_id,
 		};
@@ -439,6 +448,8 @@ export const taskService = {
 			} catch (error) {
 				log.warn(`Error deleting output directory for task ${taskId}:`, error);
 			}
+
+			await thumbnailUtils.delete(taskId, OUTPUT_CONFIG);
 
 			// Delete related records and task from database in a transaction
 			await sql.begin(async (sql) => {

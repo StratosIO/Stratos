@@ -17,11 +17,11 @@ tasks.get("/:id/status", taskController.getTaskStatus);
 tasks.delete("/:id", taskController.delete);
 
 tasks.use(
-	"/previews/*",
+	"/thumbnails/*",
 	serveStatic({
 		root: OUTPUT_CONFIG.DIR,
 		rewriteRequestPath: (path) => {
-			return `/previews/${path.split("/").at(-1)}`;
+			return `/thumbnails/${path.split("/").at(-1)}`;
 		},
 	}),
 );
