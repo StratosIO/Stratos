@@ -25,8 +25,6 @@ CREATE TABLE tasks (
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
   expires_at TIMESTAMP WITH TIME ZONE DEFAULT (CURRENT_TIMESTAMP + INTERVAL '24 hours'),
   result_path TEXT,
-  preview_path TEXT,
-  preview_generated BOOLEAN DEFAULT FALSE,
   error TEXT,
   user_id INTEGER REFERENCES users(id) ON DELETE CASCADE
 );

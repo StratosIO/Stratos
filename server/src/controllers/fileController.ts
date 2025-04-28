@@ -3,7 +3,6 @@ import { fileService } from "../services/fileService.js";
 import { uploadValidation } from "../utils/uploadValidation.js";
 import { validate as ValidUUID } from "uuid";
 import log from "../config/logger.js";
-import type { ListQueryParams } from "../types/index.js";
 import { DEFAULT_PAGE_SIZE, MAX_PAGE_SIZE } from "../types/index.js";
 
 export const fileController = {

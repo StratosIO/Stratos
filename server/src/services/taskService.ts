@@ -18,7 +18,7 @@ import type {
 } from "../types/index.js";
 import { eventService } from "./eventService.js";
 import { getContentType } from "../utils/fileUtils.js";
-import { previewService } from "./previewService.js";
+import { previewUtils } from "../utils/previewUtils.js";
 
 const execAsync = promisify(exec);
 
@@ -197,7 +197,7 @@ export const taskService = {
 					const match = progressRegex.exec(output);
 					if (match) {
 						const timeStr = match[1];
-						log.info(`Progress match found for task ${taskId}: ${timeStr}`);
+						log.debug(`Progress match found for task ${taskId}: ${timeStr}`);
 						// Convert HH:MM:SS.MS to seconds
 						const timeParts = timeStr.split(":");
 						const seconds =
@@ -216,7 +216,7 @@ export const taskService = {
 							currentTime: seconds,
 							totalDuration: duration,
 						});
-						log.info(
+						log.debug(
 							`Progress event emitted for task ${taskId}: ${progress * 100}%`,
 						);
 					}
@@ -255,15 +255,16 @@ export const taskService = {
 								})),
 							});
 
-							// Trigger preview generation if there's a result file
-							if (resultPath) {
-								// Don't await - let it run in background
-								previewService
-									.generatePreview(taskId)
-									.catch((err) =>
-										log.error(`Preview generation failed for ${taskId}:`, err),
-									);
-							}
+							await taskService.getTaskFiles(taskId).then(async (info) => {
+								if (info.single) {
+								  await previewUtils
+									.generatePreview(info.single.path, taskId, info.single.mime_type)
+									.catch((err) => {
+									  log.error(`Preview generation failed for task ${taskId}:`, err);
+									});
+								}
+							  });							  
+
 							log.info(`Task ${taskId} completed successfully`);
 							resolve();
 						} else {
@@ -422,7 +423,7 @@ export const taskService = {
 		try {
 			// check if task exists and get its details
 			const [task] = await sql`
-			SELECT id, result_path, preview_path
+			SELECT id, result_path
 			FROM tasks 
 			WHERE id = ${taskId}
 		  `;

@@ -4,12 +4,7 @@ import fs from "node:fs/promises";
 import path from "node:path";
 import log from "../config/logger.js";
 import { UPLOAD_CONFIG } from "../types/index.js";
-import {
-	THUMBNAIL_DIR_NAME,
-	MIN_FILE_SIZE,
-	THUMBNAIL_SIZE,
-	THUMBNAIL_FORMAT,
-} from "../types/index.js";
+import { THUMBNAIL_DIR_NAME, THUMBNAIL_FORMAT } from "../types/index.js";
 
 const execAsync = promisify(exec);
 
@@ -40,11 +35,7 @@ export const thumbnailUtils = {
 	/**
 	 * Determine if a thumbnail should be generated based on file type and size
 	 */
-	shouldGenerateThumbnail: (fileType: string, fileSize: number): boolean => {
-		if (fileSize < MIN_FILE_SIZE) {
-			return false;
-		}
-
+	shouldGenerateThumbnail: (fileType: string): boolean => {
 		const supportedTypes = [
 			// Images
 			"image/jpeg",
@@ -52,6 +43,7 @@ export const thumbnailUtils = {
 			"image/png",
 			"image/gif",
 			"image/webp",
+			"image/avif",
 			"video/mp4",
 			"video/webm",
 			"video/ogg",
@@ -80,25 +72,25 @@ export const thumbnailUtils = {
 			);
 
 			if (fileType.startsWith("image/")) {
-				// Generate thumbnail for images
+				await execAsync(`ffmpeg -y -i "${filePath}" "${thumbnailPath}"`);
+			}
+			if (fileType.startsWith("video/")) {
+				const seekTime = await (async () => {
+					try {
+						const { stdout } = await execAsync(
+							`ffprobe -v error -show_entries format=duration -of csv=p=0 "${filePath}"`,
+						);
+						const duration = parseFloat(stdout.trim());
+						return duration > 0 ? duration / 2 : 1;
+					} catch {
+						return 0;
+					}
+				})();
+
 				await execAsync(
-					`ffmpeg -i "${filePath}" -vf "scale=${THUMBNAIL_SIZE}:force_original_aspect_ratio=decrease" -q:v 2 "${thumbnailPath}"`,
+					`ffmpeg -y -i "${filePath}" -ss ${seekTime} -vframes 1 "${thumbnailPath}"`,
 				);
-			} else if (fileType.startsWith("video/")) {
-				// Generate thumbnail for videos (first frame)
-				// Try 1 second mark first, fallback to 0 seconds if that fails
-				try {
-					await execAsync(
-						`ffmpeg -i "${filePath}" -ss 00:00:01.000 -vframes 1 -vf "scale=${THUMBNAIL_SIZE}:force_original_aspect_ratio=decrease" -q:v 2 "${thumbnailPath}"`,
-					);
-				} catch {
-					// Fallback to first frame
-					await execAsync(
-						`ffmpeg -i "${filePath}" -vframes 1 -vf "scale=${THUMBNAIL_SIZE}:force_original_aspect_ratio=decrease" -q:v 2 "${thumbnailPath}"`,
-					);
-				}
 			} else {
-				// For unsupported types, return null
 				return null;
 			}
 

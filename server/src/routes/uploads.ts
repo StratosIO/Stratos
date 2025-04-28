@@ -1,8 +1,8 @@
 import { Hono } from "hono";
-import { serveStatic } from "hono/bun";
 import { fileController } from "../controllers/fileController.js";
 import { authMiddleware } from "../middleware/auth.js";
 import { UPLOAD_CONFIG } from "../types/index.js";
+import { serveStatic } from "hono/bun";
 
 const uploads = new Hono();
 
