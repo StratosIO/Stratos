@@ -6,9 +6,11 @@
 	import TaskList from '$lib/components/TaskList.svelte'
 	import FileUploader from '$lib/components/FileUploader.svelte'
 	import ServerStatus from '$lib/components/ServerStatus.svelte'
-	import { currentTab } from '$lib/stores'
 	import SettingsTab from '$lib/components/SettingsTab.svelte'
 	import DebugTab from '$lib/components/DebugTab.svelte'
+	import TabsSelector from '$lib/components/TabsSelector.svelte'
+
+	import { currentTab } from '$lib/stores'
 
 	let mobile = $state(false)
 
@@ -29,24 +31,17 @@
 		<main class="space-y-6 p-6">
 			<ServerStatus />
 			<FileUploader />
-			<div class="tabs tabs-border">
-				<input type="radio" class="tab" value="Files" bind:group={$currentTab} />
-				<input type="radio" class="tab" value="Tasks" bind:group={$currentTab} />
-				<input type="radio" class="tab" value="Settings" bind:group={$currentTab} />
-			</div>
+			<TabsSelector />
 			{#if $currentTab === 'Files'}
-				<div class="space-y-8">
-					<FileList />
-					<FileDetail />
-				</div>
+				<FileList />
+				<FileDetail />
 				<CommandPanel />
 			{:else if $currentTab === 'Tasks'}
-				<div class="space-y-8">
-					<TaskList />
-					<TaskDetail />
-				</div>
+				<TaskList />
+				<TaskDetail />
 			{:else if $currentTab === 'Settings'}
 				<SettingsTab />
+				<CommandPanel />
 			{/if}
 		</main>
 	</div>
@@ -56,17 +51,7 @@
 		<aside class="flex max-h-screen w-sm flex-shrink-0 flex-col space-y-6 overflow-y-scroll p-6">
 			<ServerStatus />
 			<FileUploader />
-			<div class="tabs tabs-border">
-				<input type="radio" class="tab" value="Files" bind:group={$currentTab} aria-label="Files" />
-				<input type="radio" class="tab" value="Tasks" bind:group={$currentTab} aria-label="Tasks" />
-				<input
-					type="radio"
-					class="tab"
-					value="Settings"
-					bind:group={$currentTab}
-					aria-label="Settings"
-				/>
-			</div>
+			<TabsSelector />
 			{#if $currentTab === 'Files'}
 				<FileList />
 			{:else if $currentTab === 'Tasks'}

@@ -4,11 +4,11 @@
 </script>
 
 <div class="mb-4">
-	<label for="ffmpeg" class="text-base-content mb-2 block font-medium">Command:</label>
+	<h2 class="mb-2 text-xl font-bold">Command</h2>
 	<div class="flex w-full items-center gap-2">
 		<div class="z-50 flex-1"><CommandInput /></div>
 	</div>
-	<div class="card rounded-field text-base-content/80 mt-4 mb-32 p-4 text-sm">
+	<div class="card rounded-field text-base-content/80 mt-4 mb-24 p-4 text-sm">
 		<p class="font-medium">Tips:</p>
 		<p>
 			Press <kbd class="kbd kbd-sm">/</kbd> to enter a slash command.
