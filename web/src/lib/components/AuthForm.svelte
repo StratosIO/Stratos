@@ -1,7 +1,10 @@
+<!-- lib/components/AuthForm.svelte -->
+
 <script lang="ts">
 	import { token, endpoint, online } from '$lib/stores'
+	import { fetchUserData } from '$lib/utils/requests'
 	import { goto } from '$app/navigation'
-	import { fly } from 'svelte/transition'
+	import Toast from '$lib/components/Toast.svelte'
 
 	// Props for component
 	const { mode = 'login' } = $props<{
@@ -14,16 +17,6 @@
 
 	let isLoading = $state(false)
 	let errorMessage = $state('')
-
-	// Auto-dismiss error messages
-	$effect(() => {
-		if (errorMessage) {
-			const timer = setTimeout(() => {
-				errorMessage = ''
-			}, 3000)
-			return () => clearTimeout(timer)
-		}
-	})
 
 	// Configuration for different modes
 	const configs = {
@@ -76,7 +69,7 @@
 
 			if (response.ok && data.token) {
 				token.set(data.token)
-				online.set(true)
+				await fetchUserData()
 				goto('/')
 			} else {
 				throw new Error(
@@ -181,11 +174,4 @@
 	</fieldset>
 </div>
 
-{#if errorMessage}
-	<div class="toast toast-top toast-start" transition:fly={{ y: -30, duration: 300 }}>
-		<div class="alert alert-error alert-soft">
-			<span class="material-icons-round">error</span>
-			<span class="error-content">{errorMessage}</span>
-		</div>
-	</div>
-{/if}
+<Toast message={errorMessage} type="error" />

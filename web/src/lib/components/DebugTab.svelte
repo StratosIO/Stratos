@@ -9,6 +9,7 @@
 		currentTab,
 		counter,
 		token,
+		maxBlobSize,
 	} from '$lib/stores'
 </script>
 
@@ -35,6 +36,10 @@
 				<tr>
 					<th>Task Selected</th>
 					<td class="max-w-[10rem] truncate font-mono select-text">{$taskSelected}</td>
+				</tr>
+				<tr>
+					<th>Max Blob Size</th>
+					<td class="max-w-[10rem] truncate font-mono select-text">{$maxBlobSize} bytes</td>
 				</tr>
 				<tr>
 					<th>Command</th>

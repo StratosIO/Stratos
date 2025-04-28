@@ -34,13 +34,17 @@
 			<TabsSelector />
 			{#if $currentTab === 'Files'}
 				<FileList />
+				<div class="divider"></div>
 				<FileDetail />
+				<div class="divider"></div>
 				<CommandPanel />
 			{:else if $currentTab === 'Tasks'}
 				<TaskList />
+				<div class="divider"></div>
 				<TaskDetail />
 			{:else if $currentTab === 'Settings'}
 				<SettingsTab />
+				<div class="divider"></div>
 				<CommandPanel />
 			{/if}
 		</main>

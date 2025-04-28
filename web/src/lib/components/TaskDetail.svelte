@@ -1,15 +1,13 @@
 <!-- lib/components/TaskDetail.svelte -->
 <script lang="ts">
 	import { onDestroy } from 'svelte'
-	import { taskSelected, tasks, endpoint, token } from '$lib/stores'
+	import { taskSelected, tasks, endpoint, token, maxBlobSize } from '$lib/stores'
 	import { downloadTaskResult } from '$lib/utils/requests'
 	import { derived } from 'svelte/store'
 	import { Tween } from 'svelte/motion'
 	import { cubicOut } from 'svelte/easing'
 	import { formatBytes } from '$lib/utils/details'
 	import Thumbnail from '$lib/components/Thumbnail.svelte'
-
-	const MAX_INLINE_SIZE = 10 * 1024 * 1024
 
 	const task = derived(
 		[tasks, taskSelected],
@@ -54,7 +52,7 @@
 	}
 
 	$effect(() => {
-		if ($task && $task.result_size !== undefined && $task.result_size < MAX_INLINE_SIZE) {
+		if ($task && $task.result_size !== undefined && $task.result_size < $maxBlobSize) {
 			loadPreviewBlob($task.id)
 		} else {
 			if (mediaUrl) URL.revokeObjectURL(mediaUrl)
@@ -111,7 +109,7 @@
 					</p>
 				{/if}
 				<div class="flex items-center gap-2">
-					<p class="truncate text-sm">
+					<p class="text-sm whitespace-nowrap">
 						Progress:
 						{#if $task.progress !== undefined}
 							<span class="ml-2 font-mono text-xs">{$task.progress}%</span>
@@ -119,24 +117,19 @@
 							<span class="ml-2 font-mono text-xs">0%</span>
 						{/if}
 					</p>
-					<div class="w-96">
-						<progress
-							class="progress mb-[2px] w-full {$task.progress !== undefined
-								? $task.error
-									? 'progress-error'
-									: 'progress-info'
-								: 'progress-info'}"
-							value={$task.progress !== undefined ? $task.progress : undefined}
-							max="100"
-						></progress>
-					</div>
+					<progress
+						class="progress max-w-96 min-w-0 flex-shrink {$task.error
+							? 'progress-error'
+							: 'progress-info'}"
+						value={$task.progress !== undefined ? progress.current : undefined}
+						max="100"
+					></progress>
 				</div>
 			</div>
 		</div>
 
+		<div class="divider m text-sm">Preview</div>
 		{#if mediaUrl}
-			<div class="divider m text-sm">Preview</div>
-
 			{#if previewType === 'image'}
 				<img
 					src={mediaUrl}
@@ -154,6 +147,12 @@
 					<track kind="captions" label="captions" />
 				</video>
 			{/if}
+		{:else}
+			<p class="text-base-content/70">
+				Preview will be avaible after task completion.
+				<br />
+				Check <b>Preview Settings</b> if it is not showing.
+			</p>
 		{/if}
 	{:else}
 		<p class="text-base-content/70">Please select a task to view details.</p>
