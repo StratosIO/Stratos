@@ -24,6 +24,7 @@ export type TaskItem = {
 	created_at: string
 	updated_at?: string
 	result_path?: string
+	result_size?: number
 	error?: string | null
 	progress?: number
 }

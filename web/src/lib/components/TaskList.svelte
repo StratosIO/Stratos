@@ -135,7 +135,9 @@
 		progress={task.progress}
 		selected={$taskSelected === index}
 		label={task.id}
-		icon="task"
+		icon="cloud_sync"
+		id={task.id}
+		type="task"
 		onSelect={() => selectTask(index)}
 		onDelete={(e: Event) => deleteTask(index, e)}
 	/>
