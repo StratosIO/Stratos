@@ -53,7 +53,7 @@ export const thumbnailUtils = {
 			);
 
 			if (fileType.startsWith("image/")) {
-				await execAsync(`ffmpeg -y -i "${filePath}" "${outputPath}"`);
+				await execAsync(`ffmpeg -y -i "${filePath}" -vframes 1 "${outputPath}"`);
 			} else if (fileType.startsWith("video/")) {
 				const seekTime = await (async () => {
 					try {

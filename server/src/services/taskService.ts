@@ -483,6 +483,7 @@ export const taskService = {
 				t.created_at, 
 				t.updated_at, 
 				t.result_path, 
+				t.result_size,
 				t.error,
 				t.user_id,
 				array_agg(tf.file_id) as file_ids
@@ -543,6 +544,7 @@ export const taskService = {
 			created_at: row.created_at,
 			updated_at: row.updated_at,
 			result_path: row.result_path,
+			result_size: row.result_size,
 			error: row.error,
 			user_id: row.user_id,
 			fileIds: row.file_ids.filter((id: string | null) => id), // Filter out null values
