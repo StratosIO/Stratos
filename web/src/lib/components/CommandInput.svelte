@@ -7,7 +7,6 @@
 		tasks,
 		token,
 		taskSelected,
-		showConfigModal,
 		currentTab,
 		slashCommands,
 	} from '$lib/stores'
@@ -174,7 +173,7 @@
 		})
 		if (!response.ok) {
 			console.error('Command send failed:', msg)
-			showConfigModal.set(true)
+			currentTab.set('Settings')
 		} else {
 			const data = await response.json()
 			console.log('Command Sent:', msg)
@@ -183,7 +182,7 @@
 			if (data.success && data.task) {
 				tasks.update((curr) => [...curr, data.task])
 				taskSelected.set($tasks.length - 1)
-				currentTab.set('tasks')
+				currentTab.set('Tasks')
 			}
 		}
 	}

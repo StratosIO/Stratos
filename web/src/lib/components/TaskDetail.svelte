@@ -78,82 +78,84 @@
 
 <h2 class="mb-2 text-xl font-bold md:text-2xl">Task Details</h2>
 
-{#if $task}
-	<div class="border-base-300 bg-base-100 rounded-field flex items-center border-2 p-4">
-		<div class="mr-6 hidden h-36 w-48 shrink-0 md:flex">
-			<Thumbnail id={$task.id} type="task" icon="description" size="3rem" />
-		</div>
-		<div class="text-base-content/70 max-w-full min-w-0 flex-1 select-text">
-			<p class="truncate text-lg text-sm">UUID: <span class="font-mono">{$task.id}</span></p>
-			<p class="truncate text-sm">Created At: {$task.created_at}</p>
-			{#if $task.updated_at}
-				<p class="truncate text-sm">Updated At: {$task.updated_at}</p>
-			{/if}
-			{#if $task.error}
-				<p class="text-error truncate text-sm">Error: {$task.error}</p>
-			{/if}
-			{#if $task.result_path}
-				<p class="truncate text-sm">
-					Result Size: {$task.result_size !== undefined
-						? formatBytes($task.result_size)
-						: 'Unknown'}
-				</p>
-				<p class="truncate text-sm">Result Path: {$task.result_path}</p>
-				<p class="flex items-center gap-1 text-sm whitespace-nowrap">
-					<span>Download Link:</span>
-					<button
-						class="text-info inline-block max-w-full cursor-pointer truncate text-left underline"
-						onclick={() => downloadTaskResult($task.id)}
-					>
-						{$endpoint}/tasks/{$task.id}
-					</button>
-				</p>
-			{/if}
-			<div class="flex items-center gap-2">
-				<p class="truncate text-sm">
-					Progress:
-					{#if $task.progress !== undefined}
-						<span class="ml-2 font-mono text-xs">{$task.progress}%</span>
-					{:else}
-						<span class="ml-2 font-mono text-xs">0%</span>
-					{/if}
-				</p>
-				<div class="w-96">
-					<progress
-						class="progress mb-[2px] w-full {$task.progress !== undefined
-							? $task.error
-								? 'progress-error'
-								: 'progress-info'
-							: 'progress-info'}"
-						value={$task.progress !== undefined ? $task.progress : undefined}
-						max="100"
-					></progress>
+<div>
+	{#if $task}
+		<div class="border-base-300 bg-base-100 rounded-field flex items-center border-2 p-4">
+			<div class="mr-6 hidden h-36 w-48 shrink-0 md:flex">
+				<Thumbnail id={$task.id} type="task" icon="description" size="3rem" />
+			</div>
+			<div class="text-base-content/70 max-w-full min-w-0 flex-1 select-text">
+				<p class="truncate text-lg text-sm">UUID: <span class="font-mono">{$task.id}</span></p>
+				<p class="truncate text-sm">Created At: {$task.created_at}</p>
+				{#if $task.updated_at}
+					<p class="truncate text-sm">Updated At: {$task.updated_at}</p>
+				{/if}
+				{#if $task.error}
+					<p class="text-error truncate text-sm">Error: {$task.error}</p>
+				{/if}
+				{#if $task.result_path}
+					<p class="truncate text-sm">
+						Result Size: {$task.result_size !== undefined
+							? formatBytes($task.result_size)
+							: 'Unknown'}
+					</p>
+					<p class="truncate text-sm">Result Path: {$task.result_path}</p>
+					<p class="flex items-center gap-1 text-sm whitespace-nowrap">
+						<span>Download Link:</span>
+						<button
+							class="text-info inline-block max-w-full cursor-pointer truncate text-left underline"
+							onclick={() => downloadTaskResult($task.id)}
+						>
+							{$endpoint}/tasks/{$task.id}
+						</button>
+					</p>
+				{/if}
+				<div class="flex items-center gap-2">
+					<p class="truncate text-sm">
+						Progress:
+						{#if $task.progress !== undefined}
+							<span class="ml-2 font-mono text-xs">{$task.progress}%</span>
+						{:else}
+							<span class="ml-2 font-mono text-xs">0%</span>
+						{/if}
+					</p>
+					<div class="w-96">
+						<progress
+							class="progress mb-[2px] w-full {$task.progress !== undefined
+								? $task.error
+									? 'progress-error'
+									: 'progress-info'
+								: 'progress-info'}"
+							value={$task.progress !== undefined ? $task.progress : undefined}
+							max="100"
+						></progress>
+					</div>
 				</div>
 			</div>
 		</div>
-	</div>
 
-	{#if mediaUrl}
-		<div class="divider my-4 text-sm">Preview</div>
+		{#if mediaUrl}
+			<div class="divider m text-sm">Preview</div>
 
-		{#if previewType === 'image'}
-			<img
-				src={mediaUrl}
-				alt="Task preview"
-				class="rounded-field bg-base-200 mx-auto max-h-96 w-full object-contain"
-			/>
-		{:else if previewType === 'audio'}
-			<audio controls class="w-full">
-				<source src={mediaUrl} />
-				Your browser does not support the audio element.
-			</audio>
-		{:else if previewType === 'video'}
-			<video controls class="bg-base-200 rounded-field mx-auto max-h-96 w-full">
-				<source src={mediaUrl} />
-				<track kind="captions" label="captions" />
-			</video>
+			{#if previewType === 'image'}
+				<img
+					src={mediaUrl}
+					alt="Task preview"
+					class="rounded-field bg-base-200 mx-auto max-h-96 w-full object-contain"
+				/>
+			{:else if previewType === 'audio'}
+				<audio controls class="w-full">
+					<source src={mediaUrl} />
+					Your browser does not support the audio element.
+				</audio>
+			{:else if previewType === 'video'}
+				<video controls class="bg-base-200 rounded-field mx-auto max-h-96 w-full">
+					<source src={mediaUrl} />
+					<track kind="captions" label="captions" />
+				</video>
+			{/if}
 		{/if}
+	{:else}
+		<p class="text-base-content/70">Please select a task to view details.</p>
 	{/if}
-{:else}
-	<p class="text-base-content/70">Please select a task to view details.</p>
-{/if}
+</div>

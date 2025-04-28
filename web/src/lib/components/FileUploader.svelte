@@ -1,6 +1,6 @@
 <!-- lib/components/FileUploader.svelte -->
 <script lang="ts">
-	import { token, endpoint, files, online, showConfigModal } from '$lib/stores'
+	import { token, endpoint, files, online, currentTab } from '$lib/stores'
 
 	const selectIcon = (file: File): string => {
 		if (file.type.startsWith('video/')) return 'videocam'
@@ -61,7 +61,7 @@
 			if ($online) {
 				uploadFile(file, id).catch(() => {})
 			} else {
-				showConfigModal.set(true)
+				currentTab.set('Settings')
 				const unsub = online.subscribe((v) => {
 					if (v) {
 						unsub()

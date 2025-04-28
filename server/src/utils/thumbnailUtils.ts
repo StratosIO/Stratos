@@ -3,7 +3,7 @@ import { promisify } from "node:util";
 import fs from "node:fs/promises";
 import path from "node:path";
 import log from "../config/logger.js";
-import { UPLOAD_CONFIG, OUTPUT_CONFIG } from "../types/index.js";
+import type { UPLOAD_CONFIG, OUTPUT_CONFIG } from "../types/index.js";
 import { THUMBNAIL_DIR_NAME, THUMBNAIL_FORMAT } from "../types/index.js";
 
 const execAsync = promisify(exec);

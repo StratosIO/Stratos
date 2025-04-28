@@ -43,15 +43,23 @@
 	}
 </script>
 
-{#each $files as file, index (file.id)}
-	<ListItem
-		progress={file.progress}
-		selected={$fileSelected === index}
-		label={file.name}
-		icon={file.icon}
-		id={file.id}
-		type="file"
-		onSelect={() => selectFile(index)}
-		onDelete={(e: Event) => deleteFile(index, e)}
-	/>
-{/each}
+<div>
+	<h2 class="mb-2 text-xl font-bold">File List</h2>
+
+	{#if $files.length === 0}
+		<p class="text-base-content/70">No files available yet.</p>
+	{:else}
+		{#each $files as file, index (file.id)}
+			<ListItem
+				progress={file.progress}
+				selected={$fileSelected === index}
+				label={file.name}
+				icon={file.icon}
+				id={file.id}
+				type="file"
+				onSelect={() => selectFile(index)}
+				onDelete={(e: Event) => deleteFile(index, e)}
+			/>
+		{/each}
+	{/if}
+</div>

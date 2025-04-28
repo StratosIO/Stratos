@@ -10,8 +10,7 @@
 	let wasOnline = false
 
 	if ($endpoint === '/api') {
-		const origin = page.url.origin
-		endpoint.set(`${origin}/api`)
+		endpoint.set(`${page.url.origin}/api`)
 	}
 
 	$effect(initializeStatusMonitor)

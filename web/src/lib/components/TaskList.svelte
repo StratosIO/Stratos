@@ -130,15 +130,23 @@
 	}
 </script>
 
-{#each $tasks as task, index (task.id)}
-	<ListItem
-		progress={task.progress}
-		selected={$taskSelected === index}
-		label={task.id}
-		icon="cloud_sync"
-		id={task.id}
-		type="task"
-		onSelect={() => selectTask(index)}
-		onDelete={(e: Event) => deleteTask(index, e)}
-	/>
-{/each}
+<div>
+	<h2 class="mb-2 text-xl font-bold">Task List</h2>
+
+	{#if $tasks.length === 0}
+		<p class="text-base-content/70">No tasks available yet.</p>
+	{:else}
+		{#each $tasks as task, index (task.id)}
+			<ListItem
+				progress={task.progress}
+				selected={$taskSelected === index}
+				label={task.id}
+				icon="cloud_sync"
+				id={task.id}
+				type="task"
+				onSelect={() => selectTask(index)}
+				onDelete={(e: Event) => deleteTask(index, e)}
+			/>
+		{/each}
+	{/if}
+</div>

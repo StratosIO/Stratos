@@ -1,13 +1,13 @@
 <!-- lib/components/ServerStatus.svelte -->
 <script lang="ts">
-	import { online, uptime, counter, showConfigModal } from '$lib/stores'
+	import { online, uptime, counter, currentTab } from '$lib/stores'
 
-	const openModal = () => showConfigModal.set(true)
+	const openSettings = () => currentTab.set('Settings')
 </script>
 
 <button
 	type="button"
-	onclick={openModal}
+	onclick={openSettings}
 	class="bg-base-200 rounded-field flex w-full items-center p-6"
 >
 	<div class="flex items-center">
