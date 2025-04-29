@@ -184,7 +184,7 @@
 			command.set('')
 			if (data.success && data.task) {
 				tasks.update((curr) => [...curr, data.task])
-				taskSelected.set($tasks.length - 1)
+				taskSelected.set(data.task.id)
 				currentTab.set('Tasks')
 			}
 		}

@@ -183,13 +183,13 @@ export async function fetchRemoteItems<T, R>({
 	const url = `${endpoint}/${resource}?${params}`
 
 	try {
-		const res = await fetch(url, {
+		const response = await fetch(url, {
 			headers: { Authorization: `Bearer ${token}` },
 		})
 
-		const json = await res.json()
+		const json = await response.json()
 
-		if (!res.ok || !json.success) {
+		if (!response.ok || !json.success) {
 			console.error(`Failed to fetch ${resource}:`, json)
 			return { nextCursor: null, hasMore: false }
 		}
@@ -256,5 +256,30 @@ export async function downloadTaskResult(taskId: string) {
 		URL.revokeObjectURL(url)
 	} catch (error) {
 		console.error('Failed to download task result:', error)
+	}
+}
+
+export async function refreshTaskStatus(taskId: string, attempt = 0): Promise<void> {
+	try {
+		const response = await fetch(`${get(endpoint)}/tasks/${taskId}/status`, {
+			headers: { Authorization: `Bearer ${get(token)}` },
+		})
+		if (!response.ok) return
+
+		const { success, task } = await response.json()
+		if (!success || !task) return
+
+		if (task.status === 'processing' && attempt < 10) {
+			await new Promise((resolve) => setTimeout(resolve, 1500))
+			return refreshTaskStatus(taskId, attempt + 1)
+		}
+
+		tasks.update((taskList) =>
+			taskList.map((existingTask) =>
+				existingTask.id === taskId ? { ...existingTask, ...task, progress: 100 } : existingTask,
+			),
+		)
+	} catch (error) {
+		console.error('Error refreshing task status:', error)
 	}
 }

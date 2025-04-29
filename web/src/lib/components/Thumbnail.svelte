@@ -24,7 +24,7 @@
 	)
 
 	const MAX_ATTEMPTS = 60
-	const RETRY_DELAY = 1000
+	const RETRY_DELAY = 1500
 
 	$effect(() => {
 		let cancelled = false
@@ -34,12 +34,12 @@
 			if (cancelled || !thumbnailUrl || !$token) return
 
 			try {
-				const res = await fetch(thumbnailUrl, {
+				const response = await fetch(thumbnailUrl, {
 					headers: { Authorization: `Bearer ${$token}` },
 				})
-				if (!res.ok) throw new Error('thumbnail not ready')
+				if (!response.ok) throw new Error('thumbnail not ready')
 
-				const blob = await res.blob()
+				const blob = await response.blob()
 				if (blob.size === 0) throw new Error('empty blob')
 
 				objectUrl = URL.createObjectURL(blob)

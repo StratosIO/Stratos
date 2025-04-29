@@ -1,23 +1,39 @@
-<!-- lib/components/TaskDetail.svelte -->
 <script lang="ts">
 	import { onDestroy } from 'svelte'
+	import { derived } from 'svelte/store'
 	import { taskSelected, tasks, endpoint, token, maxBlobSize, showToast } from '$lib/stores'
 	import { downloadTaskResult } from '$lib/utils/requests'
-	import { derived } from 'svelte/store'
 	import { Tween } from 'svelte/motion'
 	import { cubicOut } from 'svelte/easing'
 	import { formatBytes } from '$lib/utils/details'
 	import Thumbnail from '$lib/components/Thumbnail.svelte'
 
-	const task = derived(
-		[tasks, taskSelected],
-		([$tasks, $taskSelected]) => $tasks[$taskSelected] || null,
+	const task = derived([tasks, taskSelected], ([$tasks, $taskSelected]) =>
+		$taskSelected ? ($tasks.find((t) => t.id === $taskSelected) ?? null) : null,
 	)
 
+	let mediaUrl = $state<string | null>(null)
+	let mediaType = $state<'video' | 'image' | 'audio' | null>(null)
 	const progress = new Tween(0, { duration: 400, easing: cubicOut })
 
-	let mediaUrl = $state<string | null>(null)
-	let previewType = $state<'video' | 'image' | 'audio' | null>(null)
+	function revokeMediaUrl() {
+		if (mediaUrl) {
+			URL.revokeObjectURL(mediaUrl)
+			mediaUrl = null
+			mediaType = null
+		}
+	}
+
+	function detectmediaType(mime: string): typeof mediaType {
+		if (mime.startsWith('video/')) return 'video'
+		if (mime.startsWith('image/')) return 'image'
+		if (mime.startsWith('audio/')) return 'audio'
+		return null
+	}
+
+	function shouldLoadPreview(task: any): boolean {
+		return task?.result_size !== undefined && task.result_size < $maxBlobSize
+	}
 
 	async function loadPreviewBlob(taskId: string) {
 		try {
@@ -27,65 +43,50 @@
 			if (!response.ok) throw new Error('fetch failed')
 
 			const blob = await response.blob()
-			const mime = blob.type || ''
+			const type = detectmediaType(blob.type || '')
 
-			let type: typeof previewType = null
-			if (mime.startsWith('video/')) type = 'video'
-			else if (mime.startsWith('image/')) type = 'image'
-			else if (mime.startsWith('audio/')) type = 'audio'
-
-			if (mediaUrl) URL.revokeObjectURL(mediaUrl)
-
+			revokeMediaUrl()
 			if (type) {
 				mediaUrl = URL.createObjectURL(blob)
-				previewType = type
-			} else {
-				mediaUrl = null
-				previewType = null
+				mediaType = type
 			}
-		} catch (err) {
-			console.error('load preview error', err)
-			if (mediaUrl) URL.revokeObjectURL(mediaUrl)
-			mediaUrl = null
-			previewType = null
+		} catch (e) {
+			console.error('Error loading preview', e)
+			revokeMediaUrl()
 		}
 	}
 
 	$effect(() => {
-		if ($task.result_size !== undefined && $task.result_size < $maxBlobSize) {
+		if (shouldLoadPreview($task)) {
 			loadPreviewBlob($task.id)
 		} else {
-			if (mediaUrl) URL.revokeObjectURL(mediaUrl)
-			mediaUrl = null
-			previewType = null
+			revokeMediaUrl()
 		}
 	})
 
-	$effect(() =>
-		task.subscribe(($task) => {
+	$effect(() => {
+		const unsubscribe = task.subscribe(($task) => {
 			if ($task?.progress !== undefined) {
 				progress.target = $task.progress
 			}
-		}),
-	)
+		})
+		return unsubscribe
+	})
 
 	$effect(() => {
-		$task.id
-
-		if ($task.result_size !== undefined && $task.result_size >= $maxBlobSize) {
+		if ($task?.result_size !== undefined && $task.result_size >= $maxBlobSize) {
 			showToast('File too large. Adjust <b>Preview Settings</b> or download instead.', 'info')
 		}
 	})
 
-	onDestroy(() => {
-		if (mediaUrl) URL.revokeObjectURL(mediaUrl)
-	})
+	onDestroy(revokeMediaUrl)
 </script>
 
 <h2 class="mb-2 text-xl font-bold md:text-2xl">Task Details</h2>
 
 <div>
 	{#if $task}
+		<!-- Info -->
 		<div class="border-base-300 bg-base-100 rounded-field flex items-center border-2 p-4">
 			<div class="mr-6 hidden h-36 w-48 shrink-0 md:flex">
 				<Thumbnail id={$task.id} type="task" icon="cloud_sync" size="3rem" />
@@ -119,11 +120,9 @@
 				<div class="flex items-center gap-2">
 					<p class="text-sm whitespace-nowrap">
 						Progress:
-						{#if $task.progress !== undefined}
-							<span class="ml-2 font-mono text-xs">{$task.progress}%</span>
-						{:else}
-							<span class="ml-2 font-mono text-xs">0%</span>
-						{/if}
+						<span class="ml-2 font-mono text-xs">
+							{$task.progress !== undefined ? $task.progress : 0}%
+						</span>
 					</p>
 					<progress
 						class="progress max-w-96 min-w-0 flex-shrink {$task.error
@@ -136,28 +135,31 @@
 			</div>
 		</div>
 
+		<!-- Preview -->
 		<div class="divider m text-sm">Preview</div>
 		{#if mediaUrl}
-			{#if previewType === 'image'}
-				<img
-					src={mediaUrl}
-					alt="Task preview"
-					class="rounded-field bg-base-200 mx-auto max-h-96 w-full object-contain"
-				/>
-			{:else if previewType === 'audio'}
-				<audio controls class="w-full">
-					<source src={mediaUrl} />
-					Your browser does not support the audio element.
-				</audio>
-			{:else if previewType === 'video'}
-				<video controls class="bg-base-200 rounded-field mx-auto max-h-96 w-full">
-					<source src={mediaUrl} />
-					<track kind="captions" label="captions" />
-				</video>
-			{/if}
+			{#key mediaUrl}
+				{#if mediaType === 'image'}
+					<img
+						src={mediaUrl}
+						alt="Task preview"
+						class="rounded-field bg-base-200 mx-auto max-h-96 w-full object-contain"
+					/>
+				{:else if mediaType === 'audio'}
+					<audio controls class="w-full">
+						<source src={mediaUrl} />
+						Your browser does not support the audio element.
+					</audio>
+				{:else if mediaType === 'video'}
+					<video controls class="bg-base-200 rounded-field mx-auto max-h-96 w-full">
+						<source src={mediaUrl} />
+						<track kind="captions" label="captions" />
+					</video>
+				{/if}
+			{/key}
 		{:else}
 			<p class="text-base-content/70">
-				Preview will be avaible after task completion.
+				Preview will be available after task completion.
 				<br />
 				Check <b>Preview Settings</b> if it is not showing.
 			</p>

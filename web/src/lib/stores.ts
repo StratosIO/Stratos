@@ -34,8 +34,9 @@ export function showToast(
 	toast.set({ id: ++tid, message, type, duration })
 }
 
-export const fileSelected = writable<number>(-1)
-export const taskSelected = writable<number>(-1)
+export const fileSelected = writable<string | null>(null)
+export const taskSelected = writable<string | null>(null)
+
 export const command = writable<string>('')
 export const currentTab = writable<string>('Files')
 export const userInfo = writable<UserInfo | null>(null)

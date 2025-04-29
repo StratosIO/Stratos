@@ -1,9 +1,9 @@
 <!-- lib/components/TaskList.svelte -->
 <script lang="ts">
-	import { token, endpoint, taskSelected, tasks } from '$lib/stores'
-	import { deleteRemoteItem } from '$lib/utils/requests'
-	import ListItem from '$lib/components/ListItem.svelte'
 	import { get } from 'svelte/store'
+	import { token, endpoint, taskSelected, tasks } from '$lib/stores'
+	import { deleteRemoteItem, refreshTaskStatus } from '$lib/utils/requests'
+	import ListItem from '$lib/components/ListItem.svelte'
 	import { onDestroy } from 'svelte'
 
 	const sources: Map<string, EventSource> = new Map()
@@ -38,26 +38,6 @@
 		sources.set(id, es)
 	}
 
-	async function refreshTaskStatus(id: string) {
-		try {
-			const response = await fetch(`${get(endpoint)}/tasks/${id}/status`, {
-				headers: { Authorization: `Bearer ${get(token)}` },
-			})
-			if (!response.ok) return
-
-			const j = await response.json()
-			if (!j.success || !j.task) return
-
-			tasks.update((all) => {
-				const i = all.findIndex((t) => t.id === id)
-				if (i !== -1) all[i] = { ...all[i], ...j.task, progress: 100 }
-				return all
-			})
-		} catch (err) {
-			console.error('refresh status failed:', err)
-		}
-	}
-
 	$effect(() => {
 		for (const t of $tasks) {
 			if (
@@ -68,8 +48,6 @@
 				startProgressStream(t.id)
 			}
 		}
-
-		// Clean up orphaned streams
 		for (const [id, es] of sources.entries()) {
 			if (!$tasks.some((t) => t.id === id)) {
 				es.close()
@@ -85,33 +63,27 @@
 		sources.clear()
 	})
 
-	async function deleteTask(index: number, e: Event): Promise<void> {
+	async function deleteTask(id: string, e: Event): Promise<void> {
 		e.stopPropagation()
-		const task = $tasks[index]
 
 		const ok = await deleteRemoteItem({
-			id: task.id,
-			endpoint: $endpoint,
-			token: $token,
+			id,
+			endpoint: get(endpoint),
+			token: get(token),
 			resource: 'tasks',
 		})
 		if (!ok) return
 
-		tasks.update((current) => {
-			const updated = [...current]
-			updated.splice(index, 1)
-			return updated
-		})
+		tasks.update((current) => current.filter((t) => t.id !== id))
 
-		taskSelected.update((currentIndex) => {
-			if (currentIndex === index) return $tasks.length ? 0 : -1
-			if (currentIndex > index) return currentIndex - 1
-			return currentIndex
-		})
+		if (get(taskSelected) === id) {
+			const remaining = get(tasks)
+			taskSelected.set(remaining.length > 0 ? remaining[0].id : null)
+		}
 	}
 
-	function selectTask(index: number): void {
-		taskSelected.set(index)
+	function selectTask(id: string): void {
+		taskSelected.set(id)
 	}
 </script>
 
@@ -121,16 +93,16 @@
 	{#if $tasks.length === 0}
 		<p class="text-base-content/70">No tasks available yet.</p>
 	{:else}
-		{#each $tasks as task, index (task.id)}
+		{#each $tasks as task (task.id)}
 			<ListItem
 				progress={task.progress}
-				selected={$taskSelected === index}
+				selected={$taskSelected === task.id}
 				label={task.id}
 				icon="cloud_sync"
 				id={task.id}
 				type="task"
-				onSelect={() => selectTask(index)}
-				onDelete={(e: Event) => deleteTask(index, e)}
+				onSelect={() => selectTask(task.id)}
+				onDelete={(e: Event) => deleteTask(task.id, e)}
 			/>
 		{/each}
 	{/if}
