@@ -17,6 +17,23 @@ export const counter = writable<{
 	counting: false,
 })
 
+let tid = 0
+
+export const toast = writable<{
+	id: number
+	message: string
+	type: 'info' | 'success' | 'error'
+	duration: number
+} | null>(null)
+
+export function showToast(
+	message: string,
+	type: 'info' | 'success' | 'error' = 'info',
+	duration = 3000,
+) {
+	toast.set({ id: ++tid, message, type, duration })
+}
+
 export const fileSelected = writable<number>(-1)
 export const taskSelected = writable<number>(-1)
 export const command = writable<string>('')

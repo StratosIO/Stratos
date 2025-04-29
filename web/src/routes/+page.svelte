@@ -65,7 +65,7 @@
 			{/if}
 		</aside>
 
-		<main class="flex flex-1 flex-col space-y-6 p-6">
+		<main class="flex flex-1 min-w-0 flex-col space-y-6 p-6">
 			{#if $currentTab === 'Files'}
 				<FileDetail />
 				<div class="mt-auto">

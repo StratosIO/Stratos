@@ -1,7 +1,7 @@
 // $lib/utils/requests.ts
 import { get } from 'svelte/store'
 import { token, endpoint, online, uptime, counter, userInfo, files, tasks } from '$lib/stores'
-import type { UserInfo, FileItem, DeleteOptions, FetchOptions } from '$lib/types'
+import type { UserInfo, FileItem, TaskItem, DeleteOptions, FetchOptions } from '$lib/types'
 
 let eventSource: EventSource | null = null
 let countdownInterval: number | undefined
@@ -43,7 +43,6 @@ export async function fetchUserData(): Promise<boolean> {
 
 		userInfo.set(info)
 
-		// Fetch files after successful auth
 		await fetchAllRemoteItems<FileItem, FileItem>({
 			endpoint: currentEndpoint,
 			resource: 'uploads',
@@ -56,13 +55,15 @@ export async function fetchUserData(): Promise<boolean> {
 			}),
 		})
 
-		// Fetch tasks
-		await fetchAllRemoteItems({
+		await fetchAllRemoteItems<TaskItem, TaskItem>({
 			endpoint: currentEndpoint,
 			resource: 'tasks',
 			token: currentToken,
 			store: tasks,
-			transform: (r) => r,
+			transform: (raw) => ({
+				...raw,
+				progress: 100,
+			}),
 		})
 
 		return true

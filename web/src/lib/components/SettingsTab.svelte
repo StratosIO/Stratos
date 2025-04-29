@@ -1,24 +1,24 @@
+<!-- lib/components/SettingsTab.svelte -->
 <script lang="ts">
 	import { endpoint, maxBlobSize } from '$lib/stores'
 	import { goto } from '$app/navigation'
 	import { page } from '$app/state'
-	import Toast from '$lib/components/Toast.svelte'
-
-	let message = $state('')
+	import { showToast } from '$lib/stores'
 
 	function copyApiEndpoint() {
 		navigator.clipboard.writeText($endpoint)
-		message = 'API Endpoint copied to clipboard!'
+		showToast('API Endpoint copied to clipboard!', 'success')
 	}
 
 	function resetApiEndpoint() {
 		endpoint.set(`${page.url.origin}/api`)
-		message = 'API Endpoint reset to default!'
+		showToast('API Endpoint reset to default!', 'info')
 	}
 
 	function logout() {
 		localStorage.removeItem('token')
 		goto('/auth/login')
+		showToast('Please log in again with your credentials.', 'info')
 	}
 </script>
 
@@ -53,7 +53,3 @@
 		/>
 	</section>
 </div>
-
-{#if message}
-	<Toast {message} type="success" />
-{/if}

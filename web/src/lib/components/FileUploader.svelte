@@ -1,6 +1,6 @@
 <!-- lib/components/FileUploader.svelte -->
 <script lang="ts">
-	import { token, endpoint, files, online, currentTab } from '$lib/stores'
+	import { token, endpoint, files, online, currentTab, showToast } from '$lib/stores'
 
 	const selectIcon = (file: File): string => {
 		if (file.type.startsWith('video/')) return 'videocam'
@@ -61,6 +61,7 @@
 			if ($online) {
 				uploadFile(file, id).catch(() => {})
 			} else {
+				showToast('Upload failed, please check your settings.', 'error')
 				currentTab.set('Settings')
 				const unsub = online.subscribe((v) => {
 					if (v) {

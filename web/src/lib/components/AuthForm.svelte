@@ -1,10 +1,9 @@
 <!-- lib/components/AuthForm.svelte -->
-
 <script lang="ts">
 	import { token, endpoint, online } from '$lib/stores'
 	import { fetchUserData } from '$lib/utils/requests'
 	import { goto } from '$app/navigation'
-	import Toast from '$lib/components/Toast.svelte'
+	import { showToast } from '$lib/stores'
 
 	// Props for component
 	const { mode = 'login' } = $props<{
@@ -16,7 +15,6 @@
 	let password = $state('')
 
 	let isLoading = $state(false)
-	let errorMessage = $state('')
 
 	// Configuration for different modes
 	const configs = {
@@ -55,8 +53,6 @@
 		event.preventDefault()
 		try {
 			isLoading = true
-			errorMessage = ''
-
 			const formData = currentConfig.prepareData()
 
 			const response = await fetch(`${$endpoint}${currentConfig.endpoint}`, {
@@ -70,6 +66,7 @@
 			if (response.ok && data.token) {
 				token.set(data.token)
 				await fetchUserData()
+				showToast('Logged in successfully. Welcome aboard!', 'success')
 				goto('/')
 			} else {
 				throw new Error(
@@ -77,7 +74,7 @@
 				)
 			}
 		} catch (error) {
-			errorMessage = error instanceof Error ? error.message : 'An error occurred. Please try again.'
+			showToast((error as Error)?.message ?? 'An error occurred.', 'error')
 		} finally {
 			isLoading = false
 		}
@@ -173,5 +170,3 @@
 		</div>
 	</fieldset>
 </div>
-
-<Toast message={errorMessage} type="error" />

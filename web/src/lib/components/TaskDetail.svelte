@@ -1,7 +1,7 @@
 <!-- lib/components/TaskDetail.svelte -->
 <script lang="ts">
 	import { onDestroy } from 'svelte'
-	import { taskSelected, tasks, endpoint, token, maxBlobSize } from '$lib/stores'
+	import { taskSelected, tasks, endpoint, token, maxBlobSize, showToast } from '$lib/stores'
 	import { downloadTaskResult } from '$lib/utils/requests'
 	import { derived } from 'svelte/store'
 	import { Tween } from 'svelte/motion'
@@ -21,12 +21,12 @@
 
 	async function loadPreviewBlob(taskId: string) {
 		try {
-			const res = await fetch(`${$endpoint}/tasks/${taskId}`, {
+			const response = await fetch(`${$endpoint}/tasks/${taskId}`, {
 				headers: { Authorization: `Bearer ${$token}` },
 			})
-			if (!res.ok) throw new Error('fetch failed')
+			if (!response.ok) throw new Error('fetch failed')
 
-			const blob = await res.blob()
+			const blob = await response.blob()
 			const mime = blob.type || ''
 
 			let type: typeof previewType = null
@@ -52,7 +52,7 @@
 	}
 
 	$effect(() => {
-		if ($task && $task.result_size !== undefined && $task.result_size < $maxBlobSize) {
+		if ($task.result_size !== undefined && $task.result_size < $maxBlobSize) {
 			loadPreviewBlob($task.id)
 		} else {
 			if (mediaUrl) URL.revokeObjectURL(mediaUrl)
@@ -69,6 +69,17 @@
 		}),
 	)
 
+	$effect(() => {
+	$task.id;
+
+		if (
+			$task.result_size !== undefined &&
+			$task.result_size >= $maxBlobSize
+		) {
+			showToast('File too large. Adjust <b>Preview Settings</b> or download instead.', 'info');
+		}
+	});
+
 	onDestroy(() => {
 		if (mediaUrl) URL.revokeObjectURL(mediaUrl)
 	})
@@ -80,7 +91,7 @@
 	{#if $task}
 		<div class="border-base-300 bg-base-100 rounded-field flex items-center border-2 p-4">
 			<div class="mr-6 hidden h-36 w-48 shrink-0 md:flex">
-				<Thumbnail id={$task.id} type="task" icon="description" size="3rem" />
+				<Thumbnail id={$task.id} type="task" icon="cloud_sync" size="3rem" />
 			</div>
 			<div class="text-base-content/70 max-w-full min-w-0 flex-1 select-text">
 				<p class="truncate text-lg text-sm">UUID: <span class="font-mono">{$task.id}</span></p>

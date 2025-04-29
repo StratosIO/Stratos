@@ -14,8 +14,8 @@
 		es.addEventListener('progress', (ev: MessageEvent) => {
 			const v = Number.parseFloat(ev.data)
 			if (Number.isNaN(v)) return
-			const pct = Math.round(v * 100)
 
+			const pct = Math.round(v * 100)
 			tasks.update((all) => {
 				const i = all.findIndex((t) => t.id === id)
 				if (i !== -1) all[i] = { ...all[i], progress: pct }
@@ -29,17 +29,6 @@
 			}
 		})
 
-		es.addEventListener('complete', () => {
-			tasks.update((all) => {
-				const i = all.findIndex((t) => t.id === id)
-				if (i !== -1) all[i] = { ...all[i], progress: 100 }
-				return all
-			})
-			es.close()
-			sources.delete(id)
-			refreshTaskStatus(id)
-		})
-
 		es.onerror = () => {
 			es.close()
 			sources.delete(id)
@@ -51,11 +40,12 @@
 
 	async function refreshTaskStatus(id: string) {
 		try {
-			const res = await fetch(`${get(endpoint)}/tasks/${id}/status`, {
+			const response = await fetch(`${get(endpoint)}/tasks/${id}/status`, {
 				headers: { Authorization: `Bearer ${get(token)}` },
 			})
-			if (!res.ok) return
-			const j = await res.json()
+			if (!response.ok) return
+
+			const j = await response.json()
 			if (!j.success || !j.task) return
 
 			tasks.update((all) => {
@@ -70,38 +60,37 @@
 
 	$effect(() => {
 		for (const t of $tasks) {
-			if ((t.status === 'processing' || t.status === 'pending') && !sources.has(t.id)) {
+			if (
+				(t.status === 'processing' || t.status === 'pending') &&
+				!sources.has(t.id) &&
+				(t.progress ?? 0) < 100
+			) {
 				startProgressStream(t.id)
-			} else if (t.status === 'completed' && t.progress !== 100) {
-				tasks.update((all) => {
-					const i = all.findIndex((x) => x.id === t.id)
-					if (i !== -1) all[i] = { ...all[i], progress: 100 }
-					return all
-				})
 			}
 		}
 
-		for (const [id, src] of sources.entries()) {
+		// Clean up orphaned streams
+		for (const [id, es] of sources.entries()) {
 			if (!$tasks.some((t) => t.id === id)) {
-				src.close()
+				es.close()
 				sources.delete(id)
 			}
 		}
 	})
 
 	onDestroy(() => {
-		for (const [, s] of sources) {
-			s.close()
+		for (const [, es] of sources) {
+			es.close()
 		}
 		sources.clear()
 	})
 
 	async function deleteTask(index: number, e: Event): Promise<void> {
 		e.stopPropagation()
-		const taskToDelete = $tasks[index]
+		const task = $tasks[index]
 
 		const ok = await deleteRemoteItem({
-			id: taskToDelete.id,
+			id: task.id,
 			endpoint: $endpoint,
 			token: $token,
 			resource: 'tasks',
@@ -109,18 +98,14 @@
 		if (!ok) return
 
 		tasks.update((current) => {
-			const newTasks = [...current]
-			newTasks.splice(index, 1)
-			return newTasks
+			const updated = [...current]
+			updated.splice(index, 1)
+			return updated
 		})
 
 		taskSelected.update((currentIndex) => {
-			if (currentIndex === index) {
-				return $tasks.length ? 0 : -1
-			}
-			if (currentIndex > index) {
-				return currentIndex - 1
-			}
+			if (currentIndex === index) return $tasks.length ? 0 : -1
+			if (currentIndex > index) return currentIndex - 1
 			return currentIndex
 		})
 	}

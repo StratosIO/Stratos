@@ -6,6 +6,8 @@
 	import { online, endpoint } from '$lib/stores'
 	import { page } from '$app/state'
 
+	import Toast from '$lib/components/Toast.svelte'
+
 	const { children } = $props()
 	let wasOnline = false
 
@@ -27,5 +29,7 @@
 		wasOnline = $online
 	})
 </script>
+
+<Toast />
 
 {@render children()}

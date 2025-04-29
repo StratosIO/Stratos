@@ -9,6 +9,7 @@
 		taskSelected,
 		currentTab,
 		slashCommands,
+		showToast,
 	} from '$lib/stores'
 	import {
 		getCommandText,
@@ -162,21 +163,23 @@
 
 	async function sendCommand() {
 		const path = `${$endpoint}/tasks`
-		const msg = $command.trim()
+		const message = $command.trim()
 		const response = await fetch(path, {
 			method: 'POST',
 			headers: {
 				'Content-Type': 'application/json',
 				Authorization: `Bearer ${$token}`,
 			},
-			body: JSON.stringify({ command: msg }),
+			body: JSON.stringify({ command: message }),
 		})
 		if (!response.ok) {
-			console.error('Command send failed:', msg)
+			console.error('Command send failed:', message)
+			showToast('Command send failed, please check your settings.', 'error')
 			currentTab.set('Settings')
 		} else {
 			const data = await response.json()
-			console.log('Command Sent:', msg)
+			console.log('Command Sent:', message)
+			showToast('Command sent successfully!', 'success')
 			inputElement.innerHTML = ''
 			command.set('')
 			if (data.success && data.task) {
