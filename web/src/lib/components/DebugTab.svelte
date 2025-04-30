@@ -5,7 +5,7 @@
 		online,
 		fileSelected,
 		taskSelected,
-		command,
+		message,
 		currentTab,
 		counter,
 		token,
@@ -31,11 +31,11 @@
 					<td class="max-w-[10rem] truncate font-mono select-text">{$online ? 'true' : 'false'}</td>
 				</tr><tr>
 					<th>File Selected</th>
-					<td class="max-w-[10rem] truncate font-mono select-text">{$fileSelected}</td>
+					<td class="max-w-[10rem] truncate font-mono select-text">{$fileSelected || 'null'}</td>
 				</tr>
 				<tr>
 					<th>Task Selected</th>
-					<td class="max-w-[10rem] truncate font-mono select-text">{$taskSelected}</td>
+					<td class="max-w-[10rem] truncate font-mono select-text">{$taskSelected || 'null'}</td>
 				</tr>
 				<tr>
 					<th>Max Blob Size</th>
@@ -43,7 +43,7 @@
 				</tr>
 				<tr>
 					<th>Command</th>
-					<td class="max-w-[10rem] truncate font-mono select-text">{$command || 'null'}</td>
+					<td class="max-w-[10rem] truncate font-mono select-text">{$message || 'null'}</td>
 				</tr>
 				<tr>
 					<th>Current Tab</th>

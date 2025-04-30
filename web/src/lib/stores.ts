@@ -37,7 +37,7 @@ export function showToast(
 export const fileSelected = writable<string | null>(null)
 export const taskSelected = writable<string | null>(null)
 
-export const command = writable<string>('')
+export const message = writable<string>('')
 export const currentTab = writable<string>('Files')
 export const userInfo = writable<UserInfo | null>(null)
 
@@ -45,7 +45,7 @@ export const token = persist<string>('token', '')
 export const endpoint = persist<string>('endpoint', '/api')
 export const maxBlobSize = persist<number>('maxBlobSize', 10000000)
 
-export const slashCommands: string[] = [
+export const commands: string[] = [
 	'extract-audio',
 	'convert-video',
 	'create-thumbnail',

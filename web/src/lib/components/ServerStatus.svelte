@@ -8,7 +8,7 @@
 <button
 	type="button"
 	onclick={openSettings}
-	class="bg-base-200 rounded-field flex w-full items-center p-6"
+	class="bg-base-200 rounded-field flex items-center p-6 cursor-pointer w-full"
 >
 	<div class="flex items-center">
 		{#if $online}
@@ -24,7 +24,10 @@
 
 		<span class="text-base-content mt-1 truncate">
 			{#if $online}
-				Server Online - Uptime: {new Date($uptime * 1000).toISOString().substring(11, 19)}
+				Server Online &nbsp;·&ensp; Uptime &nbsp;·&ensp;
+				<span class="font-mono text-sm">
+					{new Date($uptime * 1000).toISOString().substring(11, 19)}
+				</span>
 			{:else if $counter.counting}
 				Action Required - Reconnect in
 				<span class="countdown">

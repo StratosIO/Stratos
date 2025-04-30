@@ -1,3 +1,4 @@
+// lib/types.ts
 import type { Writable } from 'svelte/store'
 
 export type UserInfo = {
@@ -27,6 +28,7 @@ export type TaskItem = {
 	result_size?: number
 	error?: string | null
 	progress?: number
+	message?: string
 }
 
 export type DeleteOptions = {

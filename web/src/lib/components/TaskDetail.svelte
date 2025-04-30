@@ -2,10 +2,11 @@
 	import { onDestroy } from 'svelte'
 	import { derived } from 'svelte/store'
 	import { taskSelected, tasks, endpoint, token, maxBlobSize, showToast } from '$lib/stores'
-	import { downloadTaskResult } from '$lib/utils/requests'
 	import { Tween } from 'svelte/motion'
 	import { cubicOut } from 'svelte/easing'
+	import type { TaskItem } from '$lib/types'
 	import { formatBytes } from '$lib/utils/details'
+	import { downloadTaskResult } from '$lib/utils/requests'
 	import Thumbnail from '$lib/components/Thumbnail.svelte'
 
 	const task = derived([tasks, taskSelected], ([$tasks, $taskSelected]) =>
@@ -31,7 +32,7 @@
 		return null
 	}
 
-	function shouldLoadPreview(task: any): boolean {
+	function shouldLoadPreview(task: TaskItem): boolean {
 		return task?.result_size !== undefined && task.result_size < $maxBlobSize
 	}
 
@@ -57,7 +58,7 @@
 	}
 
 	$effect(() => {
-		if (shouldLoadPreview($task)) {
+		if ($task && shouldLoadPreview($task)) {
 			loadPreviewBlob($task.id)
 		} else {
 			revokeMediaUrl()

@@ -1,49 +1,50 @@
 <!-- lib/components/CommandInput.svelte -->
 <script lang="ts">
 	import {
-		command,
+		message,
 		endpoint,
 		files,
 		tasks,
 		token,
 		taskSelected,
 		currentTab,
-		slashCommands,
+		commands,
 		showToast,
 	} from '$lib/stores'
-	import {
-		getCommandText,
-		insertMentionAtCursor,
-		insertSlashCommandAtCursor,
-	} from '$lib/utils/compose'
+	import type { FileItem } from '$lib/types'
+	import Suggestion from '$lib/components/Suggestion.svelte'
 
 	let inputElement: HTMLDivElement
-	let showSuggestions = $state(false)
-	let suggestionQuery = $state('')
-	let activeSuggestionIndex = $state(0)
-	let showSlashSuggestions = $state(false)
-	let slashQuery = $state('')
-	let activeSlashIndex = $state(0)
 
-	let filteredFiles = $derived(
-		showSuggestions
-			? $files
-					.filter((file) => file.name.toLowerCase().includes(suggestionQuery.toLowerCase()))
-					.slice(0, 5)
-			: [],
-	)
-	let filteredSlash = $derived(
-		showSlashSuggestions
-			? slashCommands
-					.filter((cmd) => cmd.toLowerCase().includes(slashQuery.toLowerCase()))
-					.slice(0, 5)
-			: [],
-	)
+	let suggestionType = $state<'mention' | 'command' | null>(null)
+	let query = $state('')
+	let activeIndex = $state(0)
 
-	function updateCommand(): void {
+	let filteredItems = $derived.by((): (string | FileItem)[] => {
+		if (!suggestionType) return []
+
+		const q = query.toLowerCase()
+
+		if (suggestionType === 'mention') {
+			return $files.filter((file) => file.name.toLowerCase().includes(q)).slice(0, 5)
+		}
+
+		if (suggestionType === 'command') {
+			return commands.filter((cmd) => cmd.toLowerCase().includes(q)).slice(0, 5)
+		}
+
+		return []
+	})
+
+	function onInput(): void {
+		updateMessage()
+		updateSuggestions()
+	}
+
+	function updateMessage(): void {
 		if (!inputElement) return
-		const txt = getCommandText(inputElement)
-		command.set(txt)
+		const txt = messageText(inputElement)
+		message.set(txt)
 		if (!inputElement.innerText.trim()) {
 			inputElement.innerHTML = ''
 		}
@@ -52,142 +53,203 @@
 	function updateSuggestions(): void {
 		const sel = window.getSelection()
 		if (!sel || sel.rangeCount === 0) {
-			resetAllSuggestions()
+			suggestionType = null
+			query = ''
 			return
 		}
 
 		const range = sel.getRangeAt(0)
-		const text = range.startContainer.textContent || ''
+		const text = range.startContainer.textContent ?? ''
 		const offset = range.startOffset
 
 		if (text.startsWith('/')) {
 			const candidate = text.slice(1, offset).trim()
 			if (!/\s/.test(candidate)) {
-				const exactMatch = slashCommands.find(
-					(cmd) => cmd.toLowerCase() === candidate.toLowerCase(),
-				)
+				const exactMatch = commands.find((cmd) => cmd.toLowerCase() === candidate.toLowerCase())
 				if (exactMatch) {
-					insertSlashCommandAtCursor(exactMatch)
-					resetSlashSuggestions()
+					insertCommandAtCursor(exactMatch)
+					clearSuggestion()
+					updateMessage()
 					return
 				}
-				setSlashSuggestions(candidate)
+				suggestionType = 'command'
+				query = candidate
+				activeIndex = 0
 				return
 			}
-			resetSlashSuggestions()
-			return
 		}
 
 		const atIndex = text.lastIndexOf('@', offset)
 		if (atIndex !== -1) {
 			const candidate = text.slice(atIndex + 1, offset)
 			if (!/\s/.test(candidate)) {
-				setMentionSuggestions(candidate)
+				suggestionType = 'mention'
+				query = candidate
+				activeIndex = 0
 				return
 			}
 		}
 
-		resetAllSuggestions()
+		clearSuggestion()
 	}
 
-	function resetAllSuggestions(): void {
-		showSuggestions = false
-		suggestionQuery = ''
-		resetSlashSuggestions()
+	function clearSuggestion() {
+		suggestionType = null
+		query = ''
+		activeIndex = 0
 	}
 
-	function resetSlashSuggestions(): void {
-		showSlashSuggestions = false
-		slashQuery = ''
-	}
+	function onKeyDown(e: KeyboardEvent) {
+		if (filteredItems.length === 0) return
 
-	function setSlashSuggestions(query: string): void {
-		slashQuery = query
-		showSlashSuggestions = true
-		activeSlashIndex = 0
-		showSuggestions = false
-		suggestionQuery = ''
-	}
-
-	function setMentionSuggestions(query: string): void {
-		suggestionQuery = query
-		showSuggestions = true
-		activeSuggestionIndex = 0
-		resetSlashSuggestions()
-	}
-
-	function onInput(): void {
-		updateCommand()
-		updateSuggestions()
-	}
-
-	function onKeyDown(e: KeyboardEvent): void {
-		if (showSlashSuggestions && filteredSlash.length > 0) {
-			if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
-				e.preventDefault()
-				activeSlashIndex =
-					(activeSlashIndex + (e.key === 'ArrowDown' ? 1 : -1) + filteredSlash.length) %
-					filteredSlash.length
-			} else if (e.key === 'Enter' || e.key === 'Tab') {
-				e.preventDefault()
-				insertSlashCommandAtCursor(filteredSlash[activeSlashIndex])
-				updateCommand()
-			} else if (e.key === 'Escape') {
-				showSlashSuggestions = false
+		if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+			e.preventDefault()
+			activeIndex =
+				(activeIndex + (e.key === 'ArrowDown' ? 1 : -1) + filteredItems.length) %
+				filteredItems.length
+		} else if (e.key === 'Enter' || e.key === 'Tab') {
+			e.preventDefault()
+			const selected = filteredItems[activeIndex]
+			if (selected) {
+				insertSelectedItem(selected)
+				clearSuggestion()
+				updateMessage()
 			}
-			return
-		}
-		if (showSuggestions && filteredFiles.length > 0) {
-			if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
-				e.preventDefault()
-				activeSuggestionIndex =
-					(activeSuggestionIndex + (e.key === 'ArrowDown' ? 1 : -1) + filteredFiles.length) %
-					filteredFiles.length
-			} else if (e.key === 'Enter' || e.key === 'Tab') {
-				e.preventDefault()
-				insertMentionAtCursor(filteredFiles[activeSuggestionIndex])
-				updateCommand()
-			} else if (e.key === 'Escape') {
-				showSuggestions = false
-			}
+		} else if (e.key === 'Escape') {
+			clearSuggestion()
 		}
 	}
 
-	function onBlur(): void {
-		setTimeout(() => {
-			showSuggestions = false
-			showSlashSuggestions = false
-			updateCommand()
-		}, 150)
+	function onBlur() {
+		clearSuggestion()
+		updateMessage()
 	}
 
-	async function sendCommand() {
+	function insertSelectedItem(item: string | FileItem) {
+		if (suggestionType === 'command') {
+			insertCommandAtCursor(item as string)
+		} else {
+			insertMentionAtCursor(item as FileItem)
+		}
+	}
+
+	async function sendMessage() {
+		const msg = $message.trim()
 		const path = `${$endpoint}/tasks`
-		const message = $command.trim()
+
 		const response = await fetch(path, {
 			method: 'POST',
 			headers: {
 				'Content-Type': 'application/json',
 				Authorization: `Bearer ${$token}`,
 			},
-			body: JSON.stringify({ command: message }),
+			body: JSON.stringify({ command: msg }),
 		})
+
 		if (!response.ok) {
-			console.error('Command send failed:', message)
-			showToast('Command send failed, please check your settings.', 'error')
+			console.error('Message send failed:', msg)
+			showToast('Message send failed, please check your settings.', 'error')
 			currentTab.set('Settings')
-		} else {
-			const data = await response.json()
-			console.log('Command Sent:', message)
-			showToast('Command sent successfully!', 'success')
-			inputElement.innerHTML = ''
-			command.set('')
-			if (data.success && data.task) {
-				tasks.update((curr) => [...curr, data.task])
-				taskSelected.set(data.task.id)
-				currentTab.set('Tasks')
+			return
+		}
+
+		const data = await response.json()
+		showToast('Message sent successfully!', 'success')
+		inputElement.innerHTML = ''
+		message.set('')
+
+		if (data.success && data.task) {
+			tasks.update((curr) => [...curr, data.task])
+			taskSelected.set(data.task.id)
+			currentTab.set('Tasks')
+		}
+	}
+
+	export function messageText(input: HTMLDivElement): string {
+		let text = ''
+		for (const node of input.childNodes) {
+			if (node.nodeType === Node.TEXT_NODE) {
+				text += node.textContent
+			} else if (node.nodeType === Node.ELEMENT_NODE) {
+				const el = node as HTMLElement
+				text += el.dataset.mentionId || el.textContent
 			}
 		}
+		return text
+	}
+
+	export function insertMentionAtCursor(file: FileItem): void {
+		const sel = window.getSelection()
+		if (!sel || sel.rangeCount === 0) return
+
+		const range = sel.getRangeAt(0)
+		if (range.startContainer.nodeType !== Node.TEXT_NODE) return
+
+		const textNode = range.startContainer
+		const text = textNode.textContent ?? ''
+		const atIndex = text.lastIndexOf('@', range.startOffset)
+		if (atIndex === -1) return
+
+		const before = text.slice(0, atIndex)
+		const after = text.slice(range.startOffset)
+		const mention = document.createElement('span')
+		mention.style.userSelect = 'text'
+		mention.style.backgroundColor = 'var(--color-secondary)'
+		mention.style.color = 'var(--color-secondary-content)'
+		mention.style.padding = '0 0.25em'
+		mention.style.borderRadius = '0.25em'
+		mention.contentEditable = 'false'
+		mention.className = 'mention'
+		mention.dataset.mentionId = file.id
+		mention.textContent = `@${file.name.length > 30 ? `${file.name.slice(0, 27)}...` : file.name}`
+		textNode.textContent = before
+
+		const parent = textNode.parentNode
+		if (parent) {
+			parent.insertBefore(mention, textNode.nextSibling)
+			parent.insertBefore(document.createTextNode(' '), mention.nextSibling)
+			parent.insertBefore(document.createTextNode(after), mention.nextSibling?.nextSibling || null)
+		}
+
+		const newRange = document.createRange()
+		newRange.setStartAfter(mention.nextSibling || mention)
+		newRange.collapse(true)
+		sel.removeAllRanges()
+		sel.addRange(newRange)
+	}
+
+	export function insertCommandAtCursor(cmd: string): void {
+		const sel = window.getSelection()
+		if (!sel || sel.rangeCount === 0) return
+
+		const range = sel.getRangeAt(0)
+		if (range.startContainer.nodeType !== Node.TEXT_NODE) return
+
+		const textNode = range.startContainer
+		const text = textNode.textContent ?? ''
+		const slashIndex = text.lastIndexOf('/', range.startOffset)
+		if (slashIndex === -1) return
+
+		const before = text.slice(0, slashIndex)
+		const after = text.slice(range.startOffset)
+		const command = document.createElement('span')
+		command.contentEditable = 'false'
+		command.className = 'font-bold'
+		command.textContent = `/${cmd}`
+		textNode.textContent = before
+
+		const parent = textNode.parentNode
+		if (parent) {
+			parent.insertBefore(command, textNode.nextSibling)
+			parent.insertBefore(document.createTextNode(' '), command.nextSibling)
+			parent.insertBefore(document.createTextNode(after), command.nextSibling?.nextSibling || null)
+		}
+
+		const newRange = document.createRange()
+		newRange.setStartAfter(command.nextSibling || command)
+		newRange.collapse(true)
+		sel.removeAllRanges()
+		sel.addRange(newRange)
 	}
 </script>
 
@@ -204,60 +266,23 @@
 		onblur={onBlur}
 		data-placeholder="ffmpeg -i @input.mp4 -ss 00:00:01 -vframes 1 output.png"
 	></div>
-	{#if showSlashSuggestions}
-		<ul
-			role="listbox"
-			class="menu bg-base-100 rounded-field absolute right-0 left-0 mt-2 max-h-48 w-full overflow-y-auto shadow"
-		>
-			{#each filteredSlash as cmd, index}
-				<li
-					role="option"
-					tabindex="0"
-					aria-selected={index === activeSlashIndex}
-					class={index === activeSlashIndex ? 'bg-base-content/10 rounded-selector' : ''}
-					onclick={() => {
-						insertSlashCommandAtCursor(cmd)
-						updateCommand()
-					}}
-					onfocus={() => (activeSlashIndex = index)}
-					onkeydown={(e) => e.key === 'Enter' && insertSlashCommandAtCursor(cmd)}
-					onmouseover={() => (activeSlashIndex = index)}
-				>
-					<button class="rounded-selector w-full text-left">/{cmd}</button>
-				</li>
-			{:else}
-				<li class="px-4 py-2 text-base-content/70">No suggestions</li>
-			{/each}
-		</ul>
-	{:else if showSuggestions}
-		<ul
-			role="listbox"
-			class="menu bg-base-100 rounded-field absolute right-0 left-0 mt-2 max-h-48 w-full overflow-y-auto shadow"
-		>
-			{#each filteredFiles as file, index (file.id)}
-				<li
-					role="option"
-					tabindex="0"
-					aria-selected={index === activeSuggestionIndex}
-					class={index === activeSuggestionIndex ? 'bg-base-content/10 rounded-selector' : ''}
-					onclick={() => {
-						insertMentionAtCursor(file)
-						updateCommand()
-					}}
-					onfocus={() => (activeSuggestionIndex = index)}
-					onkeydown={(e) => e.key === 'Enter' && insertMentionAtCursor(file)}
-					onmouseover={() => (activeSuggestionIndex = index)}
-				>
-					<button class="rounded-selector w-full text-left">@{file.name}</button>
-				</li>
-			{:else}
-				<li class="px-4 py-2 text-base-content/70">No suggestions</li>
-			{/each}
-		</ul>
-	{/if}
+	<Suggestion
+		show={!!suggestionType}
+		items={filteredItems}
+		{activeIndex}
+		renderItem={(item: string | FileItem) =>
+			suggestionType === 'command' ? `/${item as string}` : `@${(item as FileItem).name}`}
+		onSelect={(item: string | FileItem) => {
+			insertSelectedItem(item)
+			clearSuggestion()
+			updateMessage()
+		}}
+		onHover={(index: number) => (activeIndex = index)}
+	/>
+
 	<button
 		type="button"
-		onclick={sendCommand}
+		onclick={sendMessage}
 		aria-label="Send"
 		class="btn btn-square btn-sm rounded-selector btn-ghost absolute right-3 bottom-3"
 	>
@@ -270,8 +295,5 @@
 		content: attr(data-placeholder);
 		color: var(--color-base);
 		opacity: 0.5;
-	}
-	.menu li:hover {
-		background: none !important;
 	}
 </style>
