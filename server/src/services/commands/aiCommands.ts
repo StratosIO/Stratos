@@ -41,9 +41,26 @@ export const AI_COMMANDS: Record<string, AICommandDefinition> = {
 			{
 				name: "factor",
 				description: "Frame rate increase factor (2 for double the fps)",
-
 				type: "number",
 				default: 2,
+			},
+		],
+	},
+	"ai-subtitle": {
+		name: "ai-subtitle",
+		description: "Transcribe and apply subtitles to a video file",
+		options: [
+			{
+				name: "language",
+				description: "Source language (auto for automatic detection)",
+				type: "string",
+				default: "auto",
+			},
+			{
+				name: "format",
+				description: "Output format (mp4, mov, webm)",
+				type: "string",
+				default: "mp4",
 			},
 		],
 	},
