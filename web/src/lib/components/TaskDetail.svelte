@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { onDestroy } from 'svelte'
 	import { derived } from 'svelte/store'
-	import { taskSelected, tasks, endpoint, token, maxBlobSize, showToast } from '$lib/stores'
+	import { files, tasks, taskSelected, endpoint, token, maxBlobSize, showToast } from '$lib/stores'
 	import { Tween } from 'svelte/motion'
 	import { cubicOut } from 'svelte/easing'
 	import type { TaskItem } from '$lib/types'
@@ -57,6 +57,11 @@
 		}
 	}
 
+	function replaceIds(command: string): string {
+		const fileMap = new Map($files.map(file => [file.id, file.name]))
+		return command.replace(/[0-9a-fA-F\-]{36}/g, id => fileMap.has(id) ? `"${fileMap.get(id)}"` : id)
+	}
+
 	$effect(() => {
 		if ($task && shouldLoadPreview($task)) {
 			loadPreviewBlob($task.id)
@@ -93,7 +98,7 @@
 				<Thumbnail id={$task.id} type="task" icon="cloud_sync" size="3rem" />
 			</div>
 			<div class="text-base-content/70 max-w-full min-w-0 flex-1 select-text">
-				<p class="truncate text-base-content font-mono font-bold">{$task.command}</p>
+				<p class="truncate text-base-content font-mono font-bold mb-1">{replaceIds($task.command)}</p>
 				<p class="truncate text-sm">UUID: <span class="font-mono text-xs">{$task.id}</span></p>
 				<p class="truncate text-sm">Created At: {$task.created_at}</p>
 				{#if $task.updated_at}

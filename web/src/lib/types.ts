@@ -22,13 +22,13 @@ export type FileItem = {
 export type TaskItem = {
 	id: string
 	status: string
+	command: string
 	created_at: string
 	updated_at?: string
 	result_path?: string
 	result_size?: number
 	error?: string | null
 	progress?: number
-	command?: string
 }
 
 export type DeleteOptions = {
