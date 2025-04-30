@@ -77,6 +77,13 @@ export const aiService = {
 					inputFileInfo,
 					outputDir,
 				);
+			} else if (commandResult.command === "ai-subtitle") {
+				resultFilePath = await processAiSubtitle(
+					taskId,
+					commandResult,
+					inputFileInfo,
+					outputDir,
+				);
 			} else {
 				throw new Error(`Unsupported AI command: ${commandResult.command}`);
 			}
@@ -372,6 +379,65 @@ async function processFpsBoost(
 			`Failed to get frame rate booster video from AI service: ${error}`,
 		);
 		throw new Error(`Frame Rate Boost service error: ${error}`);
+	}
+}
+
+/**
+ * Process AI Subtitle task
+ */
+async function processAiSubtitle(
+	taskId: string,
+	commandResult: ParsedCommand,
+	inputFile: { file_path: string; file_name: string; mime_type: string },
+	outputDir: string,
+): Promise<string> {
+	const options = commandResult.options || {};
+	const language = (options.language as string) || "auto";
+	const format = (options.format as string) || "mp4";
+
+	log.info(
+		`Preparing for AI subtitle: ${inputFile.file_name} with language ${language}`,
+	);
+
+	// First, generate the transcription
+	const transcriptionResult = await processTranscription(
+		taskId,
+		{ ...commandResult, options: { ...options, format: "srt" } },
+		inputFile,
+		outputDir,
+	);
+
+	// Generate output filename
+	const baseName = path.parse(inputFile.file_name).name;
+	const outputFile = `${baseName}-subtitled.${format}`;
+	const resultFilePath = path.join(outputDir, outputFile);
+
+	// Apply subtitles to the video using FFmpeg
+	try {
+		eventService.emitTaskProgress(taskId, {
+			taskId,
+			progress: 0.8,
+			message: "Applying subtitles to video...",
+		});
+
+		await execAsync(
+			`ffmpeg -i "${inputFile.file_path}" -vf "subtitles=${transcriptionResult}" -c:v libx264 -c:a copy "${resultFilePath}"`,
+		);
+
+		// Clean up the temporary SRT file
+		await fs.unlink(transcriptionResult);
+		log.info("Temporary SRT file cleaned up successfully");
+
+		eventService.emitTaskProgress(taskId, {
+			taskId,
+			progress: 1.0,
+			message: "Subtitles applied successfully",
+		});
+
+		return resultFilePath;
+	} catch (error) {
+		log.error(`Failed to apply subtitles: ${error}`);
+		throw new Error("Failed to apply subtitles to video");
 	}
 }
 
