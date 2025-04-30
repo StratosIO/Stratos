@@ -55,4 +55,5 @@ export const commands: string[] = [
 	'ai-transcribe',
 	'ai-slowmotion',
 	'ai-fpsboost',
+	'ai-subtitle',
 ]
