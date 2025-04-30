@@ -40,7 +40,12 @@ class TaskQueue {
       log.info(`Processing queue: starting ${tasksToStart} tasks, ${this.queue.length - tasksToStart} will remain queued`);
       
       for (let i = 0; i < tasksToStart; i++) {
-        const taskId = this.queue.shift()!;
+        const taskId = this.queue.shift();
+        if (taskId === undefined) {
+            log.warn('Queue unexpectedly empty during processing');
+            break;
+        }
+
         this.running.add(taskId);
         
         log.info(`Starting task ${taskId}. Queue stats: ${this.getStatsString()}`);
