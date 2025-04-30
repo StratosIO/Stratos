@@ -20,7 +20,7 @@ app = Flask(__name__)
 def transcribe(file_path, options):
     logger.info(f"Starting transcription for file: {file_path}")
     file_path = file_path.replace("+", "/")
-    base_name = file_path.split("/")[-1].replace("-audio.wav", "-transcript.txt")
+    base_name = file_path.split("/")[-1].replace("-audio.wav", "-transcript.srt")
     output_path = "/".join(file_path.split("/")[:-1]) + "/" + base_name
     options = options.split("-")
 
