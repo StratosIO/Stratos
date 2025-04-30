@@ -57,7 +57,7 @@
 		}
 	}
 
-	function replaceIds(command: string): string {
+	function replaceFileIds(command: string): string {
 		const fileMap = new Map($files.map((file) => [file.id, file.name]))
 		return command.replace(/[0-9a-fA-F\-]{36}/g, (id) =>
 			fileMap.has(id) ? `"${fileMap.get(id)}"` : id,
@@ -100,9 +100,7 @@
 				<Thumbnail id={$task.id} type="task" icon="cloud_sync" size="3rem" />
 			</div>
 			<div class="text-base-content/70 max-w-full min-w-0 flex-1 select-text">
-				<p class="text-base-content mb-1 truncate font-mono font-bold">
-					{replaceIds($task.command)}
-				</p>
+				<p class="truncate text-base-content font-mono font-bold mb-1">{replaceFileIds($task.command)}</p>
 				<p class="truncate text-sm">UUID: <span class="font-mono text-xs">{$task.id}</span></p>
 				<p class="truncate text-sm">Created At: {$task.created_at}</p>
 				{#if $task.updated_at}
@@ -115,6 +113,8 @@
 					<p class="truncate text-sm">
 						Output Size: {formatBytes($task.result_size)}
 					</p>
+				{/if}
+				{#if $task.result_path}
 					<p class="flex items-center gap-1 text-sm whitespace-nowrap">
 						<span>Download Link:</span>
 						<button
