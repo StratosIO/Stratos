@@ -111,6 +111,7 @@ export const taskController = {
 				task: {
 					id: task.id,
 					status: task.status,
+					command: task.command,
 					created_at: task.created_at,
 					updated_at: task.updated_at,
 					result_path: task.result_path,

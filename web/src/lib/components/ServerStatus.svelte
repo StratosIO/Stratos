@@ -8,7 +8,7 @@
 <button
 	type="button"
 	onclick={openSettings}
-	class="bg-base-200 rounded-field flex items-center p-6 cursor-pointer w-full"
+	class="bg-base-200 rounded-field flex w-full cursor-pointer items-center p-6"
 >
 	<div class="flex items-center">
 		{#if $online}
@@ -24,7 +24,7 @@
 
 		<span class="text-base-content mt-1 truncate">
 			{#if $online}
-				Server Online &nbsp;·&ensp; Uptime &nbsp;·&ensp;
+				Server Online&ensp;·&ensp; Uptime&ensp;·&ensp;
 				<span class="font-mono text-sm">
 					{new Date($uptime * 1000).toISOString().substring(11, 19)}
 				</span>

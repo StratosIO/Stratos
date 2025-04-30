@@ -6,7 +6,7 @@
 {#if show}
 	<ul
 		role="listbox"
-		class="menu cursor-pointer bg-base-100 rounded-field absolute mt-2 w-full shadow"
+		class="menu bg-base-100 rounded-field absolute mt-2 w-full cursor-pointer shadow"
 	>
 		{#if items.length > 0}
 			{#each items as item, index (item.id ?? item)}
@@ -24,9 +24,7 @@
 					onkeydown={(e) => e.key === 'Enter' && onSelect(item)}
 					onmouseover={() => onHover(index)}
 				>
-					<button
-						class="rounded-selector hover:bg-transparent"
-					>
+					<button class="rounded-selector hover:bg-transparent">
 						{@html renderItem(item)}
 					</button>
 				</li>

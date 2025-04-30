@@ -26,10 +26,10 @@
 				Type: {$file.type || 'Unknown'}
 			</p>
 			<p class="truncate text-sm">
-				Uploaded at: <span class="font-mono">{$file.time}</span>
+				Uploaded at: <span class="font-mono text-xs">{$file.time}</span>
 			</p>
 			<p class="truncate text-sm">
-				UUID: <span class="font-mono">{$file.id}</span>
+				UUID: <span class="font-mono text-xs">{$file.id}</span>
 			</p>
 		</div>
 	</div>

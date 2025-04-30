@@ -22,18 +22,11 @@
 
 	let filteredItems = $derived.by((): (string | FileItem)[] => {
 		if (!suggestionType) return []
-
 		const q = query.toLowerCase()
 
-		if (suggestionType === 'mention') {
-			return $files.filter((file) => file.name.toLowerCase().includes(q)).slice(0, 5)
-		}
-
-		if (suggestionType === 'command') {
-			return commands.filter((cmd) => cmd.toLowerCase().includes(q)).slice(0, 5)
-		}
-
-		return []
+		return suggestionType === 'mention'
+			? $files.filter((f) => f.name.toLowerCase().includes(q)).slice(0, 5)
+			: commands.filter((cmd) => cmd.toLowerCase().includes(q)).slice(0, 5)
 	})
 
 	function onInput(): void {
@@ -52,45 +45,60 @@
 
 	function updateSuggestions(): void {
 		const sel = window.getSelection()
-		if (!sel || sel.rangeCount === 0) {
-			suggestionType = null
-			query = ''
+		if (!sel?.rangeCount) {
+			clearSuggestion()
 			return
 		}
 
 		const range = sel.getRangeAt(0)
+		if (range.startContainer.nodeType !== Node.TEXT_NODE) {
+			clearSuggestion()
+			return
+		}
+
 		const text = range.startContainer.textContent ?? ''
 		const offset = range.startOffset
 
-		if (text.startsWith('/')) {
-			const candidate = text.slice(1, offset).trim()
-			if (!/\s/.test(candidate)) {
-				const exactMatch = commands.find((cmd) => cmd.toLowerCase() === candidate.toLowerCase())
-				if (exactMatch) {
-					insertCommandAtCursor(exactMatch)
-					clearSuggestion()
-					updateMessage()
-					return
-				}
-				suggestionType = 'command'
-				query = candidate
-				activeIndex = 0
+		const trigger = findTrigger(text, offset)
+		if (!trigger) {
+			clearSuggestion()
+			return
+		}
+
+		const { type, value } = trigger
+
+		if (type === 'command') {
+			const exact = commands.find((cmd) => cmd.toLowerCase() === value.toLowerCase())
+			if (exact) {
+				insertCommandAtCursor(exact)
+				clearSuggestion()
+				updateMessage()
 				return
 			}
 		}
 
-		const atIndex = text.lastIndexOf('@', offset)
-		if (atIndex !== -1) {
-			const candidate = text.slice(atIndex + 1, offset)
-			if (!/\s/.test(candidate)) {
-				suggestionType = 'mention'
-				query = candidate
-				activeIndex = 0
-				return
+		suggestionType = type
+		query = value
+		activeIndex = 0
+	}
+
+	function findTrigger(
+		text: string,
+		offset: number,
+	): { type: 'mention' | 'command'; value: string } | null {
+		const slice = text.slice(0, offset)
+
+		for (const [char, type] of [
+			['@', 'mention'],
+			['/', 'command'],
+		] as const) {
+			const index = slice.lastIndexOf(char)
+			if (index !== -1) {
+				const value = slice.slice(index + 1)
+				if (!/\s/.test(value)) return { type, value }
 			}
 		}
-
-		clearSuggestion()
+		return null
 	}
 
 	function clearSuggestion() {
@@ -100,13 +108,12 @@
 	}
 
 	function onKeyDown(e: KeyboardEvent) {
-		if (filteredItems.length === 0) return
+		if (!filteredItems.length) return
 
+		const max = filteredItems.length
 		if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
 			e.preventDefault()
-			activeIndex =
-				(activeIndex + (e.key === 'ArrowDown' ? 1 : -1) + filteredItems.length) %
-				filteredItems.length
+			activeIndex = (activeIndex + (e.key === 'ArrowDown' ? 1 : -1) + max) % max
 		} else if (e.key === 'Enter' || e.key === 'Tab') {
 			e.preventDefault()
 			const selected = filteredItems[activeIndex]
@@ -134,35 +141,41 @@
 	}
 
 	async function sendMessage() {
-		const msg = $message.trim()
-		const path = `${$endpoint}/tasks`
+		const commands = $message
+			.trim()
+			.split('\n')
+			.map((c) => c.trim())
+			.filter(Boolean)
+		if (!commands.length) return
 
-		const response = await fetch(path, {
-			method: 'POST',
-			headers: {
-				'Content-Type': 'application/json',
-				Authorization: `Bearer ${$token}`,
-			},
-			body: JSON.stringify({ command: msg }),
-		})
+		for (const cmd of commands) {
+			const response = await fetch(`${$endpoint}/tasks`, {
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/json',
+					Authorization: `Bearer ${$token}`,
+				},
+				body: JSON.stringify({ command: cmd }),
+			})
 
-		if (!response.ok) {
-			console.error('Message send failed:', msg)
-			showToast('Message send failed, please check your settings.', 'error')
-			currentTab.set('Settings')
-			return
+			if (!response.ok) {
+				showToast(`Failed to send: ${cmd}`, 'error')
+				currentTab.set('Settings')
+				break
+			}
+
+			const { success, task } = await response.json()
+			if (success && task) {
+				tasks.update((t) => [...t, { ...task, command: cmd }])
+				taskSelected.set(task.id)
+				currentTab.set('Tasks')
+			}
+			showToast(`Sent: <span class="font-mono">${cmd}</span>`, 'success')
+			await new Promise((r) => setTimeout(r, 150))
 		}
 
-		const data = await response.json()
-		showToast('Message sent successfully!', 'success')
 		inputElement.innerHTML = ''
 		message.set('')
-
-		if (data.success && data.task) {
-			tasks.update((curr) => [...curr, data.task])
-			taskSelected.set(data.task.id)
-			currentTab.set('Tasks')
-		}
 	}
 
 	export function messageText(input: HTMLDivElement): string {
@@ -178,78 +191,60 @@
 		return text
 	}
 
-	export function insertMentionAtCursor(file: FileItem): void {
+	function insertSpanAtTrigger(
+		triggerChar: string,
+		getSpan: (text: string) => HTMLSpanElement,
+	): void {
 		const sel = window.getSelection()
-		if (!sel || sel.rangeCount === 0) return
+		if (!sel?.rangeCount) return
 
 		const range = sel.getRangeAt(0)
 		if (range.startContainer.nodeType !== Node.TEXT_NODE) return
 
 		const textNode = range.startContainer
 		const text = textNode.textContent ?? ''
-		const atIndex = text.lastIndexOf('@', range.startOffset)
-		if (atIndex === -1) return
+		const triggerIndex = text.lastIndexOf(triggerChar, range.startOffset)
+		if (triggerIndex === -1) return
 
-		const before = text.slice(0, atIndex)
+		const before = text.slice(0, triggerIndex)
 		const after = text.slice(range.startOffset)
-		const mention = document.createElement('span')
-		mention.style.userSelect = 'text'
-		mention.style.backgroundColor = 'var(--color-secondary)'
-		mention.style.color = 'var(--color-secondary-content)'
-		mention.style.padding = '0 0.25em'
-		mention.style.borderRadius = '0.25em'
-		mention.contentEditable = 'false'
-		mention.className = 'mention'
-		mention.dataset.mentionId = file.id
-		mention.textContent = `@${file.name.length > 30 ? `${file.name.slice(0, 27)}...` : file.name}`
+		const span = getSpan(text.slice(triggerIndex + 1, range.startOffset))
+
 		textNode.textContent = before
 
 		const parent = textNode.parentNode
 		if (parent) {
-			parent.insertBefore(mention, textNode.nextSibling)
-			parent.insertBefore(document.createTextNode(' '), mention.nextSibling)
-			parent.insertBefore(document.createTextNode(after), mention.nextSibling?.nextSibling || null)
+			parent.insertBefore(span, textNode.nextSibling)
+			parent.insertBefore(document.createTextNode(' '), span.nextSibling)
+			parent.insertBefore(document.createTextNode(after), span.nextSibling?.nextSibling || null)
 		}
 
 		const newRange = document.createRange()
-		newRange.setStartAfter(mention.nextSibling || mention)
+		newRange.setStartAfter(span.nextSibling || span)
 		newRange.collapse(true)
 		sel.removeAllRanges()
 		sel.addRange(newRange)
 	}
 
+	export function insertMentionAtCursor(file: FileItem): void {
+		insertSpanAtTrigger('@', () => {
+			const mention = document.createElement('span')
+			mention.contentEditable = 'false'
+			mention.className = 'select-text text-secondary-content bg-secondary rounded-sm px-1'
+			mention.dataset.mentionId = file.id
+			mention.textContent = `@${file.name.length > 30 ? `${file.name.slice(0, 27)}...` : file.name}`
+			return mention
+		})
+	}
+
 	export function insertCommandAtCursor(cmd: string): void {
-		const sel = window.getSelection()
-		if (!sel || sel.rangeCount === 0) return
-
-		const range = sel.getRangeAt(0)
-		if (range.startContainer.nodeType !== Node.TEXT_NODE) return
-
-		const textNode = range.startContainer
-		const text = textNode.textContent ?? ''
-		const slashIndex = text.lastIndexOf('/', range.startOffset)
-		if (slashIndex === -1) return
-
-		const before = text.slice(0, slashIndex)
-		const after = text.slice(range.startOffset)
-		const command = document.createElement('span')
-		command.contentEditable = 'false'
-		command.className = 'font-bold'
-		command.textContent = `/${cmd}`
-		textNode.textContent = before
-
-		const parent = textNode.parentNode
-		if (parent) {
-			parent.insertBefore(command, textNode.nextSibling)
-			parent.insertBefore(document.createTextNode(' '), command.nextSibling)
-			parent.insertBefore(document.createTextNode(after), command.nextSibling?.nextSibling || null)
-		}
-
-		const newRange = document.createRange()
-		newRange.setStartAfter(command.nextSibling || command)
-		newRange.collapse(true)
-		sel.removeAllRanges()
-		sel.addRange(newRange)
+		insertSpanAtTrigger('/', () => {
+			const command = document.createElement('span')
+			command.contentEditable = 'false'
+			command.className = 'font-bold'
+			command.textContent = `/${cmd}`
+			return command
+		})
 	}
 </script>
 
@@ -279,7 +274,6 @@
 		}}
 		onHover={(index: number) => (activeIndex = index)}
 	/>
-
 	<button
 		type="button"
 		onclick={sendMessage}

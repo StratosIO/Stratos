@@ -28,7 +28,7 @@ export type TaskItem = {
 	result_size?: number
 	error?: string | null
 	progress?: number
-	message?: string
+	command?: string
 }
 
 export type DeleteOptions = {

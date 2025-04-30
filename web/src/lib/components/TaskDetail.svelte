@@ -93,7 +93,8 @@
 				<Thumbnail id={$task.id} type="task" icon="cloud_sync" size="3rem" />
 			</div>
 			<div class="text-base-content/70 max-w-full min-w-0 flex-1 select-text">
-				<p class="truncate text-lg text-sm">UUID: <span class="font-mono">{$task.id}</span></p>
+				<p class="truncate text-base-content font-mono font-bold">{$task.command}</p>
+				<p class="truncate text-sm">UUID: <span class="font-mono text-xs">{$task.id}</span></p>
 				<p class="truncate text-sm">Created At: {$task.created_at}</p>
 				{#if $task.updated_at}
 					<p class="truncate text-sm">Updated At: {$task.updated_at}</p>
@@ -101,13 +102,10 @@
 				{#if $task.error}
 					<p class="text-error truncate text-sm">Error: {$task.error}</p>
 				{/if}
-				{#if $task.result_path}
+				{#if $task.result_size}
 					<p class="truncate text-sm">
-						Result Size: {$task.result_size !== undefined
-							? formatBytes($task.result_size)
-							: 'Unknown'}
+						Output Size: {formatBytes($task.result_size)}
 					</p>
-					<p class="truncate text-sm">Result Path: {$task.result_path}</p>
 					<p class="flex items-center gap-1 text-sm whitespace-nowrap">
 						<span>Download Link:</span>
 						<button
