@@ -84,7 +84,7 @@ def slowmo(file_path, options):
         frame_rate = int(frame_rate)
         sf_value = int(1 / speed_factor)
         logger.info(f"SF value: {sf_value}")
-        
+
         result = subprocess.run(
             ["python",
              "slowmo/video_to_slomo.py",
@@ -120,11 +120,6 @@ def slowmo(file_path, options):
         )
         
         return jsonify({"message": "Slow motion video created successfully"}), 200
-    except subprocess.CalledProcessError as e:
-        logger.error("Slow Motion script failed")
-        logger.error(f"Command: {' '.join(e.cmd)}")
-        logger.error(f"Error output: {e.stderr}")
-        return jsonify({"error": str(e)}), 500
     except Exception as e:
         logger.error(f"Unexpected error during Slow Motion processing: {str(e)}")
         return jsonify({"error": str(e)}), 500
@@ -165,7 +160,7 @@ def fpsboost(file_path, options):
         frame_rate = int(frame_rate)
         sf_value = factor
         logger.info(f"SF value: {sf_value}")
-        
+
         result = subprocess.run(
             ["python",
              "slowmo/video_to_slomo.py",
@@ -201,15 +196,9 @@ def fpsboost(file_path, options):
         )
         
         return jsonify({"message": "Frame Rate Boost video created successfully"}), 200
-    except subprocess.CalledProcessError as e:
-        logger.error("Frame Rate Boost script failed")
-        logger.error(f"Command: {' '.join(e.cmd)}")
-        logger.error(f"Error output: {e.stderr}")
-        return jsonify({"error": str(e)}), 500
     except Exception as e:
         logger.error(f"Unexpected error during Frame Rate Boost processing: {str(e)}")
         return jsonify({"error": str(e)}), 500
-
 
 if __name__ == "__main__":
     logger.info("Starting Flask application")
