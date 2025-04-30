@@ -19,7 +19,7 @@
 
 	let thumbnailUrl = $derived(
 		id && type
-			? `${$endpoint}/${type === 'file' ? 'uploads' : 'tasks'}/thumbnails/${id}.avif`
+			? `${$endpoint}/${type === 'file' ? 'uploads' : 'tasks'}/thumbnails/${id}.jpg`
 			: null,
 	)
 

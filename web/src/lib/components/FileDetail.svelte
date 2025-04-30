@@ -17,8 +17,8 @@
 		<div class="mr-6 hidden h-28 w-36 shrink-0 md:flex">
 			<Thumbnail id={$file.id} type="file" icon={$file.icon} size="3rem" />
 		</div>
-		<div class="text-base-content/70 w-0 max-w-full flex-1 truncate select-text">
-			<p class="text-base-content truncate text-lg font-medium">{$file.name}</p>
+		<div class="text-base-content/70 max-w-full min-w-0 flex-1 select-text">
+			<p class="truncate text-base-content text-lg font-medium">{$file.name}</p>
 			<p class="truncate text-sm">
 				Size: {formatBytes($file.size)}
 			</p>

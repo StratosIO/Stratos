@@ -100,13 +100,11 @@
 				<Thumbnail id={$task.id} type="task" icon="cloud_sync" size="3rem" />
 			</div>
 			<div class="text-base-content/70 max-w-full min-w-0 flex-1 select-text">
-				<p class="text-base-content mb-1 truncate font-mono font-bold">
-					{replaceFileIds($task.command)}
-				</p>
+				<p class="truncate text-sm text-base-content font-mono font-bold mb-1">{replaceFileIds($task.command)}</p>
 				<p class="truncate text-sm">UUID: <span class="font-mono text-xs">{$task.id}</span></p>
-				<p class="truncate text-sm">Created At: {$task.created_at}</p>
+				<p class="truncate text-sm">Created At: <span class="font-mono text-xs">{$task.created_at}</span></p>
 				{#if $task.updated_at}
-					<p class="truncate text-sm">Updated At: {$task.updated_at}</p>
+					<p class="truncate text-sm">Updated At: <span class="font-mono text-xs">{$task.updated_at}</span></p>
 				{/if}
 				{#if $task.error}
 					<p class="text-error truncate text-sm">Error: {$task.error}</p>

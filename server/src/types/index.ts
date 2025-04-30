@@ -148,8 +148,4 @@ export type TaskEventType = "progress" | "complete" | "failed";
 
 // Constants for thumbnail generation
 export const THUMBNAIL_DIR_NAME = "thumbnails";
-export const THUMBNAIL_FORMAT = "avif";
-
-// Constants for preview generation
-export const PREVIEW_DIR_NAME = "previews";
-export const PREVIEW_FORMAT = "avif";
+export const THUMBNAIL_FORMAT = "jpg";
