@@ -7,9 +7,15 @@ import { promisify } from "node:util";
 import { OUTPUT_CONFIG } from "../types/index.js";
 import type { ParsedCommand } from "../types/index.js";
 import axios from "axios";
+import { eventService } from "./eventService.js";
 
 const execAsync = promisify(exec);
 const AI_URL = process.env.AI_URL || "http://stratos-ai:5001";
+
+interface ProgressData {
+	progress: number;
+	message?: string;
+}
 
 export const aiService = {
 	/**
@@ -52,18 +58,21 @@ export const aiService = {
 
 			if (commandResult.command === "transcribe") {
 				resultFilePath = await processTranscription(
+					taskId,
 					commandResult,
 					inputFileInfo,
 					outputDir,
 				);
 			} else if (commandResult.command === "slowmotion") {
 				resultFilePath = await processSlowmo(
+					taskId,
 					commandResult,
 					inputFileInfo,
 					outputDir,
 				);
 			} else if (commandResult.command === "fpsboost") {
 				resultFilePath = await processFpsBoost(
+					taskId,
 					commandResult,
 					inputFileInfo,
 					outputDir,
@@ -81,6 +90,13 @@ export const aiService = {
 				WHERE id = ${taskId}
 			`;
 
+			// Emit completion event
+			eventService.emitTaskComplete(taskId, {
+				taskId,
+				status: "completed",
+				resultPath: resultFilePath,
+			});
+
 			log.info(`AI Task ${taskId} completed successfully`);
 		} catch (error) {
 			log.error(`Error executing AI task ${taskId}:`, error);
@@ -93,6 +109,9 @@ export const aiService = {
 					updated_at = NOW() 
 				WHERE id = ${taskId}
 			`;
+
+			// Emit failure event
+			eventService.emitTaskFailed(taskId, String(error));
 		}
 	},
 };
@@ -101,6 +120,7 @@ export const aiService = {
  * Process Transcription task
  */
 async function processTranscription(
+	taskId: string,
 	commandResult: ParsedCommand,
 	inputFile: { file_path: string; file_name: string; mime_type: string },
 	outputDir: string,
@@ -119,6 +139,11 @@ async function processTranscription(
 	const audioPath = path.join(outputDir, audioFile);
 
 	// Extract audio using FFmpeg
+	eventService.emitTaskProgress(taskId, {
+		taskId,
+		progress: 0.1,
+		message: "Extracting audio from video...",
+	});
 	await extractAudio(inputFile.file_path, audioPath);
 	log.info(`Successfully extracted audio to ${audioPath}`);
 
@@ -136,7 +161,18 @@ async function processTranscription(
 	log.info(`Sending file to AI service: transcribe with ${audioPath}`);
 	try {
 		// Call the external AI service for transcription
-		await axios.post(`${AI_URL}/transcribe/${safeFilePath}/${optionsString}`);
+		eventService.emitTaskProgress(taskId, {
+			taskId,
+			progress: 0.2,
+			message: "Starting transcription...",
+		});
+		const response = await axios.post(`${AI_URL}/transcribe/${safeFilePath}/${optionsString}`);
+
+		eventService.emitTaskProgress(taskId, {
+			taskId,
+			progress: 0.9,
+			message: "Saving transcription...",
+		});
 
 		log.info(`Transcription saved at ${resultFilePath}`);
 
@@ -167,6 +203,7 @@ async function processTranscription(
  * Process Slowmo task
  */
 async function processSlowmo(
+	taskId: string,
 	commandResult: ParsedCommand,
 	inputFile: { file_path: string; file_name: string; mime_type: string },
 	outputDir: string,
@@ -185,6 +222,11 @@ async function processSlowmo(
 
 	// Convert input to MP4 if needed
 	try {
+		eventService.emitTaskProgress(taskId, {
+			taskId,
+			progress: 0.1,
+			message: "Preparing video for processing...",
+		});
 		log.info(`Converting input to MP4 format: ${tempPath}`);
 		await execAsync(
 			`ffmpeg -i "${inputFile.file_path}" -c:v libx264 -preset medium -crf 23 -c:a aac -b:a 128k "${tempPath}"`,
@@ -206,7 +248,20 @@ async function processSlowmo(
 	log.info(`Sending file to AI service: Slow Motion with ${tempPath}`);
 	try {
 		// Call the external AI service for slow motion
-		await axios.post(`${AI_URL}/slowmo/${safeFilePath}/${optionsString}`);
+		eventService.emitTaskProgress(taskId, {
+			taskId,
+			progress: 0.2,
+			message: "Starting slow motion processing...",
+		});
+
+		// Start the slow motion processing
+		const response = await axios.post(`${AI_URL}/slowmo/${safeFilePath}/${optionsString}`);
+
+		eventService.emitTaskProgress(taskId, {
+			taskId,
+			progress: 0.9,
+			message: "Saving processed video...",
+		});
 
 		log.info(`Slow motion video saved at ${resultFilePath}`);
 
@@ -232,6 +287,7 @@ async function processSlowmo(
  * Process Frame Rate Boost task
  */
 async function processFpsBoost(
+	taskId: string,
 	commandResult: ParsedCommand,
 	inputFile: { file_path: string; file_name: string; mime_type: string },
 	outputDir: string,
@@ -250,6 +306,11 @@ async function processFpsBoost(
 
 	// Convert input to MP4 if needed
 	try {
+		eventService.emitTaskProgress(taskId, {
+			taskId,
+			progress: 0.1,
+			message: "Preparing video for processing...",
+		});
 		log.info(`Converting input to MP4 format: ${tempPath}`);
 		await execAsync(
 			`ffmpeg -i "${inputFile.file_path}" -c:v libx264 -preset medium -crf 23 -c:a aac -b:a 128k "${tempPath}"`,
@@ -271,7 +332,20 @@ async function processFpsBoost(
 	log.info(`Sending file to AI service: Frame Rate Boost with ${tempPath}`);
 	try {
 		// Call the external AI service for frame rate boost
-		await axios.post(`${AI_URL}/fpsboost/${safeFilePath}/${optionsString}`);
+		eventService.emitTaskProgress(taskId, {
+			taskId,
+			progress: 0.2,
+			message: "Starting frame rate boost...",
+		});
+
+		// Start the frame rate boost processing
+		const response = await axios.post(`${AI_URL}/fpsboost/${safeFilePath}/${optionsString}`);
+
+		eventService.emitTaskProgress(taskId, {
+			taskId,
+			progress: 0.9,
+			message: "Saving processed video...",
+		});
 
 		log.info(`Frame rate boosted video saved at ${resultFilePath}`);
 
