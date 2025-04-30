@@ -15,6 +15,7 @@ import { streamSSE } from "hono/streaming";
 import fs from "node:fs/promises";
 import path from "node:path";
 import { getContentType } from "../utils/fileUtils.js";
+import { taskQueue } from "../services/queueService.js";
 
 export const taskController = {
 	submitCommand: async (c: Context) => {
@@ -71,9 +72,8 @@ export const taskController = {
 			);
 
 			// Start processing in background
-			taskService.executeCommand(task.id).catch((err) => {
-				log.error(`Background task execution failed for ${task.id}:`, err);
-			});
+
+			taskQueue.addTask(task.id); //add task to queue
 
 			return c.json(
 				{
