@@ -20,7 +20,7 @@ app = Flask(__name__)
 def transcribe(file_path, options):
     logger.info(f"Starting transcription for file: {file_path}")
     file_path = file_path.replace("+", "/")
-    base_name = file_path.split("/")[-1].replace("-audio.wav", "-transcript.srt")
+    base_name = file_path.split("/")[-1].replace("-audio.wav", "-transcription.srt")
     output_path = "/".join(file_path.split("/")[:-1]) + "/" + base_name
     options = options.split("-")
 
@@ -37,7 +37,21 @@ def transcribe(file_path, options):
         # Write the output to a file
         logger.info(f"Writing transcription to: {output_path}")
         with open(output_path, "w") as f:
-            f.write(result.stdout.strip())
+            # Split the output into individual subtitle entries
+            entries = result.stdout.strip().split('\n[')
+            entries = [entries[0]] + ['[' + line for line in entries[1:]]
+            for i, entry in enumerate(entries, 1):
+                # Split timestamp and text
+                parts = entry.split(']')
+                # Format timestamp
+                timestamp = parts[0].replace('[', '')
+                # Convert milliseconds format (000) to comma format (000)
+                timestamp = timestamp.replace('.', ',')
+                
+                # Write SRT entry
+                f.write(f"{i}\n")
+                f.write(f"{timestamp}\n")
+                f.write(f"{parts[1].strip()}\n\n")
 
         logger.info("Transcription completed successfully")
         return jsonify({"message": "Transcription completed"}), 200
