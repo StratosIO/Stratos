@@ -154,9 +154,7 @@
 						</span>
 					</p>
 					<progress
-						class="progress max-w-96 min-w-0 flex-shrink {$task.error
-							? 'progress-error'
-							: 'progress-info'}"
+						class="progress max-w-96 flex-1 {$task.error ? 'progress-error' : 'progress-info'}"
 						value={$task.progress !== undefined ? progress.current : undefined}
 						max="100"
 					></progress>

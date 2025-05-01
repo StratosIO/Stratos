@@ -188,7 +188,7 @@
 				text += el.dataset.mentionId || el.textContent
 			}
 		}
-		return text
+		return text.replace(/\u00A0/g, '\u0020')
 	}
 
 	function insertSpanAtTrigger(
