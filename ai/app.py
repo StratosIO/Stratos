@@ -118,7 +118,17 @@ def slowmo(file_path, options):
         # Convert the output file to MP4 format
         logger.info(f"Converting output file to MP4 format: {output_path}")
         result = subprocess.run(
-            ["ffmpeg", "-i", output_path, "-c:v", "libx264", "-c:a", "aac", "-b:a", "128k", output_path.replace(".mkv", ".mp4")],
+            ["ffmpeg", 
+             "-i", output_path,  # Input video
+             "-i", file_path,    # Original video for audio
+             "-filter_complex", f"[1:a]atempo={speed_factor}[a]",  # Slow down audio to match video
+             "-map", "0:v",      # Map the video as is (already slowed down)
+             "-map", "[a]",      # Map the slowed down audio
+             "-c:v", "libx264", 
+             "-c:a", "aac", 
+             "-b:a", "128k", 
+             output_path.replace(".mkv", ".mp4")
+            ],
             capture_output=True,
             text=True,
             check=True,
@@ -194,7 +204,17 @@ def fpsboost(file_path, options):
         # Convert the output file to MP4 format
         logger.info(f"Converting output file to MP4 format: {output_path}")
         result = subprocess.run(
-            ["ffmpeg", "-i", output_path, "-c:v", "libx264", "-c:a", "aac", "-b:a", "128k", output_path.replace(".mkv", ".mp4")],
+            ["ffmpeg", 
+             "-i", output_path,  # Input video
+             "-i", file_path,    # Original video for audio
+             "-filter_complex", f"[1:a]atempo=1.0[a]",  # Keep audio at normal speed
+             "-map", "0:v",      # Map the video as is (already sped up)
+             "-map", "[a]",      # Map the normal speed audio
+             "-c:v", "libx264", 
+             "-c:a", "aac", 
+             "-b:a", "128k", 
+             output_path.replace(".mkv", ".mp4")
+            ],
             capture_output=True,
             text=True,
             check=True,
