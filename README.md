@@ -2,7 +2,7 @@
 
 <div align="center">
   <!-- Add your project logo here when available -->
-  <!-- <img src="docs/logo.png" alt="Stratos Logo" width="200"/> -->
+  <img src="docs/logo.png" alt="Stratos Logo" width="400"/>
 
   [![Build Status](https://github.com/StratosIO/Stratos/actions/workflows/build.yml/badge.svg)](https://github.com/StratosIO/Stratos/actions)
   [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](https://github.com/StratosIO/Stratos/blob/master/LICENSE)
@@ -20,20 +20,27 @@
 
 ## 📑 Table of Contents
 
-- [📋 Overview](#-overview)
-- [🎮 Demo](#-demo)
-- [🚀 Features](#-features)
-- [🛠️ Tech Stack](#️-tech-stack)
-- [🏗️ Project Structure](#️-project-structure)
-- [📘 Documentation](#-Documentation)
-- [🏁 Getting Started](#-getting-started)
-  - [Prerequisites](#prerequisites)
-  - [Installation](#installation)
-  - [Docker Deployment](#docker-deployment)
-- [📝 Contributing](#-contributing)
-- [📄 License](#-license)
-- [🤝 Support](#-support)
-- [👥 Contributors](#-contributors)
+- [🎬 Stratos](#-stratos)
+  - [📑 Table of Contents](#-table-of-contents)
+  - [📋 Overview](#-overview)
+  - [🎮 Demo](#-demo)
+  - [🚀 Features](#-features)
+  - [🛠️ Tech Stack](#️-tech-stack)
+    - [Frontend](#frontend)
+    - [Backend](#backend)
+    - [Development Tools](#development-tools)
+  - [🏗️ Project Structure](#️-project-structure)
+  - [📘 Documentation](#-documentation)
+    - [User Manual](#user-manual)
+    - [API Documentation](#api-documentation)
+  - [🏁 Getting Started](#-getting-started)
+    - [Prerequisites](#prerequisites)
+    - [Installation](#installation)
+    - [Docker Deployment](#docker-deployment)
+    - [Commit Guidelines](#commit-guidelines)
+  - [📄 License](#-license)
+  - [🤝 Support](#-support)
+  - [👥 Contributors](#-contributors)
 
 ## 📋 Overview
 
