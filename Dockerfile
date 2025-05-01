@@ -12,7 +12,7 @@ FROM oven/bun:alpine AS server
 
 WORKDIR /app
 
-RUN apk add --no-cache ffmpeg
+RUN apk add --no-cache ffmpeg ttf-dejavu
 
 COPY server/package.json .env .
 COPY --from=web /web/build dist
