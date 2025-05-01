@@ -77,7 +77,7 @@ export const aiService = {
 					inputFileInfo,
 					outputDir,
 				);
-			} else if (commandResult.command === "ai-subtitle") {
+			} else if (commandResult.command === "subtitle") {
 				resultFilePath = await processAiSubtitle(
 					taskId,
 					commandResult,
@@ -419,14 +419,22 @@ async function processAiSubtitle(
 			progress: 0.8,
 			message: "Applying subtitles to video...",
 		});
-
+		// Replace .srt with .ass
+		const transcriptionResultAss = transcriptionResult.replace(/\.srt$/,".ass");
+		// create a new file with .en.srt
 		await execAsync(
-			`ffmpeg -i "${inputFile.file_path}" -vf "subtitles=${transcriptionResult}" -c:v libx264 -c:a copy "${resultFilePath}"`,
+			`ffmpeg -i ${transcriptionResult} ${transcriptionResultAss}`,
 		);
-
+		await execAsync(
+			`ffmpeg -i ${inputFile.file_path} -vf ass=${transcriptionResultAss} -c:v libx264 -crf 23 -preset fast -c:a copy ${resultFilePath}`,
+		);
+		// Log the resultFilePath
+		log.info(`Subtitles applied to video: ${resultFilePath}`);
 		// Clean up the temporary SRT file
 		await fs.unlink(transcriptionResult);
+		await fs.unlink(transcriptionResultAss);
 		log.info("Temporary SRT file cleaned up successfully");
+		log.info("Temporary ASS file cleaned up successfully");
 
 		eventService.emitTaskProgress(taskId, {
 			taskId,
