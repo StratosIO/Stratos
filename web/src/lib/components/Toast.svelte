@@ -24,7 +24,7 @@
 		style:display={$toast ? 'flex' : 'none'}
 	>
 		{#if $toast}
-			<div class={`alert alert-${$toast.type} alert-soft`}>
+			<div class={`alert alert-${$toast.type} alert-soft max-w-sm`}>
 				<span class="material-icons-round mr-1">
 					{$toast.type === 'error' ? 'error' : $toast.type === 'success' ? 'check_circle' : 'info'}
 				</span>

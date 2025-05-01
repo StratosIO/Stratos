@@ -170,10 +170,10 @@
 				taskSelected.set(task.id)
 				currentTab.set('Tasks')
 			}
-			showToast(`Sent: <span class="font-mono">${cmd}</span>`, 'success')
-			await new Promise((r) => setTimeout(r, 150))
+			await new Promise((r) => setTimeout(r, 50))
 		}
 
+		showToast('Command sent successfully', 'success')
 		inputElement.innerHTML = ''
 		message.set('')
 	}
