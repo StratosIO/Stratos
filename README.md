@@ -1,8 +1,6 @@
-# 🎬 Stratos
-
 <div align="center">
   <!-- Add your project logo here when available -->
-  <img src="docs/logo.png" alt="Stratos Logo" width="400"/>
+  <img src="docs/logo.png" alt="Stratos Logo" width="800"/>
 
   [![Build Status](https://github.com/StratosIO/Stratos/actions/workflows/build.yml/badge.svg)](https://github.com/StratosIO/Stratos/actions)
   [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](https://github.com/StratosIO/Stratos/blob/master/LICENSE)
@@ -14,6 +12,8 @@
   [![GitHub Forks](https://img.shields.io/github/forks/StratosIO/Stratos?style=social)](https://github.com/StratosIO/Stratos/network/members)
 
 </div>
+
+# 🎬 Stratos
 
 > **⚠️ Development Status**  
 > Stratos is currently in active development. We're working hard to bring you a powerful video editing solution. Features and APIs are subject to change as we refine the platform.
