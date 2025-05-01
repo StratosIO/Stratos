@@ -60,6 +60,21 @@ Create a increased fps version of a video.
 /ai-fpsboost 5c12ecc5-f2f8-438b-892d-e23348cb1d81 --output=fps-boost-clip
 ```
 
+### /ai-subtitle
+
+Automatically transcribe and apply subtitles to a video file.
+
+**Options:**
+- `--language`: Source language (`auto`, `en`, `es`, `fr`, etc., default: `auto`)
+- `--format`: Output format (`mp4`, `mov`, `webm`, default: `mp4`)
+
+**Examples:**
+```
+/ai-subtitle 5c12ecc5-f2f8-438b-892d-e23348cb1d81
+/ai-subtitle 5c12ecc5-f2f8-438b-892d-e23348cb1d81 --language=en
+/ai-subtitle 5c12ecc5-f2f8-438b-892d-e23348cb1d81 --output=subtitled-video
+```
+
 ## How it works
 
 When you use an AI command, the system:
