@@ -47,7 +47,7 @@ export const AI_COMMANDS: Record<string, AICommandDefinition> = {
 		],
 	},
 	"subtitle": {
-		name: "ai-subtitle",
+		name: "subtitle",
 		description: "Transcribe and apply subtitles to a video file",
 		options: [
 			{
