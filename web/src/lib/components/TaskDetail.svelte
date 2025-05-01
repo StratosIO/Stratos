@@ -64,10 +64,25 @@
 		)
 	}
 
+	let lastId: string | undefined = undefined
+	let lastUpdatedAt: string | undefined = undefined
+
 	$effect(() => {
-		if ($task && shouldLoadPreview($task)) {
-			loadPreviewBlob($task.id)
-		} else {
+		const id = $task?.id
+		const updatedAt = $task?.updated_at
+
+		if (id && (id !== lastId || updatedAt !== lastUpdatedAt)) {
+			lastId = id
+			lastUpdatedAt = updatedAt
+
+			if (shouldLoadPreview($task)) {
+				loadPreviewBlob(id)
+			} else {
+				revokeMediaUrl()
+			}
+		}
+
+		if (!id) {
 			revokeMediaUrl()
 		}
 	})
