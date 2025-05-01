@@ -5,9 +5,11 @@
   [![Build Status](https://github.com/StratosIO/Stratos/actions/workflows/build.yml/badge.svg)](https://github.com/StratosIO/Stratos/actions)
   [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](https://github.com/StratosIO/Stratos/blob/master/LICENSE)
   [![TypeScript](https://img.shields.io/badge/TypeScript-007ACC?style=flat&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
+  ![Python](https://img.shields.io/badge/-Python-3776AB?style=flat&logo=python&logoColor=white)
   [![Svelte](https://img.shields.io/badge/Svelte-FF3E00?style=flat&logo=svelte&logoColor=white)](https://svelte.dev/)
   [![Bun](https://img.shields.io/badge/Bun-000000?style=flat&logo=bun&logoColor=white)](https://bun.sh/)
   [![Docker](https://img.shields.io/badge/Docker-2496ED?style=flat&logo=docker&logoColor=white)](https://www.docker.com/)
+  ![GitHub tag (latest by date)](https://img.shields.io/github/v/tag/StratosIO/Stratos)
   [![GitHub Stars](https://img.shields.io/github/stars/StratosIO/Stratos?style=social)](https://github.com/StratosIO/Stratos/stargazers)
   [![GitHub Forks](https://img.shields.io/github/forks/StratosIO/Stratos?style=social)](https://github.com/StratosIO/Stratos/network/members)
 
