@@ -215,7 +215,7 @@
 		const parent = textNode.parentNode
 		if (parent) {
 			parent.insertBefore(span, textNode.nextSibling)
-			parent.insertBefore(document.createTextNode(' '), span.nextSibling)
+			parent.insertBefore(document.createTextNode('\u00A0'), span.nextSibling)
 			parent.insertBefore(document.createTextNode(after), span.nextSibling?.nextSibling || null)
 		}
 
