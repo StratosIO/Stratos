@@ -53,7 +53,5 @@ export const commands: string[] = [
 	'compress-video',
 	'trim-video',
 	'ai-transcribe',
-	'ai-slowmotion',
-	'ai-fpsboost',
 	'ai-subtitle',
 ]
